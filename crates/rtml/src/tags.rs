@@ -8,15 +8,23 @@ use crate::{Children, InnerChildren, Tag};
 
 #[macro_export]
 macro_rules! prop {
-    ($($name:ident = $value:expr),+) => {{ let mut props: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+    ($($($name:tt)-+ $(= $value:expr)?),+) => {{ let mut props: std::collections::HashMap<String, String> = std::collections::HashMap::new();
         $(
-            let key = stringify!($name);
+            let name = vec![$(stringify!($name)),*];
+            let key = name.join("-");
             if key.starts_with("on") {
                 panic!("event handler {} should be registered with env! macro", key);
             } else if key == "style" {
                 panic!("style property should be set with style! macro");
             }
-            props.insert(key.to_string(), $value.to_string());
+            let mut no_value = true;
+            $(
+                no_value = false;
+                props.insert(key.to_string(), $value.to_string());
+            )?
+            if no_value {
+                props.insert(key.to_string(), String::new());
+            }
 
         )*
         $crate::tags::TagProp(props)
@@ -45,7 +53,6 @@ macro_rules! on {
         $crate::tags::TagHandler::default()
     }}
 }
-
 
 /// simple wrapper of tag props
 #[derive(Debug, Clone, Default)]
@@ -80,8 +87,11 @@ impl Tag for UnitTag {
             let pad = pad + 1;
             write!(buf, "{:pad$}", "")?;
             for (name, val) in self.props.0.iter() {
-                write!(buf, "{:pad$}", "")?;
-                write!(buf, "{}={}", name, val)?;
+                if val.is_empty() {
+                    write!(buf, r#"{:pad$}{}"#, "", name)?;
+                } else {
+                    write!(buf, r#"{:pad$}{}="{}""#, "", name, val)?;
+                }
                 buf.push_str(f.line_sep);
             }
             if !self.style.0.is_empty() {
@@ -94,7 +104,7 @@ impl Tag for UnitTag {
             }
             for (name, val) in self.on.0.iter() {
                 write!(buf, "{:pad$}", "")?;
-                write!(buf, "on{}={}", name, val)?;
+                write!(buf, r#"on{}="{}""#, name, val)?;
                 buf.push_str(f.line_sep);
             }
             let pad = pad - 1;
@@ -102,7 +112,11 @@ impl Tag for UnitTag {
             buf.push_str(f.line_sep);
         } else {
             for (name, val) in self.props.0.iter() {
-                write!(buf, " {}={}", name, val)?;
+                if val.is_empty() {
+                    write!(buf, r#" {}"#, name)?;
+                } else {
+                    write!(buf, r#" {}="{}""#, name, val)?;
+                }
             }
             if !self.style.0.is_empty() {
                 write!(buf, " style=\"")?;
@@ -112,7 +126,7 @@ impl Tag for UnitTag {
                 write!(buf, "\"")?;
             }
             for (name, val) in self.on.0.iter() {
-                write!(buf, " on{}={}", name, val)?;
+                write!(buf, r#" on{}="{}""#, name, val)?;
             }
             buf.push('>');
         }
@@ -371,15 +385,15 @@ impl TagFormatter {
 }
 
 /// a helper macro to define custom html tag construct function, struct and arguments structs
-/// 
+///
 /// ## example
-/// 
+///
 /// ```no_run
 /// tag!(app, App, AppArgs, "my custom tag");
-/// 
+///
 /// let app = app(h1("great"));
 /// ```
-/// 
+///
 #[macro_export]
 macro_rules! tag {
     ($func_name:ident, $struct:ident, $arg:ident, $($doc:literal),+) => {

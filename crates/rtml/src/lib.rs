@@ -13,6 +13,13 @@ pub type InnerChildren = Vec<Box<dyn Tag>>;
 /// helper struct for easier input
 pub struct Children(pub InnerChildren);
 
+impl Children {
+    /// add children
+    pub fn push<T: Tag + 'static>(&mut self, item: T) {
+        self.0.push(Box::new(item))
+    }
+}
+
 /// a trait represent html tags
 pub trait Tag {
     fn name(&self) -> &'static str;

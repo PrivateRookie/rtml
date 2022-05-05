@@ -3,6 +3,7 @@
         "fieldset",
         "figcaption",
         "rtml",
-        "rustfmt"
+        "rustfmt",
+        "stylesheet"
     ]
 }
