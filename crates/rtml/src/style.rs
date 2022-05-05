@@ -17,14 +17,17 @@
 /// ```
 #[macro_export]
 macro_rules! style {
-    ($($($name:ident)-+: $value:expr);*) => {
+    ($($($name:ident)-+: $value:expr);+) => {
         {
             let mut map: HashMap<String, String> = HashMap::new();
             $(
                 let name = vec![$(stringify!($name)),*];
                 map.insert(name.join("-"), $value.to_string());
             )+
-            map
+            $crate::tags::TagStyle(map)
         }
     };
+    () => {
+        $crate::tags::TagStyle::default()
+    }
 }
