@@ -19,7 +19,7 @@
 macro_rules! style {
     ($($($name:ident)-+: $value:expr);+) => {
         {
-            let mut map: HashMap<String, String> = HashMap::new();
+            let mut map: std::collections::HashMap<String, String> = std::collections::HashMap::new();
             $(
                 let name = vec![$(stringify!($name)),*];
                 map.insert(name.join("-"), $value.to_string());

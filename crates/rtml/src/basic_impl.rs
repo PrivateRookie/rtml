@@ -94,6 +94,19 @@ impl<const N: usize> From<[Box<dyn Tag>; N]> for Children {
     }
 }
 
+impl<T, const N: usize> From<[T; N]> for Children
+where
+    T: Tag + 'static,
+{
+    fn from(src: [T; N]) -> Self {
+        let mut children: InnerChildren = Vec::with_capacity(N);
+        for item in src {
+            children.push(Box::new(item));
+        }
+        Self(children)
+    }
+}
+
 macro_rules! tuple_impl {
     ($($t:tt),+ | $($i:tt),+) => {
         impl <$($t ),+ > From<($($t,)+)> for Children
