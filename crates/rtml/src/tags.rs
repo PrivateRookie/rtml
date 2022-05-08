@@ -8,7 +8,9 @@ use crate::{Children, Tag, TagContent, TagList};
 
 #[macro_export]
 macro_rules! prop {
-    ($($($name:tt)-+ $(= $value:expr)?),+) => {{ let mut props: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+    ($($($name:tt)-+ $(= $value:expr)?),+) => {
+        #[allow(unused_assignments)]
+        { let mut props: std::collections::HashMap<String, String> = std::collections::HashMap::new();
         $(
             let name = vec![$(stringify!($name)),*];
             let key = name.join("-");
@@ -17,14 +19,11 @@ macro_rules! prop {
             } else if key == "style" {
                 panic!("style property should be set with style! macro");
             }
-            let mut no_value = true;
+            let mut value = None;
             $(
-                no_value = false;
-                props.insert(key.to_string(), $value.to_string());
+                value = Some($value.to_string());
             )?
-            if no_value {
-                props.insert(key.to_string(), String::new());
-            }
+            props.insert(key.to_string(), value.unwrap_or_default());
 
         )*
         $crate::tags::TagProp(props)

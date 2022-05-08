@@ -7,8 +7,9 @@ pub mod script;
 pub mod style;
 /// built in standard html tags
 pub mod tags;
-/// render backend impl
-pub mod backend;
+
+#[cfg(feature = "wasm")]
+pub mod wasm;
 
 pub type TagList = Vec<Box<dyn Tag>>;
 
@@ -43,7 +44,7 @@ pub enum TagContent<'a> {
 }
 
 /// a trait represent html tags
-pub trait Tag : std::fmt::Debug {
+pub trait Tag: std::fmt::Debug {
     fn name(&self) -> &'static str;
     fn props(&self) -> Option<&TagProp>;
     fn styles(&self) -> Option<&TagStyle>;
