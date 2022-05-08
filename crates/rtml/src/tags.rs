@@ -4,7 +4,7 @@ use std::{
     fmt::{Debug, Display},
 };
 
-use crate::{Children, InnerChildren, Tag};
+use crate::{Children, Tag, TagContent, TagList};
 
 #[macro_export]
 macro_rules! prop {
@@ -34,26 +34,6 @@ macro_rules! prop {
     }}
 }
 
-/// and event listener
-#[macro_export]
-macro_rules! on {
-    ($($name:ident = $cb:ident),+) => {
-      {
-          let mut handlers: std::collections::HashMap<String, String> = std::collections::HashMap::new();
-          $(
-              let key = stringify!($name);
-              let val = stringify!($cb);
-              handlers.insert(key.to_string(), val.to_string());
-
-          )*
-          $crate::tags::TagHandler(props)
-      }
-    };
-    () => {{
-        $crate::tags::TagHandler::default()
-    }}
-}
-
 /// simple wrapper of tag props
 #[derive(Debug, Clone, Default)]
 pub struct TagProp(pub HashMap<String, String>);
@@ -62,21 +42,29 @@ pub struct TagProp(pub HashMap<String, String>);
 #[derive(Debug, Clone, Default)]
 pub struct TagStyle(pub HashMap<String, String>);
 
-/// simple wrapper of tag event handler
-#[derive(Debug, Clone, Default)]
-pub struct TagHandler(pub HashMap<String, String>);
-
+#[derive(Debug)]
 pub struct UnitTag {
     pub tag: &'static str,
     pub props: TagProp,
-    pub on: TagHandler,
     pub style: TagStyle,
-    pub children: InnerChildren,
+    pub children: TagList,
 }
 
 impl Tag for UnitTag {
     fn name(&self) -> &'static str {
         self.tag
+    }
+
+    fn props(&self) -> Option<&TagProp> {
+        Some(&self.props)
+    }
+
+    fn styles(&self) -> Option<&TagStyle> {
+        Some(&self.style)
+    }
+
+    fn content(&self) -> TagContent {
+        TagContent::Tags(&self.children)
     }
 
     fn format(&self, f: &mut TagFormatter, buf: &mut String) -> std::fmt::Result {
@@ -102,11 +90,6 @@ impl Tag for UnitTag {
                 }
                 write!(buf, "\"")?;
             }
-            for (name, val) in self.on.0.iter() {
-                write!(buf, "{:pad$}", "")?;
-                write!(buf, r#"on{}="{}""#, name, val)?;
-                buf.push_str(f.line_sep);
-            }
             let pad = pad - 1;
             write!(buf, "{:pad$}>", "")?;
             buf.push_str(f.line_sep);
@@ -124,9 +107,6 @@ impl Tag for UnitTag {
                     write!(buf, "{}: {}; ", name, val)?;
                 }
                 write!(buf, "\"")?;
-            }
-            for (name, val) in self.on.0.iter() {
-                write!(buf, r#" on{}="{}""#, name, val)?;
             }
             buf.push('>');
         }
@@ -157,7 +137,6 @@ impl<C: Into<Children>> From<(&'static str, C)> for UnitTag {
             tag: src.0,
             children: src.1.into().0,
             props: Default::default(),
-            on: Default::default(),
             style: Default::default(),
         }
     }
@@ -169,19 +148,6 @@ impl<C: Into<Children>> From<(&'static str, TagProp, C)> for UnitTag {
             tag: src.0,
             children: src.2.into().0,
             props: src.1,
-            on: Default::default(),
-            style: Default::default(),
-        }
-    }
-}
-
-impl<C: Into<Children>> From<(&'static str, TagHandler, C)> for UnitTag {
-    fn from(src: (&'static str, TagHandler, C)) -> Self {
-        Self {
-            tag: src.0,
-            children: src.2.into().0,
-            props: Default::default(),
-            on: src.1,
             style: Default::default(),
         }
     }
@@ -193,142 +159,29 @@ impl<C: Into<Children>> From<(&'static str, TagStyle, C)> for UnitTag {
             tag: src.0,
             children: src.2.into().0,
             props: Default::default(),
-            on: Default::default(),
             style: src.1,
         }
     }
 }
 
-impl<C: Into<Children>> From<(&'static str, TagProp, TagHandler, C)> for UnitTag {
-    fn from(src: (&'static str, TagProp, TagHandler, C)) -> Self {
-        Self {
-            tag: src.0,
-            children: src.3.into().0,
-            style: Default::default(),
-            props: src.1,
-            on: src.2,
-        }
-    }
-}
 impl<C: Into<Children>> From<(&'static str, TagProp, TagStyle, C)> for UnitTag {
     fn from(src: (&'static str, TagProp, TagStyle, C)) -> Self {
         Self {
             tag: src.0,
             children: src.3.into().0,
-            on: Default::default(),
             props: src.1,
             style: src.2,
         }
     }
 }
-impl<C: Into<Children>> From<(&'static str, TagHandler, TagProp, C)> for UnitTag {
-    fn from(src: (&'static str, TagHandler, TagProp, C)) -> Self {
-        Self {
-            tag: src.0,
-            children: src.3.into().0,
-            style: Default::default(),
-            on: src.1,
-            props: src.2,
-        }
-    }
-}
-impl<C: Into<Children>> From<(&'static str, TagHandler, TagStyle, C)> for UnitTag {
-    fn from(src: (&'static str, TagHandler, TagStyle, C)) -> Self {
-        Self {
-            tag: src.0,
-            children: src.3.into().0,
-            props: Default::default(),
-            on: src.1,
-            style: src.2,
-        }
-    }
-}
+
 impl<C: Into<Children>> From<(&'static str, TagStyle, TagProp, C)> for UnitTag {
     fn from(src: (&'static str, TagStyle, TagProp, C)) -> Self {
         Self {
             tag: src.0,
             children: src.3.into().0,
-            on: Default::default(),
             style: src.1,
             props: src.2,
-        }
-    }
-}
-impl<C: Into<Children>> From<(&'static str, TagStyle, TagHandler, C)> for UnitTag {
-    fn from(src: (&'static str, TagStyle, TagHandler, C)) -> Self {
-        Self {
-            tag: src.0,
-            children: src.3.into().0,
-            props: Default::default(),
-            style: src.1,
-            on: src.2,
-        }
-    }
-}
-
-impl<C: Into<Children>> From<(&'static str, TagProp, TagHandler, TagStyle, C)> for UnitTag {
-    fn from(src: (&'static str, TagProp, TagHandler, TagStyle, C)) -> Self {
-        Self {
-            tag: src.0,
-            children: src.4.into().0,
-            props: src.1,
-            on: src.2,
-            style: src.3,
-        }
-    }
-}
-impl<C: Into<Children>> From<(&'static str, TagProp, TagStyle, TagHandler, C)> for UnitTag {
-    fn from(src: (&'static str, TagProp, TagStyle, TagHandler, C)) -> Self {
-        Self {
-            tag: src.0,
-            children: src.4.into().0,
-            props: src.1,
-            style: src.2,
-            on: src.3,
-        }
-    }
-}
-impl<C: Into<Children>> From<(&'static str, TagHandler, TagProp, TagStyle, C)> for UnitTag {
-    fn from(src: (&'static str, TagHandler, TagProp, TagStyle, C)) -> Self {
-        Self {
-            tag: src.0,
-            children: src.4.into().0,
-            on: src.1,
-            props: src.2,
-            style: src.3,
-        }
-    }
-}
-impl<C: Into<Children>> From<(&'static str, TagHandler, TagStyle, TagProp, C)> for UnitTag {
-    fn from(src: (&'static str, TagHandler, TagStyle, TagProp, C)) -> Self {
-        Self {
-            tag: src.0,
-            children: src.4.into().0,
-            on: src.1,
-            style: src.2,
-            props: src.3,
-        }
-    }
-}
-impl<C: Into<Children>> From<(&'static str, TagStyle, TagProp, TagHandler, C)> for UnitTag {
-    fn from(src: (&'static str, TagStyle, TagProp, TagHandler, C)) -> Self {
-        Self {
-            tag: src.0,
-            children: src.4.into().0,
-            style: src.1,
-            props: src.2,
-            on: src.3,
-        }
-    }
-}
-impl<C: Into<Children>> From<(&'static str, TagStyle, TagHandler, TagProp, C)> for UnitTag {
-    fn from(src: (&'static str, TagStyle, TagHandler, TagProp, C)) -> Self {
-        Self {
-            tag: src.0,
-            children: src.4.into().0,
-            style: src.1,
-            on: src.2,
-            props: src.3,
         }
     }
 }
@@ -343,12 +196,6 @@ impl UnitTag {
     /// set tag styles
     pub fn style(mut self, style: TagStyle) -> Self {
         self.style = style;
-        self
-    }
-
-    /// set tag handlers
-    pub fn on(mut self, handlers: TagHandler) -> Self {
-        self.on = handlers;
         self
     }
 }
@@ -398,11 +245,24 @@ impl TagFormatter {
 macro_rules! tag {
     ($func_name:ident, $struct:ident, $arg:ident, $($doc:literal),+) => {
         $(#[doc=$doc])+
+        #[derive(Debug)]
         pub struct $struct (UnitTag);
 
         impl $crate::Tag for $struct {
             fn name(&self) -> &'static str {
                 self.0.name()
+            }
+
+            fn props(&self) -> std::option::Option<&$crate::TagProp> {
+                Some(&self.0.props)
+            }
+
+            fn styles(&self) -> std::option::Option<&$crate::TagStyle> {
+                Some(&self.0.style)
+            }
+
+            fn content(&self) -> $crate::TagContent {
+                self.0.content()
             }
 
             fn format(&self, f: &mut $crate::TagFormatter, buf: &mut String) -> std::fmt::Result {
@@ -412,40 +272,10 @@ macro_rules! tag {
 
         impl std::fmt::Display for $struct {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                self.0.fmt(f)
+                std::fmt::Display::fmt(&self.0, f)
+                // self.0.fmt(f)
             }
         }
-
-        // impl <C: Into<$crate::Children>> From<C> for $struct {
-        //     fn from(src: C) -> Self {
-        //         $struct ($crate::tags::UnitTag {
-        //             tag: stringify!($func_name),
-        //             props: Default::default(),
-        //             on: Default::default(),
-        //             style: Default::default(),
-        //             children: src.into().0,
-        //         })
-        //     }
-        // }
-
-        // impl<TA: $crate::Tag + 'static> From<TA> for $struct {
-        //     fn from(src: TA) -> Self {
-        //         let children: $crate::InnerChildren = vec![Box::new(src)];
-        //         Self($crate::tags::UnitTag {
-        //             tag: stringify!($func_name),
-        //             children: children.0,
-        //             props: Default::default(),
-        //             on: Default::default(),
-        //             style: Default::default()
-        //         })
-        //     }
-        // }
-
-        // impl From<$struct> for $crate::Children {
-        //     fn from(src: $struct) -> Self {
-        //         $crate::Children(vec![Box ::new(src)])
-        //     }
-        // }
 
         impl<TA: $crate::Tag + 'static, TB: $crate::Tag + 'static> From<(TA, TB)> for $struct {
             fn from(src: (TA, TB)) -> Self {
@@ -454,16 +284,14 @@ macro_rules! tag {
                     tag: stringify!($func_name),
                     children: children.0,
                     props: Default::default(),
-                    on: Default::default(),
                     style: Default::default()
                 })
             }
         }
 
         pub struct $arg {
-            pub children: $crate::InnerChildren,
+            pub children: $crate::TagList,
             pub props: $crate::tags::TagProp,
-            pub on: $crate::tags::TagHandler,
             pub style: $crate::tags::TagStyle,
         }
 
@@ -472,7 +300,6 @@ macro_rules! tag {
                 Self {
                     children: src.into().0,
                     props: Default::default(),
-                    on: Default::default(),
                     style: Default::default(),
                 }
             }
@@ -483,70 +310,27 @@ macro_rules! tag {
                 Self {
                     children: src.1.into().0,
                     props: src.0,
-                    on: Default::default(),
                     style: Default::default(),
                 }
             }
         }
 
-        impl<C: Into<Children>> From<(TagHandler, C)> for $arg {
-            fn from(src: ( TagHandler, C)) -> Self {
-                Self {
-                    children: src.1.into().0,
-                    props: Default::default(),
-                    on: src.0,
-                    style: Default::default(),
-                }
-            }
-        }
 
         impl<C: Into<Children>> From<(TagStyle, C)> for $arg {
             fn from(src: ( TagStyle, C)) -> Self {
                 Self {
                     children: src.1.into().0,
                     props: Default::default(),
-                    on: Default::default(),
                     style: src.0,
                 }
             }
         }
 
-        impl<C: Into<Children>> From<(TagProp, TagHandler, C)> for $arg {
-            fn from(src: ( TagProp, TagHandler, C)) -> Self {
-                Self {
-                    children: src.2.into().0,
-                    style: Default::default(),
-                    props: src.0,
-                    on: src.1,
-                }
-            }
-        }
         impl<C: Into<Children>> From<(TagProp, TagStyle, C)> for $arg {
             fn from(src: ( TagProp, TagStyle, C)) -> Self {
                 Self {
                     children: src.2.into().0,
-                    on: Default::default(),
                     props: src.0,
-                    style: src.1,
-                }
-            }
-        }
-        impl<C: Into<Children>> From<(TagHandler, TagProp, C)> for $arg {
-            fn from(src: ( TagHandler, TagProp, C)) -> Self {
-                Self {
-                    children: src.2.into().0,
-                    style: Default::default(),
-                    on: src.0,
-                    props: src.1,
-                }
-            }
-        }
-        impl<C: Into<Children>> From<(TagHandler, TagStyle, C)> for $arg {
-            fn from(src: ( TagHandler, TagStyle, C)) -> Self {
-                Self {
-                    children: src.2.into().0,
-                    props: Default::default(),
-                    on: src.0,
                     style: src.1,
                 }
             }
@@ -555,241 +339,51 @@ macro_rules! tag {
             fn from(src: ( TagStyle, TagProp, C)) -> Self {
                 Self {
                     children: src.2.into().0,
-                    on: Default::default(),
                     style: src.0,
                     props: src.1,
                 }
             }
         }
-        impl<C: Into<Children>> From<(TagStyle, TagHandler, C)> for $arg {
-            fn from(src: ( TagStyle, TagHandler, C)) -> Self {
+
+
+        impl From<TagProp> for $arg {
+            fn from(src: TagProp) -> Self {
                 Self {
-                    children: src.2.into().0,
+                    children: vec![],
+                    props: src,
+                    style: Default::default(),
+                }
+            }
+        }
+
+        impl From<TagStyle> for $arg {
+            fn from(src:  TagStyle) -> Self {
+                Self {
+                    children: vec![],
                     props: Default::default(),
-                    style: src.0,
-                    on: src.1,
+                    style: src,
                 }
             }
         }
 
-        impl<C: Into<Children>> From<(TagProp, TagHandler, TagStyle, C)> for $arg {
-            fn from(src: ( TagProp, TagHandler, TagStyle, C)) -> Self {
+        impl From<(TagProp, TagStyle)> for $arg {
+            fn from(src: ( TagProp, TagStyle)) -> Self {
                 Self {
-                    children: src.3.into().0,
-                    props: src.0,
-                    on: src.1,
-                    style: src.2,
-                }
-            }
-        }
-        impl<C: Into<Children>> From<(TagProp, TagStyle, TagHandler, C)> for $arg {
-            fn from(src: ( TagProp, TagStyle, TagHandler, C)) -> Self {
-                Self {
-                    children: src.3.into().0,
+                    children: vec![],
                     props: src.0,
                     style: src.1,
-                    on: src.2,
                 }
             }
         }
-        impl<C: Into<Children>> From<(TagHandler, TagProp, TagStyle, C)> for $arg {
-            fn from(src: ( TagHandler, TagProp, TagStyle, C)) -> Self {
+        impl From<(TagStyle, TagProp)> for $arg {
+            fn from(src: ( TagStyle, TagProp)) -> Self {
                 Self {
-                    children: src.3.into().0,
-                    on: src.0,
-                    props: src.1,
-                    style: src.2,
-                }
-            }
-        }
-        impl<C: Into<Children>> From<(TagHandler, TagStyle, TagProp, C)> for $arg {
-            fn from(src: ( TagHandler, TagStyle, TagProp, C)) -> Self {
-                Self {
-                    children: src.3.into().0,
-                    on: src.0,
-                    style: src.1,
-                    props: src.2,
-                }
-            }
-        }
-        impl<C: Into<Children>> From<(TagStyle, TagProp, TagHandler, C)> for $arg {
-            fn from(src: ( TagStyle, TagProp, TagHandler, C)) -> Self {
-                Self {
-                    children: src.3.into().0,
+                    children: vec![],
                     style: src.0,
                     props: src.1,
-                    on: src.2,
                 }
             }
         }
-        impl<C: Into<Children>> From<(TagStyle, TagHandler, TagProp, C)> for $arg {
-            fn from(src: ( TagStyle, TagHandler, TagProp, C)) -> Self {
-                Self {
-                    children: src.3.into().0,
-                    style: src.0,
-                    on: src.1,
-                    props: src.2,
-                }
-            }
-        }
-
-        ////////////////// helper sep
-
-    impl From<TagProp> for $arg {
-        fn from(src: TagProp) -> Self {
-            Self {
-                children: vec![],
-                props: src,
-                on: Default::default(),
-                style: Default::default(),
-            }
-        }
-    }
-
-    impl From<TagHandler> for $arg {
-        fn from(src: TagHandler) -> Self {
-            Self {
-                children: vec![],
-                props: Default::default(),
-                on: src,
-                style: Default::default(),
-            }
-        }
-    }
-
-    impl From<TagStyle> for $arg {
-        fn from(src:  TagStyle) -> Self {
-            Self {
-                children: vec![],
-                props: Default::default(),
-                on: Default::default(),
-                style: src,
-            }
-        }
-    }
-
-    impl From<(TagProp, TagHandler)> for $arg {
-        fn from(src: ( TagProp, TagHandler)) -> Self {
-            Self {
-                children: vec![],
-                style: Default::default(),
-                props: src.0,
-                on: src.1,
-            }
-        }
-    }
-    impl From<(TagProp, TagStyle)> for $arg {
-        fn from(src: ( TagProp, TagStyle)) -> Self {
-            Self {
-                children: vec![],
-                on: Default::default(),
-                props: src.0,
-                style: src.1,
-            }
-        }
-    }
-    impl From<(TagHandler, TagProp)> for $arg {
-        fn from(src: ( TagHandler, TagProp)) -> Self {
-            Self {
-                children: vec![],
-                style: Default::default(),
-                on: src.0,
-                props: src.1,
-            }
-        }
-    }
-    impl From<(TagHandler, TagStyle)> for $arg {
-        fn from(src: ( TagHandler, TagStyle)) -> Self {
-            Self {
-                children: vec![],
-                props: Default::default(),
-                on: src.0,
-                style: src.1,
-            }
-        }
-    }
-    impl From<(TagStyle, TagProp)> for $arg {
-        fn from(src: ( TagStyle, TagProp)) -> Self {
-            Self {
-                children: vec![],
-                on: Default::default(),
-                style: src.0,
-                props: src.1,
-            }
-        }
-    }
-    impl From<(TagStyle, TagHandler)> for $arg {
-        fn from(src: ( TagStyle, TagHandler)) -> Self {
-            Self {
-                children: vec![],
-                props: Default::default(),
-                style: src.0,
-                on: src.1,
-            }
-        }
-    }
-
-    impl From<(TagProp, TagHandler, TagStyle)> for $arg {
-        fn from(src: ( TagProp, TagHandler, TagStyle)) -> Self {
-            Self {
-                children: vec![],
-                props: src.0,
-                on: src.1,
-                style: src.2,
-            }
-        }
-    }
-    impl From<(TagProp, TagStyle, TagHandler)> for $arg {
-        fn from(src: ( TagProp, TagStyle, TagHandler)) -> Self {
-            Self {
-                children: vec![],
-                props: src.0,
-                style: src.1,
-                on: src.2,
-            }
-        }
-    }
-    impl From<(TagHandler, TagProp, TagStyle)> for $arg {
-        fn from(src: ( TagHandler, TagProp, TagStyle)) -> Self {
-            Self {
-                children: vec![],
-                on: src.0,
-                props: src.1,
-                style: src.2,
-            }
-        }
-    }
-    impl From<(TagHandler, TagStyle, TagProp)> for $arg {
-        fn from(src: ( TagHandler, TagStyle, TagProp)) -> Self {
-            Self {
-                children: vec![],
-                on: src.0,
-                style: src.1,
-                props: src.2,
-            }
-        }
-    }
-    impl From<(TagStyle, TagProp, TagHandler)> for $arg {
-        fn from(src: ( TagStyle, TagProp, TagHandler)) -> Self {
-            Self {
-                children: vec![],
-                style: src.0,
-                props: src.1,
-                on: src.2,
-            }
-        }
-    }
-    impl From<(TagStyle, TagHandler, TagProp)> for $arg {
-        fn from(src: ( TagStyle, TagHandler, TagProp)) -> Self {
-            Self {
-                children: vec![],
-                style: src.0,
-                on: src.1,
-                props: src.2,
-            }
-        }
-    }
-
 
         impl $struct {
             /// set tag properties
@@ -804,22 +398,16 @@ macro_rules! tag {
                 self
             }
 
-            /// set tag handlers
-            pub fn on(mut self, handlers: $crate::tags::TagHandler) -> Self {
-                self.0.on = handlers;
-                self
-            }
         }
 
         $(#[doc=$doc])+
         pub fn $func_name<T: Into<$arg>>(tag: T) -> $struct {
             let args: $arg = tag.into();
-            let $arg { children, props, on, style } = args;
+            let $arg { children, props, style } = args;
             $struct($crate::tags::UnitTag {
                 tag: stringify!($func_name),
                 children,
                 props,
-                on,
                 style
             })
         }

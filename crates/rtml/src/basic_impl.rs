@@ -1,8 +1,8 @@
 use super::TagFormatter;
 use crate::Children;
-use crate::InnerChildren;
 use crate::Kong;
 use crate::Tag;
+use crate::TagList;
 use std::fmt::Write;
 
 macro_rules! impl_basic {
@@ -10,6 +10,18 @@ macro_rules! impl_basic {
         impl Tag for $t {
             fn name(&self) -> &'static str {
                 stringify!($t)
+            }
+
+            fn props(&self) -> std::option::Option<&$crate::TagProp> {
+                None
+            }
+
+            fn styles(&self) -> std::option::Option<&$crate::TagStyle> {
+                None
+            }
+
+            fn content(&self) -> $crate::TagContent {
+                $crate::TagContent::Text(self.to_string())
             }
 
             fn format(&self, f: &mut TagFormatter, buf: &mut String) -> std::fmt::Result {
@@ -47,8 +59,20 @@ impl Tag for Kong {
         ""
     }
 
+    fn content(&self) -> crate::TagContent {
+        crate::TagContent::Text(String::new())
+    }
+
     fn format(&self, _f: &mut crate::tags::TagFormatter, _buf: &mut String) -> std::fmt::Result {
         Ok(())
+    }
+
+    fn props(&self) -> Option<&crate::tags::TagProp> {
+        None
+    }
+
+    fn styles(&self) -> Option<&crate::tags::TagStyle> {
+        None
     }
 }
 
@@ -57,8 +81,20 @@ impl Tag for () {
         ""
     }
 
+    fn content(&self) -> crate::TagContent {
+        crate::TagContent::Text(String::new())
+    }
+
     fn format(&self, _f: &mut crate::tags::TagFormatter, _buf: &mut String) -> std::fmt::Result {
         Ok(())
+    }
+
+    fn props(&self) -> Option<&crate::tags::TagProp> {
+        None
+    }
+
+    fn styles(&self) -> Option<&crate::tags::TagStyle> {
+        None
     }
 }
 
@@ -67,7 +103,7 @@ where
     T: Tag + 'static,
 {
     fn from(src: Vec<T>) -> Self {
-        let children: InnerChildren = src
+        let children: TagList = src
             .into_iter()
             .map(|c| {
                 let t: Box<dyn Tag> = Box::new(c);
@@ -89,7 +125,7 @@ where
 
 impl<const N: usize> From<[Box<dyn Tag>; N]> for Children {
     fn from(src: [Box<dyn Tag>; N]) -> Self {
-        let children: InnerChildren = src.into_iter().collect();
+        let children: TagList = src.into_iter().collect();
         Self(children)
     }
 }
@@ -99,7 +135,7 @@ where
     T: Tag + 'static,
 {
     fn from(src: [T; N]) -> Self {
-        let mut children: InnerChildren = Vec::with_capacity(N);
+        let mut children: TagList = Vec::with_capacity(N);
         for item in src {
             children.push(Box::new(item));
         }
@@ -114,7 +150,7 @@ macro_rules! tuple_impl {
                 $($t: Tag + 'static),+
         {
             fn from(src: ($($t,)+)) -> Self {
-                let mut children: InnerChildren = Vec::new();
+                let mut children: TagList = Vec::new();
                 $(
                     children.push(Box::new(src.$i));
                 )+

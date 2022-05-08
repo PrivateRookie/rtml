@@ -6,7 +6,7 @@ fn main() {
     let page = webpage((
         p((
             "power by ",
-            a((prop! { href="https://www.openzui.com/#/" }, "ZUI"))
+            a((prop! { href="https://www.openzui.com/#/" }, "ZUI")),
         )),
         h1("icons"),
         div(ul((
