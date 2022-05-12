@@ -4,7 +4,8 @@ use web_sys::Element;
 
 use crate::{Marker, Markers, Merge, Template};
 
-pub mod builtin;
+mod builtin;
+pub use builtin::*;
 
 /// html element content
 pub enum Content {
@@ -39,6 +40,8 @@ impl<M: Markers + Clone> Template for Unit<M> {
         &self,
     ) -> (
         &'static str,
+        &Attrs,
+        &Styles,
         &Content,
         HashMap<&str, Box<dyn FnOnce() -> Box<dyn FnMut()> + '_>>,
     ) {
@@ -52,7 +55,13 @@ impl<M: Markers + Clone> Template for Unit<M> {
                 (kind, cb)
             })
             .collect();
-        (self.name, &self.content, factories)
+        (
+            self.name,
+            &self.attrs,
+            &self.styles,
+            &self.content,
+            factories,
+        )
     }
 
     fn set_element(&self, element: Element) {

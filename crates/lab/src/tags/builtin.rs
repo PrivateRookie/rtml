@@ -19,9 +19,46 @@ macro_rules! def {
         $(#[cfg_attr(feature=$lang, doc=$doc)])+
         pub struct $struct<D: $crate::Markers>(pub $crate::tags::Unit<D>);
 
+        impl<D: Clone> $struct<($crate::Marker<D>,)> {
+            pub fn link<R>(self, other: R) -> $struct<<($crate::Marker<D>,) as $crate::Merge<R>>::Output>
+            where
+                ($crate::Marker<D>,): $crate::Merge<R>,
+            {
+                $struct(self.0.link(other))
+            }
+        }
+
+        impl $struct<($crate::Marker,)> {
+            /// set associated element data
+            pub fn with<D>(self, data: std::rc::Rc<std::cell::RefCell<D>>) -> $struct<($crate::Marker<D>,)> {
+                $struct(self.0.with(data))
+            }
+
+            /// set associated element data
+            /// this method take the ownership of data
+            pub fn take<D>(self, data: D) -> $struct<($crate::Marker<D>,)> {
+                $struct(self.0.take(data))
+            }
+
+        }
+
+        impl<M: $crate::Markers + Clone> $struct<M> {
+            /// return marker of element
+            pub fn mark(&self) -> M {
+                self.0.mark()
+            }
+
+            /// add event listeners
+            pub fn on<K: Into<&'static str>>(self, kind: K, listener: impl Fn(M) -> Box<dyn FnMut()> + 'static) -> Self {
+                $struct(self.0.on(kind, listener))
+            }
+        }
+
         impl<M: $crate::Markers + Clone> $crate::Template for $struct<M> {
             fn resources(&self) -> (
                 &'static str,
+                &$crate::tags::Attrs,
+                &$crate::tags::Styles,
                 &$crate::tags::Content,
                 std::collections::HashMap<&str, Box<dyn FnOnce() -> Box<dyn FnMut()> + '_>>,
             ) {
@@ -130,3 +167,408 @@ macro_rules! def {
         }
     };
 }
+
+mod a;
+pub use a::*;
+
+mod abbr;
+pub use abbr::*;
+
+mod acronym;
+pub use acronym::*;
+
+mod address;
+pub use address::*;
+
+mod applet;
+pub use applet::*;
+
+mod area;
+pub use area::*;
+
+mod article;
+pub use article::*;
+
+mod aside;
+pub use aside::*;
+
+mod audio;
+pub use audio::*;
+
+mod b;
+pub use b::*;
+
+mod base;
+pub use base::*;
+
+mod basefont;
+pub use basefont::*;
+
+mod bdi;
+pub use bdi::*;
+
+mod bdo;
+pub use bdo::*;
+
+mod bgsound;
+pub use bgsound::*;
+
+mod big;
+pub use big::*;
+
+mod blockquote;
+pub use blockquote::*;
+
+mod body;
+pub use body::*;
+
+mod br;
+pub use br::*;
+
+mod button;
+pub use button::*;
+
+mod canvas;
+pub use canvas::*;
+
+mod caption;
+pub use caption::*;
+
+mod cite;
+pub use cite::*;
+
+mod code;
+pub use code::*;
+
+mod col;
+pub use col::*;
+
+mod colgroup;
+pub use colgroup::*;
+
+mod content;
+pub use content::*;
+
+mod data;
+pub use data::*;
+
+mod datalist;
+pub use datalist::*;
+
+mod dd;
+pub use dd::*;
+
+mod del;
+pub use del::*;
+
+mod details;
+pub use details::*;
+
+mod dfn;
+pub use dfn::*;
+
+mod dialog;
+pub use dialog::*;
+
+mod dir;
+pub use dir::*;
+
+mod div;
+pub use div::*;
+
+mod dl;
+pub use dl::*;
+
+mod dt;
+pub use dt::*;
+
+mod em;
+pub use em::*;
+
+mod embed;
+pub use embed::*;
+
+mod fieldset;
+pub use fieldset::*;
+
+mod figcaption;
+pub use figcaption::*;
+
+mod figure;
+pub use figure::*;
+
+mod font;
+pub use font::*;
+
+mod footer;
+pub use footer::*;
+
+mod form;
+pub use form::*;
+
+mod frame;
+pub use frame::*;
+
+mod frameset;
+pub use frameset::*;
+
+mod head;
+pub use head::*;
+
+mod header;
+pub use header::*;
+
+mod h1;
+pub use h1::*;
+
+mod h2;
+pub use h2::*;
+
+mod h3;
+pub use h3::*;
+
+mod h4;
+pub use h4::*;
+
+mod h5;
+pub use h5::*;
+
+mod h6;
+pub use h6::*;
+
+mod hgroup;
+pub use hgroup::*;
+
+mod hr;
+pub use hr::*;
+
+mod html;
+pub use html::*;
+
+mod i;
+pub use i::*;
+
+mod iframe;
+pub use iframe::*;
+
+mod img;
+pub use img::*;
+
+mod input;
+pub use input::*;
+
+mod ins;
+pub use ins::*;
+
+mod kbd;
+pub use kbd::*;
+
+mod keygen;
+pub use keygen::*;
+
+mod label;
+pub use label::*;
+
+mod legend;
+pub use legend::*;
+
+mod li;
+pub use li::*;
+
+mod link;
+pub use link::*;
+
+mod main;
+pub use main::*;
+
+mod map;
+pub use map::*;
+
+mod mark;
+pub use mark::*;
+
+mod marquee;
+pub use marquee::*;
+
+mod menu;
+pub use menu::*;
+
+mod menuitem;
+pub use menuitem::*;
+
+mod meta;
+pub use meta::*;
+
+mod meter;
+pub use meter::*;
+
+mod nav;
+pub use nav::*;
+
+mod noframes;
+pub use noframes::*;
+
+mod noscript;
+pub use noscript::*;
+
+mod object;
+pub use object::*;
+
+mod ol;
+pub use ol::*;
+
+mod optgroup;
+pub use optgroup::*;
+
+mod option;
+pub use option::*;
+
+mod output;
+pub use output::*;
+
+mod p;
+pub use p::*;
+
+mod param;
+pub use param::*;
+
+mod picture;
+pub use picture::*;
+
+mod plaintext;
+pub use plaintext::*;
+
+mod portal;
+pub use portal::*;
+
+mod pre;
+pub use pre::*;
+
+mod progress;
+pub use progress::*;
+
+mod q;
+pub use q::*;
+
+mod rb;
+pub use rb::*;
+
+mod rp;
+pub use rp::*;
+
+mod rt;
+pub use rt::*;
+
+mod rtc;
+pub use rtc::*;
+
+mod ruby;
+pub use ruby::*;
+
+mod s;
+pub use s::*;
+
+mod samp;
+pub use samp::*;
+
+mod script;
+pub use script::*;
+
+mod section;
+pub use section::*;
+
+mod select;
+pub use select::*;
+
+mod shadow;
+pub use shadow::*;
+
+mod slot;
+pub use slot::*;
+
+mod small;
+pub use small::*;
+
+mod source;
+pub use source::*;
+
+mod spacer;
+pub use spacer::*;
+
+mod span;
+pub use span::*;
+
+mod strike;
+pub use strike::*;
+
+mod strong;
+pub use strong::*;
+
+mod style;
+pub use style::*;
+
+mod sub;
+pub use sub::*;
+
+mod summary;
+pub use summary::*;
+
+mod sup;
+pub use sup::*;
+
+mod table;
+pub use table::*;
+
+mod tbody;
+pub use tbody::*;
+
+mod td;
+pub use td::*;
+
+mod template;
+pub use template::*;
+
+mod textarea;
+pub use textarea::*;
+
+mod tfoot;
+pub use tfoot::*;
+
+mod th;
+pub use th::*;
+
+mod thead;
+pub use thead::*;
+
+mod time;
+pub use time::*;
+
+mod title;
+pub use title::*;
+
+mod tr;
+pub use tr::*;
+
+mod track;
+pub use track::*;
+
+mod tt;
+pub use tt::*;
+
+mod u;
+pub use u::*;
+
+mod ul;
+pub use ul::*;
+
+mod var;
+pub use var::*;
+
+mod video;
+pub use video::*;
+
+mod wbr;
+pub use wbr::*;
+
+mod xmp;
+pub use xmp::*;
