@@ -13,7 +13,7 @@ fn main() {
                     prop! { type="module" },
                     format!(
                         r#"import init from "./{}.js"; init();"#,
-                        env!("CARGO_PKG_NAME").replace("-", "_")
+                        env!("CARGO_PKG_NAME").replace('-', "_")
                     ),
                 )),
                 title("RTML with WASM"),

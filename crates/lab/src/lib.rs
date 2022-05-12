@@ -20,7 +20,7 @@ pub trait Template {
             Content::Text(text) => {
                 let ele = doc.create_element(name)?;
                 self.set_element(ele.clone());
-                ele.set_inner_html(&text);
+                ele.set_inner_html(text);
                 parent.append_child(&ele)?;
                 for (kind, factory) in listeners.into_iter() {
                     let cb = Closure::wrap(factory());
@@ -103,9 +103,8 @@ impl<M: Markers + Clone> Template for Unit<M> {
             .listeners
             .iter()
             .map(|(kind, func)| {
-                let cb = Box::new(move || {
-                    func(self.markers.clone())
-                }) as Box<dyn FnOnce() -> Box<dyn FnMut()>>;
+                let cb = Box::new(move || func(self.markers.clone()))
+                    as Box<dyn FnOnce() -> Box<dyn FnMut()>>;
                 let kind = kind.clone();
                 (kind, cb)
             })
