@@ -211,7 +211,8 @@ impl<D: Clone> Unit<(Marker<D>,)> {
 }
 
 impl Unit<(Marker,)> {
-    pub fn with<D: Clone>(self, data: Rc<RefCell<D>>) -> Unit<(Marker<D>,)> {
+    /// set associated element data
+    pub fn with<D>(self, data: Rc<RefCell<D>>) -> Unit<(Marker<D>,)> {
         let Self {
             name,
             content,
@@ -225,6 +226,23 @@ impl Unit<(Marker,)> {
             listeners: Default::default(),
         }
     }
+
+    /// set associated element data
+    /// this method take the ownership of data
+    pub fn take<D>(self, data: D) -> Unit<(Marker<D>,)> {
+        let Self {
+            name,
+            content,
+            markers,
+            listeners: _,
+        } = self;
+        Unit {
+            name,
+            content,
+            markers: (markers.0.to(Rc::new(RefCell::new(data))),),
+            listeners: Default::default(),
+        }
+    }
 }
 
 impl<M: Markers + Clone> Unit<M> {
@@ -235,9 +253,9 @@ impl<M: Markers + Clone> Unit<M> {
     pub fn on<K: Into<&'static str>>(
         mut self,
         kind: K,
-        listener: Box<dyn Fn(M) -> Box<dyn FnMut()>>,
+        listener: impl Fn(M) -> Box<dyn FnMut()> + 'static,
     ) -> Self {
-        self.listeners.insert(kind.into(), listener);
+        self.listeners.insert(kind.into(), Box::new(listener));
         self
     }
 }
@@ -281,21 +299,18 @@ pub fn start() {
 
     let p = tag("p", Content::Text("no data yet".to_string()));
     let btn = tag("button", Content::Text("click".to_string()))
-        .with(Rc::new(RefCell::new(0usize)))
+        .take(0usize)
         .link(p.mark())
-        .on(
-            EventKind::Click,
-            Box::new(|(btn, show)| {
-                Box::new(move || {
-                    tracing::info!("clicked");
-                    let mut count = btn.data.borrow_mut();
-                    *count += 1;
-                    let e = show.ele.borrow();
-                    let e = e.as_ref().unwrap();
-                    e.set_inner_html(&count.to_string());
-                })
-            }),
-        );
+        .on(EventKind::Click, |(btn, show)| {
+            Box::new(move || {
+                tracing::info!("clicked");
+                let mut count = btn.data.borrow_mut();
+                *count += 1;
+                let e = show.ele.borrow();
+                let e = e.as_ref().unwrap();
+                e.set_inner_html(&count.to_string());
+            })
+        });
     let p = Box::new(p);
     let btn = Box::new(btn);
     let container = tag("div", Content::List(vec![p, btn]));
@@ -317,7 +332,7 @@ pub trait Merge<Rhs = Self> {
 
 macro_rules! impl_collection {
     ($($ty:tt),+) => {
-        impl<$($ty: Clone),+> $crate::Markers  for ($($crate::Marker<$ty>),+ ,) {
+        impl<$($ty),+> $crate::Markers  for ($($crate::Marker<$ty>),+ ,) {
             fn set_this(&self, element: Element) {
                 self.0.set(element);
             }
