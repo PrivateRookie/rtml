@@ -150,10 +150,9 @@ macro_rules! tuple_impl {
                 $($t: Tag + 'static),+
         {
             fn from(src: ($($t,)+)) -> Self {
-                let mut children: TagList = Vec::new();
-                $(
-                    children.push(Box::new(src.$i));
-                )+
+                let children: TagList = vec![
+                    $(Box::new(src.$i),)+
+                ];
                 Self(children)
             }
         }

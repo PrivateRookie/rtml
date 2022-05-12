@@ -74,10 +74,10 @@ div(h1("hello"))
 // 元组也OK
 // div 传入的参数是一个 (H1, Hr, P) 元组
 div((
- h1("hello"),
- hr(()),
- p("this is some desc")
- ))
+    h1("hello"),
+    hr(()),
+    p("this is some desc")
+))
 
 // Vec 也行
 // ul 传入的是一个 
