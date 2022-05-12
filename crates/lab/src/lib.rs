@@ -28,40 +28,24 @@ pub trait Template {
     /// generate html element and add event bindings
     fn render(&self, parent: &Element, doc: &Document) -> Result<Element, JsValue> {
         let (name, content, listeners) = self.resources();
-        let ele = match content {
-            Content::Null => parent.clone(),
+        let ele = doc.create_element(name)?;
+        self.set_element(ele.clone());
+        parent.append_child(&ele)?;
+        for (kind, factory) in listeners.into_iter() {
+            let cb = Closure::wrap(factory());
+            ele.add_event_listener_with_callback(kind, cb.as_ref().unchecked_ref())?;
+            cb.forget()
+        }
+        match content {
+            Content::Null => {}
             Content::Text(text) => {
-                let ele = doc.create_element(name)?;
-                self.set_element(ele.clone());
                 ele.set_inner_html(&text);
-                parent.append_child(&ele)?;
-                for (kind, factory) in listeners.into_iter() {
-                    let cb = Closure::wrap(factory());
-                    ele.add_event_listener_with_callback(
-                        kind.as_ref(),
-                        cb.as_ref().unchecked_ref(),
-                    )?;
-                    cb.forget()
-                }
-                ele
             }
             Content::List(children) => {
-                let ele = doc.create_element(name)?;
-                self.set_element(ele.clone());
-                for (kind, factory) in listeners.into_iter() {
-                    let cb = Closure::wrap(factory());
-                    ele.add_event_listener_with_callback(
-                        kind.as_ref(),
-                        cb.as_ref().unchecked_ref(),
-                    )?;
-                    cb.forget()
-                }
                 for child in children {
                     let child = child.render(&ele, doc)?;
                     ele.append_child(&child)?;
                 }
-                parent.append_child(&ele)?;
-                ele
             }
         };
         Ok(ele)
