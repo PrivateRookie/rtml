@@ -3,6 +3,7 @@ def! {
   Acronym,
   AcronymArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<acronym>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/acronym)
 
 ---

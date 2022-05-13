@@ -3,6 +3,7 @@ def! {
   Dfn,
   DfnArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<dfn>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/dfn)
 
 ---

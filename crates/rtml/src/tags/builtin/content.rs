@@ -3,6 +3,7 @@ def! {
   Content,
   ContentArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<content>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/content)
 
 ---

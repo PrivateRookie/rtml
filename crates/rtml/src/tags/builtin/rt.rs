@@ -3,6 +3,7 @@ def! {
   Rt,
   RtArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<rt>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/rt)
 
 ---

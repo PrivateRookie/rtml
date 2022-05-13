@@ -3,6 +3,7 @@ def! {
   Pre,
   PreArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<pre>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/pre)
 
 ---

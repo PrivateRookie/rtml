@@ -3,6 +3,7 @@ def! {
   Kbd,
   KbdArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<kbd>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/kbd)
 
 ---

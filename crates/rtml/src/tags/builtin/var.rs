@@ -3,6 +3,7 @@ def! {
   Var,
   VarArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<var>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/var)
 
 ---

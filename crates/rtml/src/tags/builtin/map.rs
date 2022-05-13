@@ -3,6 +3,7 @@ def! {
   Map,
   MapArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<map>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/map)
 
 ---

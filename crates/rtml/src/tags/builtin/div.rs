@@ -3,6 +3,7 @@ def! {
   Div,
   DivArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<div>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/div)
 
 ---

@@ -3,6 +3,7 @@ def! {
   Plaintext,
   PlaintextArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<plaintext>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/plaintext)
 
 ---

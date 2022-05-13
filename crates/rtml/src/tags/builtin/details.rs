@@ -3,6 +3,7 @@ def! {
   Details,
   DetailsArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<details>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/details)
 
 ---

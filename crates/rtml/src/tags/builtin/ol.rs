@@ -3,6 +3,7 @@ def! {
   Ol,
   OlArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<ol>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/ol)
 
 ---

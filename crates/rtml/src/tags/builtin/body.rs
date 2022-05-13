@@ -3,6 +3,7 @@ def! {
   Body,
   BodyArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<body>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/body)
 
 ---

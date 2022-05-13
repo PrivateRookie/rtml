@@ -3,6 +3,7 @@ def! {
   Thead,
   TheadArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<thead>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/thead)
 
 ---

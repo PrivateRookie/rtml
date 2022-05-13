@@ -3,6 +3,7 @@ def! {
   Wbr,
   WbrArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<wbr>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/wbr)
 
 ---

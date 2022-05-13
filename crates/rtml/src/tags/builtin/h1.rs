@@ -3,6 +3,7 @@ def! {
   H1,
   H1Arg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<heading_elements>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/heading_elements)
 
 ---

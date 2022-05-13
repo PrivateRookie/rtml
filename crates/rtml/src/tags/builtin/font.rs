@@ -3,6 +3,7 @@ def! {
   Font,
   FontArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<font>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/font)
 
 ---

@@ -3,6 +3,7 @@ def! {
   Fieldset,
   FieldsetArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<fieldset>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/fieldset)
 
 ---

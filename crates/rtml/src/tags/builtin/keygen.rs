@@ -3,6 +3,7 @@ def! {
   Keygen,
   KeygenArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<keygen>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/keygen)
 
 ---

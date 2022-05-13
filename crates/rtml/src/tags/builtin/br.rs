@@ -3,6 +3,7 @@ def! {
   Br,
   BrArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<br>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/br)
 
 ---

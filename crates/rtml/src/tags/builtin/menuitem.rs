@@ -3,6 +3,7 @@ def! {
   Menuitem,
   MenuitemArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<menuitem>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/menuitem)
 
 ---

@@ -3,6 +3,7 @@ def! {
   Tfoot,
   TfootArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<tfoot>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/tfoot)
 
 ---

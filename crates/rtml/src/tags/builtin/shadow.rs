@@ -3,6 +3,7 @@ def! {
   Shadow,
   ShadowArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<shadow>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/shadow)
 
 ---

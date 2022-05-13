@@ -3,6 +3,7 @@ def! {
   Rtc,
   RtcArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<rtc>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/rtc)
 
 ---

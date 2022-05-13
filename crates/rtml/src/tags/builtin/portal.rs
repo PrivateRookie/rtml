@@ -3,6 +3,7 @@ def! {
   Portal,
   PortalArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<portal>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/portal)
 
 ---

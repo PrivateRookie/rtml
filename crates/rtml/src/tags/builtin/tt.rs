@@ -3,6 +3,7 @@ def! {
   Tt,
   TtArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<tt>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/tt)
 
 ---

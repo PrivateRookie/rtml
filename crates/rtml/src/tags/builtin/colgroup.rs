@@ -3,6 +3,7 @@ def! {
   Colgroup,
   ColgroupArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<colgroup>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/colgroup)
 
 ---

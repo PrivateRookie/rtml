@@ -3,6 +3,7 @@ def! {
   Strong,
   StrongArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<strong>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/strong)
 
 ---

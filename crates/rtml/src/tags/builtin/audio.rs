@@ -3,6 +3,7 @@ def! {
   Audio,
   AudioArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<audio>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/audio)
 
 ---

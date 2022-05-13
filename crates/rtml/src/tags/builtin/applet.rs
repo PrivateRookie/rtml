@@ -3,6 +3,7 @@ def! {
   Applet,
   AppletArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<applet>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/applet)
 
 ---

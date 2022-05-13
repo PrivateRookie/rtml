@@ -3,6 +3,7 @@ def! {
   Dialog,
   DialogArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<dialog>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/dialog)
 
 ---

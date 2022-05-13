@@ -3,6 +3,7 @@ def! {
   Abbr,
   AbbrArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<abbr>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/abbr)
 
 ---

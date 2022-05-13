@@ -3,6 +3,7 @@ def! {
   Span,
   SpanArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<span>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/span)
 
 ---

@@ -3,6 +3,7 @@ def! {
   P,
   PArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<p>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/p)
 
 ---

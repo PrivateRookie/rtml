@@ -3,6 +3,7 @@ def! {
   Samp,
   SampArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<samp>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/samp)
 
 ---

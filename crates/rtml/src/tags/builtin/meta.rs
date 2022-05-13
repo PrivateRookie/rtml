@@ -3,6 +3,7 @@ def! {
   Meta,
   MetaArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<meta>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/meta)
 
 ---

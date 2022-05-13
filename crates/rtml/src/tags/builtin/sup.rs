@@ -3,6 +3,7 @@ def! {
   Sup,
   SupArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<sup>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/sup)
 
 ---

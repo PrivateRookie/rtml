@@ -3,6 +3,7 @@ def! {
   Base,
   BaseArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<base>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/base)
 
 ---

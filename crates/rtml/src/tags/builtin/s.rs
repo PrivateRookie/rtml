@@ -3,6 +3,7 @@ def! {
   S,
   SArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<s>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/s)
 
 ---

@@ -3,6 +3,7 @@ def! {
   Time,
   TimeArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<time>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/time)
 
 ---

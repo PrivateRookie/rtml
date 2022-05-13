@@ -3,6 +3,7 @@ def! {
   Bdo,
   BdoArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<bdo>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/bdo)
 
 ---

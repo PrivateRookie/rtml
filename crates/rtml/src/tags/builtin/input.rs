@@ -3,6 +3,7 @@ def! {
   Input,
   InputArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<input>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/input)
 
 ---

@@ -3,6 +3,7 @@ def! {
   Xmp,
   XmpArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<xmp>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/xmp)
 
 ---

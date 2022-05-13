@@ -3,6 +3,7 @@ def! {
   Canvas,
   CanvasArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<canvas>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/canvas)
 
 ---

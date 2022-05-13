@@ -3,6 +3,7 @@ def! {
   Head,
   HeadArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<head>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/head)
 
 ---

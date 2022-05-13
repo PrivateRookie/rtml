@@ -3,6 +3,7 @@ def! {
   Progress,
   ProgressArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<progress>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/progress)
 
 ---

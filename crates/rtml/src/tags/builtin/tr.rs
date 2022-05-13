@@ -3,6 +3,7 @@ def! {
   Tr,
   TrArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<tr>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/tr)
 
 ---

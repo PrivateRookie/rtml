@@ -3,6 +3,7 @@ def! {
   Q,
   QArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<q>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/q)
 
 ---

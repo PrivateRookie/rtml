@@ -3,6 +3,7 @@ def! {
   Template,
   TemplateArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<template>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/template)
 
 ---

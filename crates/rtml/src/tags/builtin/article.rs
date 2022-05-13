@@ -3,6 +3,7 @@ def! {
   Article,
   ArticleArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<article>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/article)
 
 ---

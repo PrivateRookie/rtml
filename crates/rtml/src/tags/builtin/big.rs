@@ -3,6 +3,7 @@ def! {
   Big,
   BigArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<big>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/big)
 
 ---

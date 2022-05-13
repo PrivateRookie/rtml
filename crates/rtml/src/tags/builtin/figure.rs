@@ -3,6 +3,7 @@ def! {
   Figure,
   FigureArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<figure>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/figure)
 
 ---

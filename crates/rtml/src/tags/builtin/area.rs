@@ -3,6 +3,7 @@ def! {
   Area,
   AreaArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<area>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/area)
 
 ---

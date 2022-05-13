@@ -3,6 +3,7 @@ def! {
   Hr,
   HrArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<hr>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/hr)
 
 ---

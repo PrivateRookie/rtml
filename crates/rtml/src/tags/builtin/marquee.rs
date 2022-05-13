@@ -3,6 +3,7 @@ def! {
   Marquee,
   MarqueeArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<marquee>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/marquee)
 
 ---

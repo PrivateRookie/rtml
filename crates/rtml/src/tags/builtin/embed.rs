@@ -3,6 +3,7 @@ def! {
   Embed,
   EmbedArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<embed>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/embed)
 
 ---

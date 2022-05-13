@@ -3,6 +3,7 @@ def! {
   Legend,
   LegendArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<legend>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/legend)
 
 ---

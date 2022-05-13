@@ -3,6 +3,7 @@ def! {
   I,
   IArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<i>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/i)
 
 ---

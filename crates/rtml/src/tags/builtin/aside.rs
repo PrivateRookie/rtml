@@ -3,6 +3,7 @@ def! {
   Aside,
   AsideArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<aside>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/aside)
 
 ---

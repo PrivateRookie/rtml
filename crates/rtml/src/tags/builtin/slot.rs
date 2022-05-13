@@ -3,6 +3,7 @@ def! {
   Slot,
   SlotArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<slot>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/slot)
 
 ---

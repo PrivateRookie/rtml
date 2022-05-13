@@ -3,6 +3,7 @@ def! {
   Optgroup,
   OptgroupArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<optgroup>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/optgroup)
 
 ---

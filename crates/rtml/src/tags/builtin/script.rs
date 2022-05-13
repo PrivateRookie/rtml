@@ -3,6 +3,7 @@ def! {
   Script,
   ScriptArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<script>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/script)
 
 ---

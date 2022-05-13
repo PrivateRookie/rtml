@@ -3,6 +3,7 @@ def! {
   Menu,
   MenuArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<menu>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/menu)
 
 ---

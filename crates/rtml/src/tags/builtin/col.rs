@@ -3,6 +3,7 @@ def! {
   Col,
   ColArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<col>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/col)
 
 ---

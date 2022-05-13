@@ -3,6 +3,7 @@ def! {
   Html,
   HtmlArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<html>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/html)
 
 ---

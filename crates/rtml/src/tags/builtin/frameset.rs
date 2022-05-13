@@ -3,6 +3,7 @@ def! {
   Frameset,
   FramesetArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<frameset>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/frameset)
 
 ---

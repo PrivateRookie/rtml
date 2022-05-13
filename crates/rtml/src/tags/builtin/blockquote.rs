@@ -3,6 +3,7 @@ def! {
   Blockquote,
   BlockquoteArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<blockquote>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/blockquote)
 
 ---

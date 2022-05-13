@@ -3,6 +3,7 @@ def! {
   Dd,
   DdArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<dd>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/dd)
 
 ---

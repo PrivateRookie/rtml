@@ -3,6 +3,7 @@ def! {
   Mark,
   MarkArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<mark>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/mark)
 
 ---

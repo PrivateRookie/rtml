@@ -3,6 +3,7 @@ def! {
   Img,
   ImgArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<img>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/img)
 
 ---

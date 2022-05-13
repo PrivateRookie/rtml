@@ -3,6 +3,7 @@ def! {
   Meter,
   MeterArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<meter>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/meter)
 
 ---

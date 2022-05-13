@@ -3,6 +3,7 @@ def! {
   Section,
   SectionArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<section>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/section)
 
 ---

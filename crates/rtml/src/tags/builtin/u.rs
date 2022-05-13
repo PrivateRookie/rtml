@@ -3,6 +3,7 @@ def! {
   U,
   UArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<u>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/u)
 
 ---

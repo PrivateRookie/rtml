@@ -3,6 +3,7 @@ def! {
   Spacer,
   SpacerArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<spacer>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/spacer)
 
 ---

@@ -3,6 +3,7 @@ def! {
   Bgsound,
   BgsoundArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<bgsound>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/bgsound)
 
 ---

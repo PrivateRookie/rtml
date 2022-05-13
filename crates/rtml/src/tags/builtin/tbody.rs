@@ -3,6 +3,7 @@ def! {
   Tbody,
   TbodyArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<tbody>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/tbody)
 
 ---

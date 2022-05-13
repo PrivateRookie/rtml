@@ -3,6 +3,7 @@ def! {
   Li,
   LiArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<li>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/li)
 
 ---

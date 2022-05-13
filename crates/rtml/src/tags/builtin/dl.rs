@@ -3,6 +3,7 @@ def! {
   Dl,
   DlArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<dl>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/dl)
 
 ---

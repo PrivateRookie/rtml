@@ -3,6 +3,7 @@ def! {
   Figcaption,
   FigcaptionArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<figcaption>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/figcaption)
 
 ---

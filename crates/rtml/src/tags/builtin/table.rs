@@ -3,6 +3,7 @@ def! {
   Table,
   TableArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<table>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/table)
 
 ---

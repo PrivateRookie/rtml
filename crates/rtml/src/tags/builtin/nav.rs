@@ -3,6 +3,7 @@ def! {
   Nav,
   NavArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<nav>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/nav)
 
 ---

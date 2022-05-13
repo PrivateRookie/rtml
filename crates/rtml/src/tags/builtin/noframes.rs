@@ -3,6 +3,7 @@ def! {
   Noframes,
   NoframesArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<noframes>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/noframes)
 
 ---

@@ -3,6 +3,7 @@ def! {
   B,
   BArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"
 
 `<b>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/b)

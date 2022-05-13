@@ -3,6 +3,7 @@ def! {
   Label,
   LabelArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<label>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/label)
 
 ---

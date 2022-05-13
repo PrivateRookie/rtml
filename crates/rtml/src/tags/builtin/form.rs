@@ -3,6 +3,7 @@ def! {
   Form,
   FormArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<form>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/form)
 
 ---

@@ -3,6 +3,7 @@ def! {
   Del,
   DelArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<del>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/del)
 
 ---

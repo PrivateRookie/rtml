@@ -3,6 +3,7 @@ def! {
   Summary,
   SummaryArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<summary>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/summary)
 
 ---

@@ -3,6 +3,7 @@ def! {
   Ins,
   InsArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<ins>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/ins)
 
 ---

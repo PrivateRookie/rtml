@@ -3,6 +3,7 @@ def! {
   Button,
   ButtonArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<button>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/button)
 
 ---

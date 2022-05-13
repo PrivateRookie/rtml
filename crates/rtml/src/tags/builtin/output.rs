@@ -3,6 +3,7 @@ def! {
   Output,
   OutputArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<output>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/output)
 
 ---

@@ -3,6 +3,7 @@ def! {
   Rp,
   RpArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<rp>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/rp)
 
 ---

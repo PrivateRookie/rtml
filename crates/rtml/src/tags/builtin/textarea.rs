@@ -3,6 +3,7 @@ def! {
   Textarea,
   TextareaArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<textarea>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/textarea)
 
 ---

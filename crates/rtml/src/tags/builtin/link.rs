@@ -3,6 +3,7 @@ def! {
   Link,
   LinkArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<link>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/link)
 
 ---

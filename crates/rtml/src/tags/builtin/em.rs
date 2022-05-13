@@ -3,6 +3,7 @@ def! {
   Em,
   EmArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<em>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/em)
 
 ---

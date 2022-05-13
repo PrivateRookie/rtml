@@ -3,6 +3,7 @@ def! {
   Param,
   ParamArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<param>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/param)
 
 ---

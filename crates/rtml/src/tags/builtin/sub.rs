@@ -3,6 +3,7 @@ def! {
   Sub,
   SubArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<sub>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/sub)
 
 ---

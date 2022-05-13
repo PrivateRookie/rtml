@@ -3,6 +3,7 @@ def! {
   Dir,
   DirArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<dir>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/dir)
 
 ---

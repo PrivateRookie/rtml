@@ -3,6 +3,7 @@ def! {
   Hgroup,
   HgroupArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<hgroup>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/hgroup)
 
 ---

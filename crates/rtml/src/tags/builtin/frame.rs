@@ -3,6 +3,7 @@ def! {
   Frame,
   FrameArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<frame>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/frame)
 
 ---

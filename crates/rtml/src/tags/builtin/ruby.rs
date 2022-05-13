@@ -3,6 +3,7 @@ def! {
   Ruby,
   RubyArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<ruby>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/ruby)
 
 ---

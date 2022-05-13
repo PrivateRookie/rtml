@@ -3,6 +3,7 @@ def! {
   Video,
   VideoArg,
   doc:
+  "en-US" = "";
   "zh-CN" = r#####"`<video>` [doc](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/video)
 
 ---
