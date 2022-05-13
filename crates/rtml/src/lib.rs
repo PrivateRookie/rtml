@@ -48,8 +48,9 @@ pub trait Template {
                 .map(|(k, v)| format!("{k}:{v};"))
                 .collect::<Vec<_>>()
                 .join("");
-            ele.set_attribute("style", &styles).map(|e| {
+            ele.set_attribute("style", &styles).map_err(|e| {
                 tracing::error!("failed to set style on {}: {:?}", name, e);
+                e
             })?;
         }
 
@@ -81,7 +82,7 @@ pub trait Template {
         match content {
             Content::Null => {}
             Content::Text(text) => {
-                ele.set_inner_html(&text);
+                ele.set_inner_html(text);
             }
             Content::List(children) => {
                 for child in children {

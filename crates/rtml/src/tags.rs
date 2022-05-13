@@ -51,8 +51,7 @@ impl<M: Markers + Clone> Template for Unit<M> {
             .map(|(kind, func)| {
                 let cb = Box::new(move || func(self.markers.clone()))
                     as Box<dyn FnOnce() -> Box<dyn FnMut()>>;
-                let kind = kind.clone();
-                (kind, cb)
+                (*kind, cb)
             })
             .collect();
         (
