@@ -35,7 +35,12 @@ pub fn page(args: TokenStream, input: TokenStream) -> TokenStream {
             let page = page.to_string();
             let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
             let out_dir = std::env::var("RTML_OUT_DIR").unwrap_or_else(|_| "pkg".to_string());
-            let mut file = File::create(path.join(out_dir).join(#name)).unwrap();
+            let file_path = path.join(out_dir);
+            if !file_path.exists() {
+                std::fs::create_dir_all(&file_path).unwrap();
+            }
+            let file_path = file_path.join(#name);
+            let mut file = File::create(file_path).unwrap();
             file.write_all(page.as_bytes()).unwrap();
         }
 

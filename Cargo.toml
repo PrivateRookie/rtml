@@ -1,2 +1,8 @@
 [workspace]
-members = ["crates/rtml", "crates/rtml-macro", "crates/lab", "crates/wasm"]
+members = [
+    "crates/rtml",
+    "crates/rtml-macro",
+    "crates/lab",
+    "examples/wasm",
+    "examples/hello-world",
+]

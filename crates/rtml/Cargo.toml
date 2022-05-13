@@ -15,6 +15,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 wasm-bindgen = { version = "0.2" }
+rtml-macro = { path = "../rtml-macro" }
 web-sys = { version = "0.3", features = [
     "Document",
     "Element",

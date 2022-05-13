@@ -1,7 +1,7 @@
 use rtml::attr;
 use rtml::tags::*;
 
-#[rtml_macro::page]
+#[rtml::page]
 fn main() -> Html {
     let pkg = env!("CARGO_PKG_NAME").replace("-", "_");
     html((

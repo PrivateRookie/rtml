@@ -11,6 +11,7 @@ pub use events::*;
 use tags::{Attrs, Content, Styles};
 mod attr;
 mod style;
+pub use rtml_macro::page;
 /// print template as html, instead of create them by dom api
 pub mod tag_fmt;
 
