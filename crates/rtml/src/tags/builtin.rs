@@ -19,6 +19,12 @@ macro_rules! def {
         $(#[cfg_attr(feature=$lang, doc=$doc)])+
         pub struct $struct<D: $crate::Markers>(pub $crate::tags::Unit<D>);
 
+        impl<M: Clone + $crate::Markers> std::fmt::Display for $struct<M> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                std::fmt::Display::fmt(&self.0, f)
+            }
+        }
+
         impl<D: Clone> $struct<$crate::Marker<D>> {
             pub fn link<R>(self, other: R) -> $struct<<$crate::Marker<D> as $crate::Merge<R>>::Output>
             where

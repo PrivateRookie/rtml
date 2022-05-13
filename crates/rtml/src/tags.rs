@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use web_sys::Element;
 
-use crate::{Marker, Markers, Merge, Template};
+use crate::{tag_fmt::TagFormatter, Marker, Markers, Merge, Template};
 
 mod builtin;
 pub use builtin::*;
@@ -33,6 +33,15 @@ pub struct Unit<M: Markers> {
     pub styles: Styles,
     pub markers: M,
     pub listeners: HashMap<&'static str, Box<dyn Fn(M) -> Box<dyn FnMut()>>>,
+}
+
+impl<M: Markers + Clone> std::fmt::Display for Unit<M> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut content = String::new();
+        let mut formatter = TagFormatter::default();
+        self.format(&mut formatter, &mut content)?;
+        write!(f, "{}", content)
+    }
 }
 
 impl<M: Markers + Clone> Template for Unit<M> {

@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 rtml = { path = "../rtml" }
+rtml-macro = { path = "../rtml-macro" }
 wasm-bindgen = { version = "0.2" }
 web-sys = { version = "0.3", features = [
     "Document",
@@ -20,3 +21,11 @@ tracing-wasm = "0.2.1"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "index"
+path = "index.rs"
+
+[[bin]]
+name = "debug"
+path = "debug.rs"
