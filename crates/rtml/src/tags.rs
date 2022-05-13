@@ -163,6 +163,11 @@ impl<M: Markers + Clone> Unit<M> {
 #[derive(Debug, Clone, Default)]
 pub struct Styles(pub HashMap<String, String>);
 
+#[doc(hidden)]
+pub fn _warning(msg: &str) {
+    tracing::warn!(msg)
+}
+
 /// simple wrapper of tag attributes
 #[derive(Debug, Clone, Default)]
 pub struct Attrs(pub HashMap<String, String>);
@@ -193,10 +198,10 @@ macro_rules! attr {
             let key = name.join("-");
             let mut valid = true;
             if key.starts_with("on") {
-                tracing::warn!("event handler can not be set with attr! macro");
+                $crate::tags::_warning("event handler can not be set with attr! macro");
                 valid = false;
             } else if key == "style" {
-                tracing::warn!("style should be set with style! macro");
+                $crate::tags::_warning("style should be set with style! macro");
                 valid = false;
             }
             let mut value = None;

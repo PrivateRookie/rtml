@@ -7,4 +7,3 @@ edition = "2021"
 
 [dependencies]
 rtml = { path = "../../crates/rtml" }
-tracing = { version = "0.1" }
