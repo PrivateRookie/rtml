@@ -1,17 +1,19 @@
-use wasm_bindgen::prelude::*;
+use rtml::{attr, style, tags::*, EventKind, Marker, Template};
 
-use rtml::{attr, mount_body, style, tags::*, EventKind, Marker};
-
-#[wasm_bindgen(start)]
+#[cfg_attr(target_os = "wasm32", wasm_bingen(start))]
 pub fn start() {
     tracing_wasm::set_as_global_default();
+    let window = web_sys::window().expect("no global `window` exists");
+    let document = window.document().expect("should have a document on window");
+    let body = document.body().expect("document should have a body");
+
     let all_cards = rtml::tags::div((
         // 调用其他组件
         count_card("card1".to_string(), Some(100), None),
         count_card("card2".to_string(), Some(20), None),
     ));
     // 渲染
-    if let Err(e) = mount_body(all_cards) {
+    if let Err(e) = all_cards.render(&body, &document) {
         tracing::error!("failed to init page, {:?}", e);
     }
 }
@@ -59,4 +61,10 @@ fn count_card(
         },
         (h2(desc), show, incr),
     ))
+}
+
+
+#[cfg(not(target_os = "wasm32"))]
+fn main () {
+    
 }

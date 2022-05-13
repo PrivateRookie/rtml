@@ -7,15 +7,13 @@ edition = "2021"
 
 [dependencies]
 rtml = { path = "../rtml" }
-wasm-bindgen = "0.2"
+wasm-bindgen = { version = "0.2" }
 web-sys = { version = "0.3", features = [
     "Document",
     "Element",
     "HtmlElement",
     "Node",
     "Window",
-    "EventListener",
-    "EventTarget"
 ] }
 tracing = { version = "0.1" }
 tracing-wasm = "0.2.1"

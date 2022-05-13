@@ -1,5 +1,5 @@
 def! {
-  main,
+  main_,
   Main,
   MainArg,
   doc:
