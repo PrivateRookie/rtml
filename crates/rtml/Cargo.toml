@@ -6,21 +6,22 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 default = []
-wasm = ["wasm-bindgen", "web-sys"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 
 [dependencies]
-wasm-bindgen = { version = "0.2", optional = true }
+wasm-bindgen = { version = "0.2" }
 web-sys = { version = "0.3", features = [
     "Document",
     "Element",
     "HtmlElement",
     "Node",
     "Window",
-], optional = true }
+] }
+tracing = { version = "0.1" }
+tracing-wasm = "0.2.1"
 
 [dev-dependencies]
 opener = "0.5"

@@ -1,167 +1,162 @@
-use super::TagFormatter;
-use crate::Children;
-use crate::Kong;
-use crate::Tag;
-use crate::TagList;
-use std::fmt::Write;
-
-macro_rules! impl_basic {
-    ($t:ty) => {
-        impl Tag for $t {
-            fn name(&self) -> &'static str {
-                stringify!($t)
-            }
-
-            fn props(&self) -> std::option::Option<&$crate::TagProp> {
-                None
-            }
-
-            fn styles(&self) -> std::option::Option<&$crate::TagStyle> {
-                None
-            }
-
-            fn content(&self) -> $crate::TagContent {
-                $crate::TagContent::Text(self.to_string())
-            }
-
-            fn format(&self, f: &mut TagFormatter, buf: &mut String) -> std::fmt::Result {
-                let pad = f.pad_size();
-                write!(buf, "{:pad$}{}{}", "", self, f.line_sep)
+macro_rules! impl_markers {
+    ($($ty:tt),+) => {
+        impl<$($ty),+> $crate::Markers  for ($($crate::Marker<$ty>),+ ,) {
+            fn set_this(&self, element: web_sys::Element) {
+                self.0.set(element);
             }
         }
     };
 }
 
-impl_basic!(String);
-impl_basic!(&str);
-impl_basic!(bool);
-impl_basic!(u8);
-impl_basic!(u16);
-impl_basic!(u32);
-impl_basic!(u64);
-impl_basic!(usize);
-impl_basic!(i8);
-impl_basic!(i16);
-impl_basic!(i32);
-impl_basic!(i64);
-impl_basic!(isize);
-impl_basic!(f32);
-impl_basic!(f64);
-
-impl std::fmt::Display for Kong {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "")
-    }
-}
-
-impl Tag for Kong {
-    fn name(&self) -> &'static str {
-        ""
-    }
-
-    fn content(&self) -> crate::TagContent {
-        crate::TagContent::Text(String::new())
-    }
-
-    fn format(&self, _f: &mut crate::tags::TagFormatter, _buf: &mut String) -> std::fmt::Result {
-        Ok(())
-    }
-
-    fn props(&self) -> Option<&crate::tags::TagProp> {
-        None
-    }
-
-    fn styles(&self) -> Option<&crate::tags::TagStyle> {
-        None
-    }
-}
-
-impl Tag for () {
-    fn name(&self) -> &'static str {
-        ""
-    }
-
-    fn content(&self) -> crate::TagContent {
-        crate::TagContent::Text(String::new())
-    }
-
-    fn format(&self, _f: &mut crate::tags::TagFormatter, _buf: &mut String) -> std::fmt::Result {
-        Ok(())
-    }
-
-    fn props(&self) -> Option<&crate::tags::TagProp> {
-        None
-    }
-
-    fn styles(&self) -> Option<&crate::tags::TagStyle> {
-        None
-    }
-}
-
-impl<T> From<Vec<T>> for Children
-where
-    T: Tag + 'static,
-{
-    fn from(src: Vec<T>) -> Self {
-        let children: TagList = src
-            .into_iter()
-            .map(|c| {
-                let t: Box<dyn Tag> = Box::new(c);
-                t
-            })
-            .collect();
-        Self(children)
-    }
-}
-
-impl<T> From<T> for Children
-where
-    T: Tag + 'static,
-{
-    fn from(src: T) -> Self {
-        Self(vec![Box::new(src)])
-    }
-}
-
-impl<const N: usize> From<[Box<dyn Tag>; N]> for Children {
-    fn from(src: [Box<dyn Tag>; N]) -> Self {
-        let children: TagList = src.into_iter().collect();
-        Self(children)
-    }
-}
-
-impl<T, const N: usize> From<[T; N]> for Children
-where
-    T: Tag + 'static,
-{
-    fn from(src: [T; N]) -> Self {
-        let mut children: TagList = Vec::with_capacity(N);
-        for item in src {
-            children.push(Box::new(item));
-        }
-        Self(children)
-    }
-}
-
-macro_rules! tuple_impl {
-    ($($t:tt),+ | $($i:tt),+) => {
-        impl <$($t ),+ > From<($($t,)+)> for Children
-            where
-                $($t: Tag + 'static),+
-        {
-            fn from(src: ($($t,)+)) -> Self {
-                let mut children: TagList = Vec::new();
-                $(
-                    children.push(Box::new(src.$i));
-                )+
-                Self(children)
-            }
-        }
-    };
-}
+impl_markers!(A);
+impl_markers!(A, B);
+impl_markers!(A, B, C);
+impl_markers!(A, B, C, D);
+impl_markers!(A, B, C, D, E);
+impl_markers!(A, B, C, D, E, F);
+impl_markers!(A, B, C, D, E, F, G);
+impl_markers!(A, B, C, D, E, F, G, H);
+impl_markers!(A, B, C, D, E, F, G, H, I);
+impl_markers!(A, B, C, D, E, F, G, H, I, J);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z);
+impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, AA);
 
 #[rustfmt::skip]
-mod inner {
+mod merge_impl {
+    macro_rules! impl_merge {
+        ($s:tt | $($ty:tt),+ | $($i:tt),+) => {
+            impl <$s: Clone, $($ty: Clone),+> $crate::Merge<($($crate::Marker<$ty>),+ ,)> for ($crate::Marker<$s>,) {
+                type Output = ($crate::Marker<$s>, $($crate::Marker<$ty>),+);
+    
+                fn merge(self, rhs: ($($crate::Marker<$ty>),+ ,)) -> Self::Output {
+                    (self.0, $(rhs.$i),+)
+                }
+            }
+        }
+    }
+
+    impl_merge!(Init | A | 0);
+    impl_merge!(Init | A, B | 0, 1);
+    impl_merge!(Init | A, B, C | 0, 1, 2);
+    impl_merge!(Init | A, B, C, D | 0, 1, 2, 3);
+    impl_merge!(Init | A, B, C, D, E | 0, 1, 2, 3, 4);
+    impl_merge!(Init | A, B, C, D, E, F | 0, 1, 2, 3, 4, 5);
+    impl_merge!(Init | A, B, C, D, E, F, G | 0, 1, 2, 3, 4, 5, 6);
+    impl_merge!(Init | A, B, C, D, E, F, G, H | 0, 1, 2, 3, 4, 5, 6, 7);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I | 0, 1, 2, 3, 4, 5, 6, 7, 8);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24);
+    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25);
+}
+
+mod impl_children {
+    use crate::{tags::Content, Template};
+    impl Content {}
+
+    impl<T> From<Vec<T>> for Content
+    where
+        T: Template + 'static,
+    {
+        fn from(src: Vec<T>) -> Self {
+            Self::List(
+                src.into_iter()
+                    .map(|item| Box::new(item) as Box<dyn Template>)
+                    .collect(),
+            )
+        }
+    }
+
+    impl<T> From<T> for Content
+    where
+        T: Template + 'static,
+    {
+        fn from(src: T) -> Self {
+            Self::List(vec![Box::new(src)])
+        }
+    }
+
+    impl<const N: usize> From<[Box<dyn Template>; N]> for Content {
+        fn from(src: [Box<dyn Template>; N]) -> Self {
+            Self::List(src.into_iter().collect())
+        }
+    }
+
+    impl From<()> for Content {
+        fn from(_: ()) -> Self {
+            Self::Null
+        }
+    }
+
+    macro_rules! prime_impl {
+        ($ty:ty) => {
+            impl From<$ty> for Content {
+                fn from(src: $ty) -> Self {
+                    Self::Text(src.to_string())
+                }
+            }
+        };
+    }
+
+    prime_impl!(String);
+    prime_impl!(&str);
+    prime_impl!(bool);
+    prime_impl!(u8);
+    prime_impl!(u16);
+    prime_impl!(u32);
+    prime_impl!(u64);
+    prime_impl!(usize);
+    prime_impl!(i8);
+    prime_impl!(i16);
+    prime_impl!(i32);
+    prime_impl!(i64);
+    prime_impl!(isize);
+    prime_impl!(f32);
+    prime_impl!(f64);
+
+    macro_rules! tuple_impl {
+        ($($t:tt),+ | $($i:tt),+) => {
+            impl <$($t ),+ > From<($($t,)+)> for Content
+                where
+                    $($t: Template + 'static),+
+            {
+                fn from(src: ($($t,)+)) -> Self {
+                    Self::List(vec![$(Box::new(src.$i) as Box<dyn Template>),+])
+                }
+            }
+        };
+    }
+
+    #[rustfmt::skip]
+    mod inner {
     use super::*;
     tuple_impl!( A  |  0 );
     tuple_impl!( A, B  |  0, 1 );
@@ -197,4 +192,5 @@ mod inner {
     tuple_impl!( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, AA, AB, AC, AD, AE, AF  |  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 );
     tuple_impl!( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, AA, AB, AC, AD, AE, AF, AG  |  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 );
     tuple_impl!( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, AA, AB, AC, AD, AE, AF, AG, AH  |  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33 );
+    }
 }

@@ -24,10 +24,10 @@ macro_rules! style {
                 let name = vec![$(stringify!($name)),*];
                 map.insert(name.join("-"), $value.to_string());
             )+
-            $crate::tags::TagStyle(map)
+            $crate::tags::Styles(map)
         }
     };
     () => {
-        $crate::tags::TagStyle::default()
+        $crate::tags::Styles::default()
     }
 }

@@ -11,3 +11,4 @@ proc-macro = true
 [dependencies]
 syn = "1"
 quote = "1"
+darling = "0.14"

@@ -1,10 +1,39 @@
 {
     "cSpell.words": [
+        "autocompleteerror",
+        "canplay",
+        "canplaythrough",
+        "contextmenu",
+        "cuechange",
+        "dblclick",
+        "dragend",
+        "dragenter",
+        "dragexit",
+        "dragleave",
+        "dragover",
+        "dragstart",
+        "durationchange",
         "fieldset",
         "figcaption",
+        "keydown",
+        "keyup",
+        "loadeddata",
+        "loadedmetadata",
+        "loadstart",
+        "mousedown",
+        "mouseenter",
+        "mouseleave",
+        "mousemove",
+        "mouseout",
+        "mouseup",
+        "mousewheel",
+        "ratechange",
         "rtml",
         "rustfmt",
-        "stylesheet"
+        "Seeked",
+        "stylesheet",
+        "timeupdate",
+        "volumechange"
     ],
-    "rust-analyzer.cargo.allFeatures": true
+    "rust-analyzer.cargo.allFeatures": false
 }
