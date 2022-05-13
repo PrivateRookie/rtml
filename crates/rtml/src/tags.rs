@@ -69,10 +69,10 @@ impl<M: Markers + Clone> Template for Unit<M> {
     }
 }
 
-impl<D: Clone> Unit<(Marker<D>,)> {
-    pub fn link<R>(self, other: R) -> Unit<<(Marker<D>,) as Merge<R>>::Output>
+impl<D: Clone> Unit<Marker<D>> {
+    pub fn link<R>(self, other: R) -> Unit<<Marker<D> as Merge<R>>::Output>
     where
-        (Marker<D>,): Merge<R>,
+        Marker<D>: Merge<R>,
     {
         let Self {
             name,
@@ -93,9 +93,9 @@ impl<D: Clone> Unit<(Marker<D>,)> {
     }
 }
 
-impl Unit<(Marker,)> {
+impl Unit<Marker> {
     /// set associated element data
-    pub fn with<D>(self, data: Rc<RefCell<D>>) -> Unit<(Marker<D>,)> {
+    pub fn bind<D>(self, data: Rc<RefCell<D>>) -> Unit<Marker<D>> {
         let Self {
             name,
             content,
@@ -109,14 +109,14 @@ impl Unit<(Marker,)> {
             content,
             attrs,
             styles,
-            markers: (markers.0.to(data),),
+            markers: markers.to(data),
             listeners: Default::default(),
         }
     }
 
     /// set associated element data
     /// this method take the ownership of data
-    pub fn take<D>(self, data: D) -> Unit<(Marker<D>,)> {
+    pub fn inject<D>(self, data: D) -> Unit<Marker<D>> {
         let Self {
             name,
             content,
@@ -130,7 +130,7 @@ impl Unit<(Marker,)> {
             content,
             attrs,
             styles,
-            markers: (markers.0.to(Rc::new(RefCell::new(data))),),
+            markers: markers.to(Rc::new(RefCell::new(data))),
             listeners: Default::default(),
         }
     }

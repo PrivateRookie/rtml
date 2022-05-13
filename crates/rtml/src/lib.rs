@@ -94,6 +94,7 @@ pub trait Template {
     }
 }
 
+/// a trait represent multi markers
 pub trait Markers {
     fn set_this(&self, element: Element);
 }
@@ -139,6 +140,13 @@ pub fn tag(name: &'static str, content: Content) -> tags::Unit<(Marker,)> {
     }
 }
 
+/// extend one marker with a tuple of marker
+///
+/// ```bash
+/// Marker<A> + Marker<B> -> (Marker<A>, Marker<B>)
+///
+/// Marker<A> + (Marker<B>, Marker<C>) -> (Marker<A>, Marker<B>, Marker<C>)
+/// ```
 pub trait Merge<Rhs = Self> {
     type Output: Markers;
 
@@ -168,7 +176,7 @@ fn count_card(
     desc: String,
     init: Option<usize>,
     btn_label: Option<String>,
-) -> crate::tags::Div<(Marker,)> {
+) -> crate::tags::Div<Marker> {
     use crate::tags::*;
 
     let init = init.unwrap_or_default();
@@ -176,7 +184,7 @@ fn count_card(
     let show = p(init);
     let incr = button(btn_label.unwrap_or_else(|| "click".to_string()))
         // 将 init 和 <button>绑定
-        .take(init)
+        .inject(init)
         // 将 <button> 和 <p> 连接到一起, 方便以后的事件处理
         .link(show.mark())
         // 添加点击事件处理函数

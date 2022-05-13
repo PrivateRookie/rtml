@@ -3,7 +3,7 @@
 macro_rules! def {
     ($func_name:ident, $struct:ident, $arg:ident, doc: $($lang:literal = $doc:literal);+) => {
         $(#[cfg_attr(feature=$lang, doc=$doc)])+
-        pub fn $func_name<T: Into<$arg>>(tag: T) -> $struct<($crate::Marker, )> {
+        pub fn $func_name<T: Into<$arg>>(tag: T) -> $struct<$crate::Marker> {
             let args : $arg = tag.into();
             let $arg { content, attrs, styles } = args;
             $struct($crate::tags::Unit {
@@ -11,7 +11,7 @@ macro_rules! def {
                 content,
                 attrs,
                 styles,
-                markers: ($crate::Marker::default(), ),
+                markers: $crate::Marker::default(),
                 listeners: Default::default()
             })
         }
@@ -19,25 +19,25 @@ macro_rules! def {
         $(#[cfg_attr(feature=$lang, doc=$doc)])+
         pub struct $struct<D: $crate::Markers>(pub $crate::tags::Unit<D>);
 
-        impl<D: Clone> $struct<($crate::Marker<D>,)> {
-            pub fn link<R>(self, other: R) -> $struct<<($crate::Marker<D>,) as $crate::Merge<R>>::Output>
+        impl<D: Clone> $struct<$crate::Marker<D>> {
+            pub fn link<R>(self, other: R) -> $struct<<$crate::Marker<D> as $crate::Merge<R>>::Output>
             where
-                ($crate::Marker<D>,): $crate::Merge<R>,
+                $crate::Marker<D>: $crate::Merge<R>,
             {
                 $struct(self.0.link(other))
             }
         }
 
-        impl $struct<($crate::Marker,)> {
+        impl $struct<$crate::Marker> {
             /// set associated element data
-            pub fn with<D>(self, data: std::rc::Rc<std::cell::RefCell<D>>) -> $struct<($crate::Marker<D>,)> {
-                $struct(self.0.with(data))
+            pub fn bind<D>(self, data: std::rc::Rc<std::cell::RefCell<D>>) -> $struct<$crate::Marker<D>> {
+                $struct(self.0.bind(data))
             }
 
             /// set associated element data
             /// this method take the ownership of data
-            pub fn take<D>(self, data: D) -> $struct<($crate::Marker<D>,)> {
-                $struct(self.0.take(data))
+            pub fn inject<D>(self, data: D) -> $struct<$crate::Marker<D>> {
+                $struct(self.0.inject(data))
             }
 
         }

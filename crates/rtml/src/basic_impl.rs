@@ -1,3 +1,11 @@
+use crate::{Marker, Markers, Merge};
+
+impl<D> Markers for Marker<D> {
+    fn set_this(&self, element: web_sys::Element) {
+        self.set(element);
+    }
+}
+
 macro_rules! impl_markers {
     ($($ty:tt),+) => {
         impl<$($ty),+> $crate::Markers  for ($($crate::Marker<$ty>),+ ,) {
@@ -36,15 +44,23 @@ impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, 
 impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z);
 impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, AA);
 
+impl<Init: Clone, A: Clone> Merge<Marker<A>> for Marker<Init> {
+    type Output = (Marker<Init>, Marker<A>);
+
+    fn merge(self, rhs: Marker<A>) -> Self::Output {
+        (self, rhs)
+    }
+}
+
 #[rustfmt::skip]
 mod merge_impl {
     macro_rules! impl_merge {
         ($s:tt | $($ty:tt),+ | $($i:tt),+) => {
-            impl <$s: Clone, $($ty: Clone),+> $crate::Merge<($($crate::Marker<$ty>),+ ,)> for ($crate::Marker<$s>,) {
+            impl <$s: Clone, $($ty: Clone),+> $crate::Merge<($($crate::Marker<$ty>),+ ,)> for $crate::Marker<$s> {
                 type Output = ($crate::Marker<$s>, $($crate::Marker<$ty>),+);
     
                 fn merge(self, rhs: ($($crate::Marker<$ty>),+ ,)) -> Self::Output {
-                    (self.0, $(rhs.$i),+)
+                    (self, $(rhs.$i),+)
                 }
             }
         }
