@@ -17,7 +17,7 @@ macro_rules! def {
         }
 
         $(#[cfg_attr(feature=$lang, doc=$doc)])+
-        pub struct $struct<D: $crate::Markers>(pub $crate::tags::Unit<D>);
+        pub struct $struct<D: $crate::Markers = $crate::Marker>(pub $crate::tags::Unit<D>);
 
         impl<M: Clone + $crate::Markers> std::fmt::Display for $struct<M> {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

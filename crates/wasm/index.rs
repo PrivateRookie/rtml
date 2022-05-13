@@ -1,9 +1,8 @@
 use rtml::attr;
 use rtml::tags::*;
-use rtml::Marker;
 
 #[rtml_macro::page]
-fn main() -> Html<Marker> {
+fn main() -> Html {
     let pkg = env!("CARGO_PKG_NAME").replace("-", "_");
     html((
         attr! {lang="zh-cn"},

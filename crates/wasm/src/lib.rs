@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use rtml::{attr, mount_body, style, tags::*, EventKind, Marker};
+use rtml::{attr, mount_body, style, tags::*, EventKind};
 
 #[wasm_bindgen(start)]
 pub fn start() {
@@ -17,11 +17,7 @@ pub fn start() {
 }
 
 // 某个块可以方便地抽成组件, 组件初始化参数即为函数参数
-fn count_card(
-    desc: String,
-    init: Option<usize>,
-    btn_label: Option<String>,
-) -> rtml::tags::Div<Marker> {
+fn count_card(desc: String, init: Option<usize>, btn_label: Option<String>) -> rtml::tags::Div {
     let init = init.unwrap_or_default();
     // 根据初始值设置显示, 注意只是设置 <p> 内容, 不会将 init 和 <p> 绑定
     let show = p(init);
