@@ -1,8 +1,10 @@
 {
     "cSpell.words": [
         "autocompleteerror",
+        "bindgen",
         "canplay",
         "canplaythrough",
+        "cdylib",
         "contextmenu",
         "cuechange",
         "dblclick",

@@ -195,5 +195,134 @@ let many_div = div(items
 
 但这无疑会带来极差的开发体验, 在写 rust 代码时我们可以充分利用 Rust 语言特性和 LSP 带来的辅助功能, 像驾驶自动挡汽车一样轻松地书写安全的代码, 但在写嵌入的 JS 代码时连基本的代码高亮和补全都没有, 仿佛一下回到上古世纪, 这绝对不行!
 
-万幸的是 Rust wasm 支持最好的语言, 可以想办法在 Rust 中写好事件处理代码, 然后将他们编译成 wasm 文件, 最后在生成的 html 文件中 link 这些文件即可.
+万幸的是 Rust wasm 支持最好的语言, 可以想办法在 Rust 中写好事件处理代码, 然后将他们编译成 wasm 文件, 最后在生成的 html 里通过 link 标签引用这些文件即可.
 
+如果你对 Rust, wasm 和 wasm-bindgen 熟悉, 可以直接查看 [examples/wasm](./examples/wasm) 例子. 并通过以下命令编译
+
+```bash
+// 编辑 wasm 文件, 设置 target 为 web 让浏览器能直接运行生成的 js
+// 这一步会在 examples/wasm 下生成 pkg 文件夹, 该文件下包含编译好的 wasm, js 文件
+wasm-pack build examples/wasm --target web
+
+// 生成 index.html 文件
+cargo run -p wasm-demo --bin index
+```
+
+用浏览器打开生成的 index.html 文件即可看到效果.
+
+![preview](assets/count_card_preview.png)
+
+可以看到 rtml 编译 wasm 的步骤似乎比 yew 等框架写好代码后通过 trunk serve 命令就能直接预览代码的方式麻烦些, 
+rtml 之所以采用如此编译步骤的原因将会在下面和设计思考一节里有所说明.
+
+
+#### 绑定数据和处理事件
+
+rtml 让用户可以将数据绑定到某个标签上, 并在随后事件处理函数中将绑定的数据当作参数传进去. 在开始之前需要介绍下 rtml 中 Marker 概念. 在 rtml 中每个标签都对应一个 Marker, Marker 包含标签绑定数据和调用 dom api 创建标签成功后拿到的 web_sys::Element 元素. 这些 Marker 会被当作事件处理函数的参数传进去, 用户就可以在事件处理函数中拿到某标签绑定数据和标签, 并根据需要更新.
+
+在 [wasm/src/lib.rs](examples/wasm/src/lib.rs) count_card 函数中展示了如何将点击次数这个数据绑定到 button 上, 并在 click 事件被触发时拿到并更新这个数据, 接着更新展示的 p 元素内容. 
+
+值得说明的是在代码中新出现的 inject, link 和 on 函数.
+
+除了 inject 函数, 还有 bind 函数也能将数据绑定到某个标签上, 区别只是 inject 参数类型为 T, 而 bind 为 Rc\<RefCell\<T\>\>.
+
+除了绑定数据, 通常某些元素是带有"联动"的, 比如 incr 按钮在被点击后不单需要更新自身 count, 还需要更新显示 count 的 p 标签内容. 这时候用户可以用 link 函数, 将 incr 按钮和 p 结合起来. 这样在事件处理函数里, 参数类型会自动变成 (btn, show).
+
+on 函数正如 js 原生的 onClick 等函数一样, 提供了事件处理逻辑接口. on有两个参数, 第一个为事件类型, 用户可以在 rtml::events::EventKind 里拿到常用的事件类型, 也可以传一个自定义 &str. on 第二参数是一个 impl Fn(M) -> Box\<dyn FnMut()\> + 'static, 此处的 M 代表由 link 函数产生的 Marker 列表.
+
+当标签没有创建 link 过其标签, 那 M 为 Marker, 代表正在被创建的标签 Marker, 如果 link 过其他元素, 第一个 Marker 总是代表正在被创建的标签, 第二个以后则保持 link 参数的顺序. 即
+
+```
+Marker<This>.link((Marker<A>, Marker<B>, Marker<C>,) -> M类型为 (Marker<This>, Marker<A>, Marker<B>, Marker<C>)
+```
+
+#### wasm 编译说明
+
+
+rtml 使用 [wasm-bindgen](https://github.com/rustwasm/wasm-bindgen) 进行 wasm 交互, 如果对 wasm-bindgen 不熟悉可以去阅读 wasm-bindgen 文档.
+
+rtml 遵循 wasm-bindgen 规范, 因此用户必须在 Cargo.toml 文件添加
+
+```toml
+[lib]
+crate-type = ["cdylib"]
+```
+
+配置, 将 crate 类型设置为 cdylib. 
+
+如果 rtml 被编译成 wasm, 各个标签将会通过 web-sys 提供的 dom api 逐个创建 html 标签, 设置好属性和样式, 并 mount 到父标签, 最外层元素会被 mount 到 body 上. 可以把处理最顶层渲染的代码放在被 #[wasm_bindgen(start)] 修饰的方法, 调用 init 方法时将会自动运行这些代码, 可以在 wasm 例子看到这样的示例.
+
+```rust
+#[wasm_bindgen(start)]
+pub fn start() {
+    // 初始化 tracing
+    tracing_wasm::set_as_global_default();
+    // 最外层组件
+    let all_cards = rtml::tags::div((
+        // 调用其他组件
+        count_card("card1", 100, None),
+        count_card("card2", 20, "+1s"),
+    ));
+    // 渲染
+    if let Err(e) = mount_body(all_cards) {
+        tracing::error!("failed to init page, {:?}", e);
+    }
+}
+```
+
+运行 wasm-pack build --target web 后 wasm-pack 将编译好的文件放在 pkg 目录下. 在需要用到 wasm 的 html 文件中, 通过以下 script 即可引入
+
+```html
+<script type="module">
+import init from "./<pkg_name>.js";
+init();
+</script>
+```
+
+转换成 rtml 表示即为
+
+```rust
+script((
+    attr! { type="module" },
+    format!(r#"import init from "./{pkg}.js";
+init();
+"#),
+)),
+```
+
+因此还需要一个程序来为我们生成 index.html, 刚好 rtml 能实现这样的任务, 所以只需要用 rtml 描述一个空 body 的 html 文件, 并将 Html.to_string() 方法拿到的 bytes 保存到 index.html 即可. 因为之前已经将 crate 类型设为 cdylib, 所以不能在 src 目录下直接创建一个 main.rs. 需要在 Cargo.toml 下新加一个 bin, 并之名 path
+
+```toml
+[[bin]]
+name = "index"
+path = "index.rs"
+```
+
+[index.rs](./examples/wasm/index.rs) 内容几乎和 hello world 的 demo 一样, 只是多了一些 meta 标签和引入 wasm 的 script, 这里不再赘述.
+
+通过 cargo run -p wasm-demo --bin index 即可运行这个 bin 生成 index.html. 通过 python3 -m http.server 等方式在 pkg 目录下启动 http 服务, 并在浏览器中打开即可看到网页效果.
+
+
+## FAQ 设计与思考
+
+### rtml 有什么用?
+
+rtml 开发目标之一是尝试在尽量不直接手写 html/css/js 的情况下能编写网页, 从 wasm 例子看这个目标已经完成了很大一部分(除开 css和少量的script标签). 这个设计目标来自我个人对愈发复杂的前端工具链的困扰, 前端工具链太复杂了, 即使有 create-react-app 等 template 工具, 配置新项目还是一个复杂的过程. 这个问题大部分源于 js 在设计之初没有做好模块化(当然在设计它时也没想到前端会这么复杂)设计, 因此需求和架构愈发复杂的前端只能不断在上面打补丁, 带来了愈发臃肿的工具链.
+如果有一个语言它能方便地操作 html/js/css, 同时又有易用的编译工具, 那岂不是可以摆脱 npm 等工具, 在一个语言里就能写网页, Rust 正是这样一门语言, 它有令人称赞的 Cargo 工具, 更有最好的 wasm 支持, 所以才有 rtml 这一尝试. **不再是 Rust for Webpage, 而是 Webpage in Rust!**.
+
+### 为什么不用 html 语法
+
+通过 proc marco 确实能在 Rust 中写出类似 html 的语法, yew 等框架也是这样做的, 好处是与原来的 html 相比语法差异小, 更容易上手. 但这样有个问题, 目前的主流编辑器对 Rust function like proc macro 支持都不太好, 当你在过程宏里写代码时, 语法高亮, 自动补全, 类型提示, 重构辅助等功能往往失效, 显然就目前而言, function like proc macro 依然是一个 **IDE不友好** 的功能, 所以没有 `html!` 这样的设计.
+
+偏偏我个人很喜欢 RA 提供 Rust 代码编辑体验, 我希望在 Rust 里写网页时也能给我带来同样的体验, 所以 rtml 设计的一个重要目标就是 **IDE 友好**.
+
+
+所有标签函数 div, span, html 等都是普通函数, 这意味着用户在使用他们时只需要遵守 Rust 规范即可, 同时类型提示, 标签文档等都能正常工作
+
+![hover_doc](./assets/hover_doc.png)
+
+在 rtml 中用各种表达式模拟 html 树形结构, 配合 rtml 数据绑定模式, 重构起来很方便. 如你可以选择某个区块, 触发建议, 即可看到 extract into function
+
+![refactor](./assets/refactor.png)
+
+rtml 包装组件时没有额外的 props 等配置, 组件也是只是普通的函数, 函数参数就是组件参数, 如 count_card 的例子.

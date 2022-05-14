@@ -1,14 +1,16 @@
 use wasm_bindgen::prelude::*;
 
-use rtml::{attr, mount_body, style, tags::*, EventKind};
+use rtml::{attr, mount_body, style, tags::*, EventKind::*};
 
 #[wasm_bindgen(start)]
 pub fn start() {
+    // 初始化 tracing
     tracing_wasm::set_as_global_default();
+    // 最外层组件
     let all_cards = rtml::tags::div((
         // 调用其他组件
-        count_card("card1".to_string(), Some(100), None),
-        count_card("card2".to_string(), Some(20), None),
+        count_card("card1", 100, None),
+        count_card("card2", 20, "+1s"),
     ));
     // 渲染
     if let Err(e) = mount_body(all_cards) {
@@ -17,11 +19,16 @@ pub fn start() {
 }
 
 // 某个块可以方便地抽成组件, 组件初始化参数即为函数参数
-fn count_card(desc: String, init: Option<usize>, btn_label: Option<String>) -> rtml::tags::Div {
-    let init = init.unwrap_or_default();
+fn count_card<I: Into<Option<usize>>, B: Into<Option<&'static str>>>(
+    desc: &str,
+    init: I,
+    btn_label: B,
+) -> rtml::tags::Div {
+    let init = init.into().unwrap_or_default();
     // 根据初始值设置显示, 注意只是设置 <p> 内容, 不会将 init 和 <p> 绑定
     let show = p(init);
-    let incr = button(btn_label.unwrap_or_else(|| "click".to_string()))
+    let label = btn_label.into().unwrap_or("click");
+    let incr = button(label)
         // 将 init 和 <button>绑定
         .inject(init)
         // 将 <button> 和 <p> 连接到一起, 方便以后的事件处理
@@ -29,7 +36,7 @@ fn count_card(desc: String, init: Option<usize>, btn_label: Option<String>) -> r
         // 添加点击事件处理函数
         // 传入的匿名函数第一个参数总是指向正在创建的 ele,
         // 根据 之前 link 参数不同, 其他参数个数也会相应变化
-        .on(EventKind::Click, |(btn, show)| {
+        .on(Click, |(btn, show)| {
             Box::new(move || {
                 tracing::info!("clicked");
                 // 从 btn 拿到从 take 函数中传入的数据

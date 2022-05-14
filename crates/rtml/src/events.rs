@@ -1,8 +1,5 @@
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct EventKind(&'static str);
-
-#[allow(non_upper_case_globals)]
-impl EventKind {
+#[allow(non_upper_case_globals, non_snake_case)]
+pub mod EventKind {
     pub const Abort: &'static str = "abort";
     pub const Autocomplete: &'static str = "autocomplete";
     pub const AutocompleteError: &'static str = "autocompleteerror";
@@ -66,14 +63,4 @@ impl EventKind {
     pub const Toggle: &'static str = "toggle";
     pub const VolumeChange: &'static str = "volumechange";
     pub const Waiting: &'static str = "waiting";
-
-    pub fn new(kind: &'static str) -> Self {
-        Self(kind)
-    }
-}
-
-impl AsRef<str> for EventKind {
-    fn as_ref(&self) -> &str {
-        self.0
-    }
 }
