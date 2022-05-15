@@ -104,6 +104,9 @@ pub trait Template {
 
         let pad = f.pad_size();
         let (name, attrs, styles, content, _) = self.resources();
+        if name == "html" {
+            write!(buf, "<!doctype html>")?;
+        }
         write!(buf, "{:pad$}<{}", "", name)?;
         if f.newline_on_attr {
             buf.push_str(f.line_sep);
@@ -206,6 +209,10 @@ impl<D> Marker<D> {
     pub fn to<T>(&self, data: Rc<RefCell<T>>) -> Marker<T> {
         let ele = self.ele.clone();
         Marker { ele, data }
+    }
+
+    pub fn get_ele(&self) -> Element {
+        self.ele.borrow().as_ref().cloned().unwrap()
     }
 }
 

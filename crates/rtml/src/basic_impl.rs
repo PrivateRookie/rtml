@@ -143,6 +143,7 @@ mod impl_children {
     }
 
     prime_impl!(String);
+    prime_impl!(&String);
     prime_impl!(&str);
     prime_impl!(bool);
     prime_impl!(u8);
