@@ -26,9 +26,9 @@ macro_rules! def {
         }
 
         impl<D: Clone> $struct<$crate::Marker<D>> {
-            pub fn link<R>(self, other: R) -> $struct<<$crate::Marker<D> as $crate::Merge<R>>::Output>
+            pub fn link<R>(self, other: R) -> $struct<<$crate::Marker<D> as $crate::ExtendMarkers<R>>::Output>
             where
-                $crate::Marker<D>: $crate::Merge<R>,
+                $crate::Marker<D>: $crate::ExtendMarkers<R>,
             {
                 $struct(self.0.link(other))
             }

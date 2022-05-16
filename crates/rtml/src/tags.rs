@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use web_sys::Element;
 
-use crate::{tag_fmt::TagFormatter, Marker, Markers, Merge, Template};
+use crate::{tag_fmt::TagFormatter, Marker, Markers, ExtendMarkers, Template};
 
 mod builtin;
 pub use builtin::*;
@@ -78,9 +78,9 @@ impl<M: Markers + Clone> Template for Unit<M> {
 }
 
 impl<D: Clone> Unit<Marker<D>> {
-    pub fn link<R>(self, other: R) -> Unit<<Marker<D> as Merge<R>>::Output>
+    pub fn link<R>(self, other: R) -> Unit<<Marker<D> as ExtendMarkers<R>>::Output>
     where
-        Marker<D>: Merge<R>,
+        Marker<D>: ExtendMarkers<R>,
     {
         let Self {
             name,
@@ -95,7 +95,7 @@ impl<D: Clone> Unit<Marker<D>> {
             content,
             attrs,
             styles,
-            markers: markers.merge(other),
+            markers: markers.extend(other),
             listeners: Default::default(),
         }
     }

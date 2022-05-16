@@ -1,4 +1,4 @@
-use crate::{Marker, Markers, Merge};
+use crate::{Marker, Markers, ExtendMarkers};
 
 impl<D> Markers for Marker<D> {
     fn set_this(&self, element: web_sys::Element) {
@@ -44,54 +44,54 @@ impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, 
 impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z);
 impl_markers!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, AA);
 
-impl<Init: Clone, A: Clone> Merge<Marker<A>> for Marker<Init> {
+impl<Init: Clone, A: Clone> ExtendMarkers<Marker<A>> for Marker<Init> {
     type Output = (Marker<Init>, Marker<A>);
 
-    fn merge(self, rhs: Marker<A>) -> Self::Output {
+    fn extend(self, rhs: Marker<A>) -> Self::Output {
         (self, rhs)
     }
 }
 
 #[rustfmt::skip]
 mod merge_impl {
-    macro_rules! impl_merge {
+    macro_rules! impl_extend {
         ($s:tt | $($ty:tt),+ | $($i:tt),+) => {
-            impl <$s: Clone, $($ty: Clone),+> $crate::Merge<($($crate::Marker<$ty>),+ ,)> for $crate::Marker<$s> {
+            impl <$s: Clone, $($ty: Clone),+> $crate::ExtendMarkers<($($crate::Marker<$ty>),+ ,)> for $crate::Marker<$s> {
                 type Output = ($crate::Marker<$s>, $($crate::Marker<$ty>),+);
     
-                fn merge(self, rhs: ($($crate::Marker<$ty>),+ ,)) -> Self::Output {
+                fn extend(self, rhs: ($($crate::Marker<$ty>),+ ,)) -> Self::Output {
                     (self, $(rhs.$i),+)
                 }
             }
         }
     }
 
-    impl_merge!(Init | A | 0);
-    impl_merge!(Init | A, B | 0, 1);
-    impl_merge!(Init | A, B, C | 0, 1, 2);
-    impl_merge!(Init | A, B, C, D | 0, 1, 2, 3);
-    impl_merge!(Init | A, B, C, D, E | 0, 1, 2, 3, 4);
-    impl_merge!(Init | A, B, C, D, E, F | 0, 1, 2, 3, 4, 5);
-    impl_merge!(Init | A, B, C, D, E, F, G | 0, 1, 2, 3, 4, 5, 6);
-    impl_merge!(Init | A, B, C, D, E, F, G, H | 0, 1, 2, 3, 4, 5, 6, 7);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I | 0, 1, 2, 3, 4, 5, 6, 7, 8);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24);
-    impl_merge!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25);
+    impl_extend!(Init | A | 0);
+    impl_extend!(Init | A, B | 0, 1);
+    impl_extend!(Init | A, B, C | 0, 1, 2);
+    impl_extend!(Init | A, B, C, D | 0, 1, 2, 3);
+    impl_extend!(Init | A, B, C, D, E | 0, 1, 2, 3, 4);
+    impl_extend!(Init | A, B, C, D, E, F | 0, 1, 2, 3, 4, 5);
+    impl_extend!(Init | A, B, C, D, E, F, G | 0, 1, 2, 3, 4, 5, 6);
+    impl_extend!(Init | A, B, C, D, E, F, G, H | 0, 1, 2, 3, 4, 5, 6, 7);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I | 0, 1, 2, 3, 4, 5, 6, 7, 8);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K, L | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24);
+    impl_extend!(Init | A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25);
 }
 
 mod impl_children {

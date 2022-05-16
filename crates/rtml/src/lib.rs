@@ -202,6 +202,20 @@ impl<D> Marker<D> {
         self.ele.borrow().is_some()
     }
 
+    pub fn bind(data: Rc<RefCell<D>>) -> Marker<D> {
+        Self {
+            data,
+            ele: Rc::new(RefCell::new(None)),
+        }
+    }
+
+    pub fn inject(data: D) -> Marker<D> {
+        Self {
+            data: Rc::new(RefCell::new(data)),
+            ele: Rc::new(RefCell::new(None)),
+        }
+    }
+
     pub fn set(&self, ele: Element) -> Option<Element> {
         self.ele.borrow_mut().replace(ele)
     }
@@ -234,10 +248,10 @@ pub fn tag(name: &'static str, content: Content) -> tags::Unit<(Marker,)> {
 ///
 /// Marker<A> + (Marker<B>, Marker<C>) -> (Marker<A>, Marker<B>, Marker<C>)
 /// ```
-pub trait Merge<Rhs = Self> {
+pub trait ExtendMarkers<Rhs = Self> {
     type Output: Markers;
 
-    fn merge(self, rhs: Rhs) -> Self::Output;
+    fn extend(self, rhs: Rhs) -> Self::Output;
 }
 
 /// default entry point of app, mount top most element
