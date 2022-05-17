@@ -34,7 +34,6 @@ fn count_card<I: Into<Option<usize>>, B: Into<Option<&'static str>>>(
             *data += 1;
         }),
     );
-
     div((
         attr! {
             class="count-card"
@@ -42,7 +41,7 @@ fn count_card<I: Into<Option<usize>>, B: Into<Option<&'static str>>>(
         style! {
             border: "black solid 1px";
             padding: "10px";
-            margin: "10px 0 10px 0"
+            margin: "10px 0 10px 0";
         },
         (h2(desc), show, incr),
     ))

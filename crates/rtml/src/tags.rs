@@ -118,7 +118,7 @@ pub struct Attrs(pub HashMap<String, String>);
 /// **NOTE**: style should be set by `style!` macro
 #[macro_export]
 macro_rules! attr {
-    ($($($name:tt)-+ $(= $value:expr)?),+) => {
+    ($($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
         #[allow(unused_assignments)]
         { let mut attrs: std::collections::HashMap<String, String> = std::collections::HashMap::new();
         $(

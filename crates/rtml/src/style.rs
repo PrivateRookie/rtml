@@ -17,7 +17,7 @@
 /// ```
 #[macro_export]
 macro_rules! style {
-    ($($($name:ident)-+: $value:expr);+) => {
+    ($($($name:ident)-+: $value:expr);+ $(;)?) => {
         {
             let mut map: std::collections::HashMap<String, String> = std::collections::HashMap::new();
             $(
