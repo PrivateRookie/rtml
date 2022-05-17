@@ -3,7 +3,7 @@
 macro_rules! def {
     ($func_name:ident, $struct:ident, $arg:ident, doc: $($lang:literal = $doc:literal);+) => {
         $(#[cfg_attr(feature=$lang, doc=$doc)])+
-        pub fn $func_name<T: Into<$arg>>(tag: T) -> $struct<$crate::Marker> {
+        pub fn $func_name<T: Into<$arg>>(tag: T) -> $struct {
             let args : $arg = tag.into();
             let $arg { content, attrs, styles } = args;
             $struct($crate::tags::Unit {
@@ -11,50 +11,20 @@ macro_rules! def {
                 content,
                 attrs,
                 styles,
-                markers: $crate::Marker::default(),
-                listeners: Default::default(),
                 other_listeners: Default::default()
             })
         }
 
         $(#[cfg_attr(feature=$lang, doc=$doc)])+
-        pub struct $struct<D: $crate::Markers = $crate::Marker>(pub $crate::tags::Unit<D>);
+        pub struct $struct(pub $crate::tags::Unit);
 
-        impl<M: Clone + $crate::Markers> std::fmt::Display for $struct<M> {
+        impl std::fmt::Display for $struct {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 std::fmt::Display::fmt(&self.0, f)
             }
         }
 
-        impl<D: Clone> $struct<$crate::Marker<D>> {
-            pub fn link<R>(self, other: R) -> $struct<<$crate::Marker<D> as $crate::ExtendMarkers<R>>::Output>
-            where
-                $crate::Marker<D>: $crate::ExtendMarkers<R>,
-            {
-                $struct(self.0.link(other))
-            }
-        }
-
-        impl $struct<$crate::Marker> {
-            /// set associated element data
-            pub fn bind<D>(self, data: std::rc::Rc<std::cell::RefCell<D>>) -> $struct<$crate::Marker<D>> {
-                $struct(self.0.bind(data))
-            }
-
-            /// set associated element data
-            /// this method take the ownership of data
-            pub fn inject<D>(self, data: D) -> $struct<$crate::Marker<D>> {
-                $struct(self.0.inject(data))
-            }
-
-        }
-
-        impl<M: $crate::Markers + Clone> $struct<M> {
-            /// return marker of element
-            pub fn mark(&self) -> M {
-                self.0.mark()
-            }
-
+        impl $struct {
             /// update component style with passed styles
             pub fn s(mut self, styles: $crate::tags::Styles) -> Self {
                 styles.0.into_iter().for_each(|(key, value)| {
@@ -84,31 +54,22 @@ macro_rules! def {
             }
 
             /// add event listeners
-            pub fn on<K: Into<&'static str>>(self, kind: K, listener: impl Fn(M) -> Box<dyn FnMut()> + 'static) -> Self {
+            pub fn on<K: Into<&'static str>>(self, kind: K, listener: Box<dyn Fn() -> Box<dyn FnMut()>>) -> Self {
                 $struct(self.0.on(kind, listener))
-            }
-
-            /// add event listeners
-            pub fn when<K: Into<&'static str>>(self, kind: K, listener: Box<dyn Fn() -> Box<dyn FnMut()>>) -> Self {
-                $struct(self.0.when(kind, listener))
             }
         }
 
-        impl<M: $crate::Markers + Clone> $crate::Template for $struct<M> {
+        impl $crate::Template for $struct {
             fn resources(& self) -> (
                 &'static str,
                 &$crate::tags::Attrs,
                 &$crate::tags::Styles,
                 &$crate::tags::Content,
-                std::collections::HashMap<&str, Box<dyn FnOnce() -> Box<dyn FnMut()> + '_>>,
                 std::collections::HashMap<&str, Box<dyn FnMut()>>,
             ) {
                 self.0.resources()
             }
 
-            fn set_element(& self, element: web_sys::Element) {
-                self.0.set_element(element)
-            }
         }
 
         pub struct $arg {

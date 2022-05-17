@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 use tag_fmt::TagFormatter;
 use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{Document, Element, HtmlElement, Window};
@@ -48,17 +48,12 @@ pub trait Template {
         &Attrs,
         &Styles,
         &Content,
-        HashMap<&str, Box<dyn FnOnce() -> Box<dyn FnMut()> + '_>>,
         HashMap<&str, Box<dyn FnMut()>>,
     );
 
-    /// after calling dom api to create element,
-    /// replace marker ele field with real element
-    fn set_element(&self, element: Element);
-
     /// generate html element and add event bindings
     fn render(&self, parent: &Element, doc: &Document) -> Result<Element, JsValue> {
-        let (name, attrs, styles, content, listeners, other_listeners) = self.resources();
+        let (name, attrs, styles, content, other_listeners) = self.resources();
         let ele = doc.create_element(name).map_err(|e| {
             tracing::error!("failed to create element {}: {:?}", name, e);
             e
@@ -83,20 +78,6 @@ pub trait Template {
             })?;
         }
 
-        for (kind, factory) in listeners.into_iter() {
-            let cb = Closure::wrap(factory());
-            ele.add_event_listener_with_callback(kind, cb.as_ref().unchecked_ref())
-                .map_err(|e| {
-                    tracing::error!(
-                        "failed to bind {} event listener on {}: {:?}",
-                        kind,
-                        name,
-                        e
-                    );
-                    e
-                })?;
-            cb.forget()
-        }
         for (kind, factory) in other_listeners.into_iter() {
             let cb = Closure::wrap(factory);
             ele.add_event_listener_with_callback(kind, cb.as_ref().unchecked_ref())
@@ -112,7 +93,6 @@ pub trait Template {
             cb.forget()
         }
 
-        self.set_element(ele.clone());
         parent.append_child(&ele).map_err(|e| {
             tracing::error!(
                 "failed to append children {} to parent {}: {:?}",
@@ -130,7 +110,7 @@ pub trait Template {
         use std::fmt::Write;
 
         let pad = f.pad_size();
-        let (name, attrs, styles, content, _, _) = self.resources();
+        let (name, attrs, styles, content, _) = self.resources();
         if name == "html" {
             write!(buf, "<!doctype html>")?;
         }
@@ -207,82 +187,14 @@ pub trait Template {
     }
 }
 
-/// a trait represent multi markers
-pub trait Markers {
-    fn set_this(&self, element: Element);
-}
-
-#[derive(Debug, Clone)]
-pub struct Marker<D = ()> {
-    pub ele: Rc<RefCell<Option<Element>>>,
-    pub data: Rc<RefCell<D>>,
-}
-
-impl Default for Marker {
-    fn default() -> Self {
-        Marker {
-            ele: Default::default(),
-            data: Rc::new(RefCell::new(())),
-        }
-    }
-}
-
-impl<D> Marker<D> {
-    pub fn is_init(&self) -> bool {
-        self.ele.borrow().is_some()
-    }
-
-    pub fn bind(data: Rc<RefCell<D>>) -> Marker<D> {
-        Self {
-            data,
-            ele: Rc::new(RefCell::new(None)),
-        }
-    }
-
-    pub fn inject(data: D) -> Marker<D> {
-        Self {
-            data: Rc::new(RefCell::new(data)),
-            ele: Rc::new(RefCell::new(None)),
-        }
-    }
-
-    pub fn set(&self, ele: Element) -> Option<Element> {
-        self.ele.borrow_mut().replace(ele)
-    }
-
-    pub fn to<T>(&self, data: Rc<RefCell<T>>) -> Marker<T> {
-        let ele = self.ele.clone();
-        Marker { ele, data }
-    }
-
-    pub fn get_ele(&self) -> Element {
-        self.ele.borrow().as_ref().cloned().unwrap()
-    }
-}
-
-pub fn tag(name: &'static str, content: Content) -> tags::Unit<(Marker,)> {
+pub fn tag(name: &'static str, content: Content) -> tags::Unit {
     tags::Unit {
         name,
         content,
         styles: Default::default(),
         attrs: Default::default(),
-        markers: (Marker::default(),),
-        listeners: Default::default(),
         other_listeners: Default::default(),
     }
-}
-
-/// extend one marker with a tuple of marker
-///
-/// ```bash
-/// Marker<A> + Marker<B> -> (Marker<A>, Marker<B>)
-///
-/// Marker<A> + (Marker<B>, Marker<C>) -> (Marker<A>, Marker<B>, Marker<C>)
-/// ```
-pub trait ExtendMarkers<Rhs = Self> {
-    type Output: Markers;
-
-    fn extend(self, rhs: Rhs) -> Self::Output;
 }
 
 /// default entry point of app, mount top most element

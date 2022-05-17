@@ -27,7 +27,7 @@ pub fn page(args: TokenStream, input: TokenStream) -> TokenStream {
     let expanded = quote! {
         #input
 
-        fn __rtml_render_index<D: rtml::Markers + Clone>(page: rtml::tags::Html<D>) {
+        fn __rtml_render_index(page: rtml::tags::Html) {
             use std::path::PathBuf;
             use std::fs::File;
             use std::io::Write;

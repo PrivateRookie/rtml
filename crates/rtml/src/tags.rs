@@ -6,7 +6,7 @@ use std::{
 
 use web_sys::Element;
 
-use crate::{render_content, tag_fmt::TagFormatter, ExtendMarkers, Marker, Markers, Template};
+use crate::{render_content, tag_fmt::TagFormatter, Template};
 
 mod builtin;
 pub use builtin::*;
@@ -31,17 +31,15 @@ impl Default for Content {
 
 pub type TemplateList = Vec<Box<dyn Template>>;
 
-pub struct Unit<M: Markers> {
+pub struct Unit {
     pub name: &'static str,
     pub content: Content,
     pub attrs: Attrs,
     pub styles: Styles,
-    pub markers: M,
-    pub listeners: HashMap<&'static str, Box<dyn Fn(M) -> Box<dyn FnMut()>>>,
     pub other_listeners: HashMap<&'static str, Box<dyn Fn() -> Box<dyn FnMut()>>>,
 }
 
-impl<M: Markers + Clone> std::fmt::Display for Unit<M> {
+impl std::fmt::Display for Unit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut content = String::new();
         let mut formatter = TagFormatter::default();
@@ -50,7 +48,7 @@ impl<M: Markers + Clone> std::fmt::Display for Unit<M> {
     }
 }
 
-impl<M: Markers + Clone> Template for Unit<M> {
+impl Template for Unit {
     fn resources(
         &self,
     ) -> (
@@ -58,18 +56,8 @@ impl<M: Markers + Clone> Template for Unit<M> {
         &Attrs,
         &Styles,
         &Content,
-        HashMap<&str, Box<dyn FnOnce() -> Box<dyn FnMut()> + '_>>,
         HashMap<&str, Box<dyn FnMut()>>,
     ) {
-        let factories: HashMap<&'static str, _> = self
-            .listeners
-            .iter()
-            .map(|(kind, func)| {
-                let cb = Box::new(move || func(self.markers.clone()))
-                    as Box<dyn FnOnce() -> Box<dyn FnMut()>>;
-                (*kind, cb)
-            })
-            .collect();
         let other_factories: HashMap<&'static str, _> = self
             .other_listeners
             .iter()
@@ -83,104 +71,13 @@ impl<M: Markers + Clone> Template for Unit<M> {
             &self.attrs,
             &self.styles,
             &self.content,
-            factories,
             other_factories,
         )
     }
-
-    fn set_element(&self, element: Element) {
-        self.markers.set_this(element);
-    }
 }
 
-impl<D: Clone> Unit<Marker<D>> {
-    pub fn link<R>(self, other: R) -> Unit<<Marker<D> as ExtendMarkers<R>>::Output>
-    where
-        Marker<D>: ExtendMarkers<R>,
-    {
-        let Self {
-            name,
-            content,
-            attrs,
-            styles,
-            markers,
-            listeners: _,
-            other_listeners: _,
-        } = self;
-        Unit {
-            name,
-            content,
-            attrs,
-            styles,
-            markers: markers.extend(other),
-            listeners: Default::default(),
-            other_listeners: Default::default(),
-        }
-    }
-}
-
-impl Unit<Marker> {
-    /// set associated element data
-    pub fn bind<D>(self, data: Rc<RefCell<D>>) -> Unit<Marker<D>> {
-        let Self {
-            name,
-            content,
-            attrs,
-            styles,
-            markers,
-            listeners: _,
-            other_listeners: _,
-        } = self;
-        Unit {
-            name,
-            content,
-            attrs,
-            styles,
-            markers: markers.to(data),
-            listeners: Default::default(),
-            other_listeners: Default::default(),
-        }
-    }
-
-    /// set associated element data
-    /// this method take the ownership of data
-    pub fn inject<D>(self, data: D) -> Unit<Marker<D>> {
-        let Self {
-            name,
-            content,
-            attrs,
-            styles,
-            markers,
-            listeners: _,
-            other_listeners: _,
-        } = self;
-        Unit {
-            name,
-            content,
-            attrs,
-            styles,
-            markers: markers.to(Rc::new(RefCell::new(data))),
-            listeners: Default::default(),
-            other_listeners: Default::default(),
-        }
-    }
-}
-
-impl<M: Markers + Clone> Unit<M> {
-    pub fn mark(&self) -> M {
-        self.markers.clone()
-    }
-
+impl Unit {
     pub fn on<K: Into<&'static str>>(
-        mut self,
-        kind: K,
-        listener: impl Fn(M) -> Box<dyn FnMut()> + 'static,
-    ) -> Self {
-        self.listeners.insert(kind.into(), Box::new(listener));
-        self
-    }
-
-    pub fn when<K: Into<&'static str>>(
         mut self,
         kind: K,
         listener: Box<dyn Fn() -> Box<dyn FnMut()>>,
@@ -302,7 +199,6 @@ impl<T: 'static> Reactive<T> {
             Box::new(move || v(&data.borrow())),
         )
     }
-
 
     pub fn mutate<M: FnMut(&mut T) + 'static + Copy>(
         &self,
