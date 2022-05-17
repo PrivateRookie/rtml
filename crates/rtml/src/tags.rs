@@ -1,8 +1,12 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    collections::HashMap,
+    rc::Rc,
+};
 
 use web_sys::Element;
 
-use crate::{tag_fmt::TagFormatter, Marker, Markers, ExtendMarkers, Template};
+use crate::{render_content, tag_fmt::TagFormatter, ExtendMarkers, Marker, Markers, Template};
 
 mod builtin;
 pub use builtin::*;
@@ -16,6 +20,7 @@ pub enum Content {
     // TODO add html escape checking
     /// normal text content
     Text(String),
+    Dynamic(ViewCredential),
 }
 
 impl Default for Content {
@@ -33,6 +38,7 @@ pub struct Unit<M: Markers> {
     pub styles: Styles,
     pub markers: M,
     pub listeners: HashMap<&'static str, Box<dyn Fn(M) -> Box<dyn FnMut()>>>,
+    pub other_listeners: HashMap<&'static str, Box<dyn Fn() -> Box<dyn FnMut()>>>,
 }
 
 impl<M: Markers + Clone> std::fmt::Display for Unit<M> {
@@ -53,6 +59,7 @@ impl<M: Markers + Clone> Template for Unit<M> {
         &Styles,
         &Content,
         HashMap<&str, Box<dyn FnOnce() -> Box<dyn FnMut()> + '_>>,
+        HashMap<&str, Box<dyn FnMut()>>,
     ) {
         let factories: HashMap<&'static str, _> = self
             .listeners
@@ -63,12 +70,21 @@ impl<M: Markers + Clone> Template for Unit<M> {
                 (*kind, cb)
             })
             .collect();
+        let other_factories: HashMap<&'static str, _> = self
+            .other_listeners
+            .iter()
+            .map(|(kind, func)| {
+                let cb = func();
+                (*kind, cb)
+            })
+            .collect();
         (
             self.name,
             &self.attrs,
             &self.styles,
             &self.content,
             factories,
+            other_factories,
         )
     }
 
@@ -89,6 +105,7 @@ impl<D: Clone> Unit<Marker<D>> {
             styles,
             markers,
             listeners: _,
+            other_listeners: _,
         } = self;
         Unit {
             name,
@@ -97,6 +114,7 @@ impl<D: Clone> Unit<Marker<D>> {
             styles,
             markers: markers.extend(other),
             listeners: Default::default(),
+            other_listeners: Default::default(),
         }
     }
 }
@@ -111,6 +129,7 @@ impl Unit<Marker> {
             styles,
             markers,
             listeners: _,
+            other_listeners: _,
         } = self;
         Unit {
             name,
@@ -119,6 +138,7 @@ impl Unit<Marker> {
             styles,
             markers: markers.to(data),
             listeners: Default::default(),
+            other_listeners: Default::default(),
         }
     }
 
@@ -132,6 +152,7 @@ impl Unit<Marker> {
             styles,
             markers,
             listeners: _,
+            other_listeners: _,
         } = self;
         Unit {
             name,
@@ -140,6 +161,7 @@ impl Unit<Marker> {
             styles,
             markers: markers.to(Rc::new(RefCell::new(data))),
             listeners: Default::default(),
+            other_listeners: Default::default(),
         }
     }
 }
@@ -155,6 +177,15 @@ impl<M: Markers + Clone> Unit<M> {
         listener: impl Fn(M) -> Box<dyn FnMut()> + 'static,
     ) -> Self {
         self.listeners.insert(kind.into(), Box::new(listener));
+        self
+    }
+
+    pub fn when<K: Into<&'static str>>(
+        mut self,
+        kind: K,
+        listener: Box<dyn Fn() -> Box<dyn FnMut()>>,
+    ) -> Self {
+        self.other_listeners.insert(kind.into(), listener);
         self
     }
 }
@@ -218,4 +249,83 @@ macro_rules! attr {
     () => {{
         $crate::tags::Attrs::default()
     }}
+}
+
+pub type Subs = Rc<RefCell<Vec<(Element, Box<dyn Fn() -> Content>)>>>;
+
+pub struct ViewCredential {
+    pub(crate) view: Cell<Box<dyn Fn() -> Content>>,
+    pub(crate) subs: Subs,
+}
+
+impl ViewCredential {
+    pub fn new(subs: Subs, view: Box<dyn Fn() -> Content + 'static>) -> Self {
+        Self {
+            view: Cell::new(view),
+            subs,
+        }
+    }
+}
+#[derive(Clone)]
+pub struct Reactive<T> {
+    pub data: Rc<RefCell<T>>,
+    pub subscribers: Subs,
+}
+
+pub fn reactive<T>(data: T) -> Reactive<T> {
+    Reactive {
+        data: Rc::new(RefCell::new(data)),
+        subscribers: Rc::new(RefCell::new(vec![])),
+    }
+}
+
+pub trait IntoReactive {
+    fn reactive(self) -> Reactive<Self>
+    where
+        Self: Sized;
+}
+
+impl<T: Sized> IntoReactive for T {
+    fn reactive(self) -> Reactive<Self>
+    where
+        Self: Sized,
+    {
+        reactive(self)
+    }
+}
+
+impl<T: 'static> Reactive<T> {
+    pub fn view<V: Fn(&T) -> Content + 'static>(&self, v: V) -> ViewCredential {
+        let data = self.data.clone();
+        ViewCredential::new(
+            self.subscribers.clone(),
+            Box::new(move || v(&data.borrow())),
+        )
+    }
+
+
+    pub fn mutate<M: FnMut(&mut T) + 'static + Copy>(
+        &self,
+        mut m: M,
+    ) -> Box<dyn Fn() -> Box<dyn FnMut()> + 'static> {
+        let data = self.data.clone();
+        let subs = self.subscribers.clone();
+        Box::new(move || {
+            let data = data.clone();
+            let subs = subs.clone();
+            Box::new(move || {
+                m(&mut data.borrow_mut());
+                for (ele, view) in subs.borrow().iter() {
+                    if ele.is_connected() {
+                        let content = view();
+                        let window = web_sys::window().expect("no global `window` exists");
+                        let document = window.document().expect("should have a document on window");
+                        if let Err(e) = render_content(&content, &ele, &document) {
+                            tracing::error!("failed to update content: {:?}", e);
+                        }
+                    }
+                }
+            })
+        })
+    }
 }

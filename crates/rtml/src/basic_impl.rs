@@ -1,4 +1,4 @@
-use crate::{Marker, Markers, ExtendMarkers};
+use crate::{ExtendMarkers, Marker, Markers};
 
 impl<D> Markers for Marker<D> {
     fn set_this(&self, element: web_sys::Element) {
@@ -95,8 +95,16 @@ mod merge_impl {
 }
 
 mod impl_children {
-    use crate::{tags::Content, Template};
-    impl Content {}
+    use crate::{
+        tags::{Content, ViewCredential},
+        Template,
+    };
+
+    impl From<ViewCredential> for Content {
+        fn from(view: ViewCredential) -> Self {
+            Self::Dynamic(view)
+        }
+    }
 
     impl<T> From<Vec<T>> for Content
     where

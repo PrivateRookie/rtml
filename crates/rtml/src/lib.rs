@@ -15,6 +15,29 @@ pub use rtml_macro::page;
 /// print template as html, instead of create them by dom api
 pub mod tag_fmt;
 
+fn render_content(content: &Content, ele: &Element, doc: &Document) -> Result<(), JsValue> {
+    match content {
+        Content::Null => {}
+        Content::Text(text) => {
+            ele.set_inner_html(text);
+        }
+        Content::List(children) => {
+            for child in children {
+                let child = child.render(ele, doc)?;
+                ele.append_child(&child)?;
+            }
+        }
+        Content::Dynamic(view) => {
+            let subs = view.subs.clone();
+            let view = view.view.replace(Box::new(|| Content::Null));
+            let content = view();
+            subs.borrow_mut().push((ele.clone(), view));
+            render_content(&content, ele, doc)?;
+        }
+    };
+    Ok(())
+}
+
 pub trait Template {
     /// provide tag name, content, attr, styles and listeners
     /// to create html element
@@ -26,6 +49,7 @@ pub trait Template {
         &Styles,
         &Content,
         HashMap<&str, Box<dyn FnOnce() -> Box<dyn FnMut()> + '_>>,
+        HashMap<&str, Box<dyn FnMut()>>,
     );
 
     /// after calling dom api to create element,
@@ -34,7 +58,7 @@ pub trait Template {
 
     /// generate html element and add event bindings
     fn render(&self, parent: &Element, doc: &Document) -> Result<Element, JsValue> {
-        let (name, attrs, styles, content, listeners) = self.resources();
+        let (name, attrs, styles, content, listeners, other_listeners) = self.resources();
         let ele = doc.create_element(name).map_err(|e| {
             tracing::error!("failed to create element {}: {:?}", name, e);
             e
@@ -73,6 +97,20 @@ pub trait Template {
                 })?;
             cb.forget()
         }
+        for (kind, factory) in other_listeners.into_iter() {
+            let cb = Closure::wrap(factory);
+            ele.add_event_listener_with_callback(kind, cb.as_ref().unchecked_ref())
+                .map_err(|e| {
+                    tracing::error!(
+                        "failed to bind {} event listener on {}: {:?}",
+                        kind,
+                        name,
+                        e
+                    );
+                    e
+                })?;
+            cb.forget()
+        }
 
         self.set_element(ele.clone());
         parent.append_child(&ele).map_err(|e| {
@@ -84,18 +122,7 @@ pub trait Template {
             );
             e
         })?;
-        match content {
-            Content::Null => {}
-            Content::Text(text) => {
-                ele.set_inner_html(text);
-            }
-            Content::List(children) => {
-                for child in children {
-                    let child = child.render(&ele, doc)?;
-                    ele.append_child(&child)?;
-                }
-            }
-        };
+        render_content(content, &ele, doc)?;
         Ok(ele)
     }
 
@@ -103,7 +130,7 @@ pub trait Template {
         use std::fmt::Write;
 
         let pad = f.pad_size();
-        let (name, attrs, styles, content, _) = self.resources();
+        let (name, attrs, styles, content, _, _) = self.resources();
         if name == "html" {
             write!(buf, "<!doctype html>")?;
         }
@@ -170,6 +197,9 @@ pub trait Template {
                 } else {
                     write!(buf, "</{name}>")?;
                 }
+            }
+            Content::Dynamic(_) => {
+                write!(buf, "dynamic content")?;
             }
         }
         buf.push_str(f.line_sep);
@@ -238,6 +268,7 @@ pub fn tag(name: &'static str, content: Content) -> tags::Unit<(Marker,)> {
         attrs: Default::default(),
         markers: (Marker::default(),),
         listeners: Default::default(),
+        other_listeners: Default::default(),
     }
 }
 

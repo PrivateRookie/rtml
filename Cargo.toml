@@ -5,4 +5,5 @@ members = [
     "crates/lab",
     "examples/wasm",
     "examples/hello-world",
+    "examples/todo",
 ]

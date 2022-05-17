@@ -12,7 +12,8 @@ macro_rules! def {
                 attrs,
                 styles,
                 markers: $crate::Marker::default(),
-                listeners: Default::default()
+                listeners: Default::default(),
+                other_listeners: Default::default()
             })
         }
 
@@ -86,20 +87,26 @@ macro_rules! def {
             pub fn on<K: Into<&'static str>>(self, kind: K, listener: impl Fn(M) -> Box<dyn FnMut()> + 'static) -> Self {
                 $struct(self.0.on(kind, listener))
             }
+
+            /// add event listeners
+            pub fn when<K: Into<&'static str>>(self, kind: K, listener: Box<dyn Fn() -> Box<dyn FnMut()>>) -> Self {
+                $struct(self.0.when(kind, listener))
+            }
         }
 
         impl<M: $crate::Markers + Clone> $crate::Template for $struct<M> {
-            fn resources(&self) -> (
+            fn resources(& self) -> (
                 &'static str,
                 &$crate::tags::Attrs,
                 &$crate::tags::Styles,
                 &$crate::tags::Content,
                 std::collections::HashMap<&str, Box<dyn FnOnce() -> Box<dyn FnMut()> + '_>>,
+                std::collections::HashMap<&str, Box<dyn FnMut()>>,
             ) {
                 self.0.resources()
             }
 
-            fn set_element(&self, element: web_sys::Element) {
+            fn set_element(& self, element: web_sys::Element) {
                 self.0.set_element(element)
             }
         }
