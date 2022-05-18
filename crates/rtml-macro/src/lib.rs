@@ -6,6 +6,7 @@ use syn::{parse_macro_input, AttributeArgs, ItemFn};
 #[derive(Debug, FromMeta)]
 struct PageArgs {
     name: Option<String>,
+    _assets: Option<String>,
 }
 
 #[proc_macro_attribute]
@@ -20,9 +21,9 @@ pub fn page(args: TokenStream, input: TokenStream) -> TokenStream {
         }
     };
 
-    let name = args.name.unwrap_or("index.html".to_string());
+    let name = args.name.unwrap_or_else(|| "index.html".to_string());
     let ident = input.sig.ident;
-    let new_ident = syn::Ident::new(&format!("__wrapped_main_{}", ident.to_string()), ident.span());
+    let new_ident = syn::Ident::new(&format!("__wrapped_main_{}", ident), ident.span());
     input.sig.ident = new_ident.clone();
     let expanded = quote! {
         #input

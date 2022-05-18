@@ -1,33 +1,28 @@
 [package]
-name = "rtml"
+name = "form"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[features]
-default = ["zh-CN"]
-zh-CN = []
-en-US = []
-
-[lib]
-crate-type = ["cdylib", "rlib"]
-
 
 [dependencies]
+rtml = { path = "../../crates/rtml" }
 wasm-bindgen = { version = "0.2" }
-rtml-macro = { path = "../rtml-macro" }
 web-sys = { version = "0.3", features = [
     "Document",
     "Element",
     "HtmlElement",
     "Node",
     "Window",
-    "HtmlCollection",
-    "Event",
-    "EventTarget",
+    "DateTimeValue"
 ] }
 tracing = { version = "0.1" }
 tracing-wasm = "0.2.1"
 
-[dev-dependencies]
-opener = "0.5"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "index"
+path = "index.rs"

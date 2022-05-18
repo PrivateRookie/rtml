@@ -38,18 +38,18 @@ fn render_content(content: &Content, ele: &Element, doc: &Document) -> Result<()
     Ok(())
 }
 
+pub type TplResources<'a> = (
+    &'static str,
+    &'a Attrs,
+    &'a Styles,
+    &'a Content,
+    HashMap<&'a str, Box<dyn Fn(JsValue)>>,
+);
+
 pub trait Template {
     /// provide tag name, content, attr, styles and listeners
     /// to create html element
-    fn resources(
-        &self,
-    ) -> (
-        &'static str,
-        &Attrs,
-        &Styles,
-        &Content,
-        HashMap<&str, Box<dyn FnMut()>>,
-    );
+    fn resources(&self) -> TplResources;
 
     /// generate html element and add event bindings
     fn render(&self, parent: &Element, doc: &Document) -> Result<Element, JsValue> {
@@ -187,13 +187,13 @@ pub trait Template {
     }
 }
 
-pub fn tag(name: &'static str, content: Content) -> tags::Unit {
+pub fn unit(name: &'static str, content: Content) -> tags::Unit {
     tags::Unit {
         name,
         content,
         styles: Default::default(),
         attrs: Default::default(),
-        other_listeners: Default::default(),
+        listeners: Default::default(),
     }
 }
 

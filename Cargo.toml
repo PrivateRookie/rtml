@@ -6,4 +6,5 @@ members = [
     "examples/wasm",
     "examples/hello-world",
     "examples/todo",
+    "examples/form"
 ]

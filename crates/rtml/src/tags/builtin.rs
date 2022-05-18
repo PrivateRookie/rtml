@@ -11,7 +11,7 @@ macro_rules! def {
                 content,
                 attrs,
                 styles,
-                other_listeners: Default::default()
+                listeners: Default::default()
             })
         }
 
@@ -54,19 +54,13 @@ macro_rules! def {
             }
 
             /// add event listeners
-            pub fn on<K: Into<&'static str>>(self, kind: K, listener: Box<dyn Fn() -> Box<dyn FnMut()>>) -> Self {
+            pub fn on<K: Into<&'static str>>(self, kind: K, listener: Box<dyn Fn() -> Box<dyn Fn(wasm_bindgen::JsValue)>>) -> Self {
                 $struct(self.0.on(kind, listener))
             }
         }
 
         impl $crate::Template for $struct {
-            fn resources(& self) -> (
-                &'static str,
-                &$crate::tags::Attrs,
-                &$crate::tags::Styles,
-                &$crate::tags::Content,
-                std::collections::HashMap<&str, Box<dyn FnMut()>>,
-            ) {
+            fn resources(& self) -> $crate::TplResources {
                 self.0.resources()
             }
 

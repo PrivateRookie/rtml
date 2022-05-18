@@ -16,6 +16,7 @@ web-sys = { version = "0.3", features = [
     "Window",
     "DateTimeValue"
 ] }
+js-sys = {version = "0.3" }
 tracing = { version = "0.1" }
 tracing-wasm = "0.2.1"
 

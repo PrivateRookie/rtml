@@ -3,7 +3,7 @@ use rtml::tags::*;
 
 #[rtml::page]
 fn main() -> Html {
-    let pkg = env!("CARGO_PKG_NAME").replace("-", "_");
+    let pkg = env!("CARGO_PKG_NAME").replace('-', "_");
     html((
         attr! {lang="zh-cn"},
         (

@@ -26,12 +26,12 @@ fn count_card<I: Into<Option<usize>>, B: Into<Option<&'static str>>>(
 ) -> rtml::tags::Div {
     let count = init.into().unwrap_or_default().reactive();
     // 根据初始值设置显示, 注意只是设置 <p> 内容, 不会将 init 和 <p> 绑定
-    let show = p(count.view(|data| data.to_string().into()));
+    let show = p(count.view(|data| data.val().to_string().into()));
     let label = btn_label.into().unwrap_or("click");
     let incr = button(label).on(
         Click,
-        count.mutate(|data| {
-            *data += 1;
+        count.change(|data| {
+            *data.val_mut() += 1;
         }),
     );
     div((
