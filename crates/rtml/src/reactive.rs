@@ -5,7 +5,7 @@ use std::{
 
 use wasm_bindgen::JsValue;
 
-use crate::{render_content, Children, Subs, ViewCredential};
+use crate::{render_children, Children, Subs, ViewCredential};
 
 pub struct Reactive<T> {
     pub data: Rc<RefCell<T>>,
@@ -102,7 +102,7 @@ fn update_and_clear<T>(rea: &Reactive<T>) {
         let content = view();
         let window = web_sys::window().expect("no global `window` exists");
         let document = window.document().expect("should have a document on window");
-        if let Err(e) = render_content(&content, ele, &document) {
+        if let Err(e) = render_children(&content, ele, &document) {
             tracing::error!("failed to update content: {:?}", e);
         }
     }

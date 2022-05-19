@@ -5,7 +5,7 @@ use std::{
 };
 use tag_fmt::TagFormatter;
 use wasm_bindgen::{prelude::*, JsCast};
-use web_sys::{Document, Element, HtmlElement, Window};
+use web_sys::{Document, Element, HtmlElement};
 
 mod basic_impl;
 mod events;
@@ -21,8 +21,12 @@ pub use rtml_macro::page;
 /// print template as html, instead of create them by dom api
 pub mod tag_fmt;
 
-pub(crate) fn render_content(content: &Children, ele: &Element, doc: &Document) -> Result<(), JsValue> {
-    match content {
+pub(crate) fn render_children(
+    children: &Children,
+    ele: &Element,
+    doc: &Document,
+) -> Result<(), JsValue> {
+    match children {
         Children::Null => {}
         Children::Text(text) => {
             ele.set_inner_html(text);
@@ -38,7 +42,7 @@ pub(crate) fn render_content(content: &Children, ele: &Element, doc: &Document) 
             let view = view.view.replace(Box::new(|| Children::Null));
             let content = view();
             subs.borrow_mut().push((ele.clone(), view));
-            render_content(&content, ele, doc)?;
+            render_children(&content, ele, doc)?;
         }
     };
     Ok(())
@@ -108,7 +112,7 @@ pub trait Template {
             );
             e
         })?;
-        render_content(content, &ele, doc)?;
+        render_children(content, &ele, doc)?;
         Ok(ele)
     }
 
@@ -238,16 +242,29 @@ impl ViewCredential {
 pub type TemplateList = Vec<Box<dyn Template>>;
 pub type Listeners = HashMap<&'static str, Box<dyn Fn() -> Box<dyn Fn(JsValue)>>>;
 
-/// default entry point of app, mount top most element
-/// to document body directory.
-pub fn mount_body<T: Template>(tag: T) -> Result<(Window, Document, HtmlElement), JsValue> {
+fn get_document() -> Document {
     let window = web_sys::window().expect("no global `window` exists");
     let document = window.document().expect("should have a document on window");
+    document
+}
+
+/// default entry point of app, mount top most element
+/// to document body directory.
+pub fn mount_body<C: Into<Children>>(children: C) -> Result<(Document, HtmlElement), JsValue> {
+    let document = get_document();
     let body = document.body().expect("document should have a body");
 
     if body.child_element_count() != 0 {
         tracing::warn!("body children is not empty");
     }
-    tag.render(&body, &document)?;
-    Ok((window, document, body))
+    let children = children.into();
+    render_children(&children, &body, &document)?;
+    Ok((document, body))
+}
+
+pub fn mount<C: Into<Children>>(target: &Element, children: C) -> Result<(), JsValue> {
+    let doc = get_document();
+    let children = children.into();
+    render_children(&children, target, &doc)?;
+    Ok(())
 }
