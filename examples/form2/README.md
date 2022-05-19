@@ -1,2 +1,2 @@
-# 执行example文件下的案例
-cargo run -p <project-name> 生成pkg文件目录
+# 执行examples文件下的案例
+cargo run -p form2 生成pkg文件目录
