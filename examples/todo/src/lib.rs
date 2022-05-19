@@ -4,7 +4,7 @@ use js_sys::Reflect;
 use rtml::EventKind::{self, Click};
 use rtml::{attr, mount_body, style, tags::*, IntoReactive};
 use wasm_bindgen::prelude::*;
-use web_sys::Event;
+
 struct Item {
     id: usize,
     msg: String,
@@ -42,7 +42,6 @@ pub fn start() {
         input(attr! {type="text", id="xpr"}).on(
             EventKind::Change,
             msg.evt(|evt, msg| {
-                let evt: web_sys::Event = evt.into();
                 if let Some(target) = evt.target() {
                     let value = Reflect::get(&target, &JsValue::from_str("value")).unwrap();
                     if let Some(val) = value.as_string() {
@@ -54,15 +53,12 @@ pub fn start() {
         button("+").on(
             Click,
             msg.add(items.clone()).evt(|event, (msg, items)| {
-                let evt: Event = event.into();
+                event.prevent_default();
                 if msg.val().is_empty() {
                 } else {
                     let text = msg.val().clone();
                     items.val_mut().push(Item::new(100, text));
-                    items.update();
-                    msg.update();
                 }
-                evt.prevent_default();
             }),
         ),
     ));

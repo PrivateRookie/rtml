@@ -1,9 +1,9 @@
 use crate::{tag_fmt::TagFormatter, Listeners, Template};
 use std::collections::HashMap;
-use wasm_bindgen::JsValue;
 
 mod builtin;
 pub use builtin::*;
+use web_sys::Event;
 
 pub struct Unit {
     pub name: &'static str,
@@ -30,7 +30,7 @@ impl Template for Unit {
         &Attrs,
         &Styles,
         &crate::Children,
-        HashMap<&str, Box<dyn Fn(JsValue)>>,
+        HashMap<&str, Box<dyn Fn(Event)>>,
     ) {
         let other_factories: HashMap<&'static str, _> = self
             .listeners
@@ -54,7 +54,7 @@ impl Unit {
     pub fn on<K: Into<&'static str>>(
         mut self,
         kind: K,
-        listener: Box<dyn Fn() -> Box<dyn Fn(JsValue)>>,
+        listener: Box<dyn Fn() -> Box<dyn Fn(Event)>>,
     ) -> Self {
         self.listeners.insert(kind.into(), listener);
         self

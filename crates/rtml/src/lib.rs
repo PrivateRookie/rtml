@@ -5,7 +5,7 @@ use std::{
 };
 use tag_fmt::TagFormatter;
 use wasm_bindgen::{prelude::*, JsCast};
-use web_sys::{Document, Element, HtmlElement};
+use web_sys::{Document, Element, HtmlElement, Event};
 
 mod basic_impl;
 mod events;
@@ -53,7 +53,7 @@ pub type TplResources<'a> = (
     &'a Attrs,
     &'a Styles,
     &'a Children,
-    HashMap<&'a str, Box<dyn Fn(JsValue)>>,
+    HashMap<&'a str, Box<dyn Fn(Event)>>,
 );
 
 pub trait Template {
@@ -240,7 +240,7 @@ impl ViewCredential {
 }
 
 pub type TemplateList = Vec<Box<dyn Template>>;
-pub type Listeners = HashMap<&'static str, Box<dyn Fn() -> Box<dyn Fn(JsValue)>>>;
+pub type Listeners = HashMap<&'static str, Box<dyn Fn() -> Box<dyn Fn(Event)>>>;
 
 fn get_document() -> Document {
     let window = web_sys::window().expect("no global `window` exists");

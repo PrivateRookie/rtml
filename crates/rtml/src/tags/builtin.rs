@@ -54,7 +54,7 @@ macro_rules! def {
             }
 
             /// add event listeners
-            pub fn on<K: Into<&'static str>>(self, kind: K, listener: Box<dyn Fn() -> Box<dyn Fn(wasm_bindgen::JsValue)>>) -> Self {
+            pub fn on<K: Into<&'static str>>(self, kind: K, listener: Box<dyn Fn() -> Box<dyn Fn(web_sys::Event)>>) -> Self {
                 $struct(self.0.on(kind, listener))
             }
         }

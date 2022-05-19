@@ -3,7 +3,7 @@ use std::{
     rc::Rc,
 };
 
-use wasm_bindgen::JsValue;
+use web_sys::Event;
 
 use crate::{render_children, Children, Subs, ViewCredential};
 
@@ -60,10 +60,10 @@ impl<T: 'static> Reactive<T> {
     }
 
     /// handle event and reactive data
-    pub fn evt<M: Fn(JsValue, Self) + 'static + Copy>(
+    pub fn evt<M: Fn(Event, Self) + 'static + Copy>(
         &self,
         m: M,
-    ) -> Box<dyn Fn() -> Box<dyn Fn(JsValue)> + 'static> {
+    ) -> Box<dyn Fn() -> Box<dyn Fn(Event)> + 'static> {
         let data = self.clone();
         Box::new(move || {
             let data = data.clone();
@@ -75,7 +75,7 @@ impl<T: 'static> Reactive<T> {
     pub fn change<M: Fn(Self) + 'static + Copy>(
         &self,
         m: M,
-    ) -> Box<dyn Fn() -> Box<dyn Fn(JsValue)> + 'static> {
+    ) -> Box<dyn Fn() -> Box<dyn Fn(Event)> + 'static> {
         let rea = self.clone();
         Box::new(move || {
             let rea = rea.clone();
@@ -158,7 +158,7 @@ macro_rules! impl_combine {
             pub fn change<Method: Fn(($crate::Reactive<This>, $($crate::Reactive<$t>),+)) + 'static + Copy>(
                 &self,
                 m: Method,
-            ) -> Box<dyn Fn() -> Box<dyn Fn(wasm_bindgen::JsValue)> + 'static>  {
+            ) -> Box<dyn Fn() -> Box<dyn Fn(web_sys::Event)> + 'static>  {
                 let data = self.data.clone();
                 Box::new(move|| {
                     let data = data.clone();
@@ -172,10 +172,10 @@ macro_rules! impl_combine {
             }
 
             /// mutate data and update view
-            pub fn evt<Method: Fn(wasm_bindgen::JsValue, ($crate::Reactive<This>, $($crate::Reactive<$t>),+)) + 'static + Copy>(
+            pub fn evt<Method: Fn(web_sys::Event, ($crate::Reactive<This>, $($crate::Reactive<$t>),+)) + 'static + Copy>(
                 &self,
                 m: Method,
-            ) -> Box<dyn Fn() -> Box<dyn Fn(wasm_bindgen::JsValue)> + 'static>  {
+            ) -> Box<dyn Fn() -> Box<dyn Fn(web_sys::Event)> + 'static>  {
                 let data = self.data.clone();
                 Box::new(move|| {
                     let data = data.clone();
