@@ -1,7 +1,7 @@
 use rtml::attr;
 use rtml::tags::*;
 #[rtml::page]
-fn main() -> Html {
+fn index() -> Html {
     html((
         attr! {lang="en"},
         (
@@ -18,7 +18,7 @@ fn main() -> Html {
                 link(attr! { rel="preconnect", href="https://fonts.gstatic.com"}),
                 link(attr! { rel="stylesheet", href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;400;700&display=swap"}),
                 link(attr! { rel="stylesheet", href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.1.1/css/fontawesome.min.css"}),
-                link(attr! { rel="stylesheet", href="../assets/index.css"})
+                style(include_str!("../assets/index.css"))
             )),
             body((
                 div((

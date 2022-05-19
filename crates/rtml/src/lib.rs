@@ -112,7 +112,7 @@ pub trait Template {
         let pad = f.pad_size();
         let (name, attrs, styles, content, _) = self.resources();
         if name == "html" {
-            write!(buf, "<!doctype html>")?;
+            write!(buf, "<!doctype html>{}", f.line_sep)?;
         }
         write!(buf, "{:pad$}<{}", "", name)?;
         if f.newline_on_attr {

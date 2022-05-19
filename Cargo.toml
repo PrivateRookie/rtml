@@ -1,10 +1,8 @@
 [workspace]
 members = [
     "crates/rtml",
-    "crates/rtml-macro",
+    "crates/macro",
     "crates/lab",
-    "examples/wasm",
-    "examples/hello-world",
-    "examples/todo",
-    "examples/form"
+    "crates/project",
+    "examples/*",
 ]

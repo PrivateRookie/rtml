@@ -21,8 +21,8 @@ pub fn page(args: TokenStream, input: TokenStream) -> TokenStream {
         }
     };
 
-    let name = args.name.unwrap_or_else(|| "index.html".to_string());
     let ident = input.sig.ident;
+    let name = args.name.unwrap_or_else(|| format!("{}.html", ident));
     let new_ident = syn::Ident::new(&format!("__wrapped_main_{}", ident), ident.span());
     input.sig.ident = new_ident.clone();
     let expanded = quote! {
