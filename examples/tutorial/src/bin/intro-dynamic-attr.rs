@@ -4,7 +4,7 @@ use rtml::{
 };
 
 #[rtml::page]
-fn adding_data() -> Html {
-    let src = "";
+fn dynamic_attr() -> Html {
+    let src = "https://www.rust-lang.org/static/images/rust-logo-blk.svg";
     html(img(attr! { src = src }))
 }
