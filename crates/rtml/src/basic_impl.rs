@@ -1,16 +1,13 @@
 mod impl_children {
-    use crate::{
-        tags::{Content, ViewCredential},
-        Template,
-    };
+    use crate::{Children, Template, ViewCredential};
 
-    impl From<ViewCredential> for Content {
+    impl From<ViewCredential> for Children {
         fn from(view: ViewCredential) -> Self {
             Self::Dynamic(view)
         }
     }
 
-    impl<T> From<Vec<T>> for Content
+    impl<T> From<Vec<T>> for Children
     where
         T: Template + 'static,
     {
@@ -23,7 +20,7 @@ mod impl_children {
         }
     }
 
-    impl<T> From<T> for Content
+    impl<T> From<T> for Children
     where
         T: Template + 'static,
     {
@@ -32,13 +29,13 @@ mod impl_children {
         }
     }
 
-    impl<const N: usize> From<[Box<dyn Template>; N]> for Content {
+    impl<const N: usize> From<[Box<dyn Template>; N]> for Children {
         fn from(src: [Box<dyn Template>; N]) -> Self {
             Self::List(src.into_iter().collect())
         }
     }
 
-    impl From<()> for Content {
+    impl From<()> for Children {
         fn from(_: ()) -> Self {
             Self::Null
         }
@@ -46,7 +43,7 @@ mod impl_children {
 
     macro_rules! prime_impl {
         ($ty:ty) => {
-            impl From<$ty> for Content {
+            impl From<$ty> for Children {
                 fn from(src: $ty) -> Self {
                     Self::Text(src.to_string())
                 }
@@ -73,7 +70,7 @@ mod impl_children {
 
     macro_rules! tuple_impl {
         ($($t:tt),+ | $($i:tt),+) => {
-            impl <$($t ),+ > From<($($t,)+)> for Content
+            impl <$($t ),+ > From<($($t,)+)> for Children
                 where
                     $($t: Template + 'static),+
             {

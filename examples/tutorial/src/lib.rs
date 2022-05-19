@@ -1,4 +1,4 @@
-use rtml::{mount_body, tags::*, EventKind::Click};
+use rtml::{mount_body, tags::*, EventKind::Click, IntoReactive};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]

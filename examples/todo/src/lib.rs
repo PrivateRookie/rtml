@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use js_sys::Reflect;
 use rtml::EventKind::{self, Click};
-use rtml::{attr, mount_body, style, tags::*};
+use rtml::{attr, mount_body, style, tags::*, IntoReactive};
 use wasm_bindgen::prelude::*;
 use web_sys::Event;
 struct Item {

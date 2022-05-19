@@ -1,4 +1,8 @@
-use std::collections::HashMap;
+use std::{
+    cell::{Cell, RefCell},
+    collections::HashMap,
+    rc::Rc,
+};
 use tag_fmt::TagFormatter;
 use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{Document, Element, HtmlElement, Window};
@@ -8,28 +12,30 @@ mod events;
 /// html tags
 pub mod tags;
 pub use events::*;
-use tags::{Attrs, Content, Styles};
+use tags::{Attrs, Styles};
 mod attr;
+mod reactive;
 mod style;
+pub use reactive::{reactive, CombinedReactive, IntoReactive, Reactive};
 pub use rtml_macro::page;
 /// print template as html, instead of create them by dom api
 pub mod tag_fmt;
 
-fn render_content(content: &Content, ele: &Element, doc: &Document) -> Result<(), JsValue> {
+pub(crate) fn render_content(content: &Children, ele: &Element, doc: &Document) -> Result<(), JsValue> {
     match content {
-        Content::Null => {}
-        Content::Text(text) => {
+        Children::Null => {}
+        Children::Text(text) => {
             ele.set_inner_html(text);
         }
-        Content::List(children) => {
+        Children::List(children) => {
             for child in children {
                 let child = child.render(ele, doc)?;
                 ele.append_child(&child)?;
             }
         }
-        Content::Dynamic(view) => {
+        Children::Dynamic(view) => {
             let subs = view.subs.clone();
-            let view = view.view.replace(Box::new(|| Content::Null));
+            let view = view.view.replace(Box::new(|| Children::Null));
             let content = view();
             subs.borrow_mut().push((ele.clone(), view));
             render_content(&content, ele, doc)?;
@@ -42,7 +48,7 @@ pub type TplResources<'a> = (
     &'static str,
     &'a Attrs,
     &'a Styles,
-    &'a Content,
+    &'a Children,
     HashMap<&'a str, Box<dyn Fn(JsValue)>>,
 );
 
@@ -156,14 +162,14 @@ pub trait Template {
             buf.push('>');
         }
         match content {
-            Content::Null => {
+            Children::Null => {
                 write!(buf, "</{name}>")?;
             }
-            Content::Text(text) => {
+            Children::Text(text) => {
                 buf.write_str(text)?;
                 write!(buf, "</{name}>")?;
             }
-            Content::List(children) => {
+            Children::List(children) => {
                 buf.push_str(f.line_sep);
                 f.indent += 1;
                 for child in children.iter() {
@@ -178,7 +184,7 @@ pub trait Template {
                     write!(buf, "</{name}>")?;
                 }
             }
-            Content::Dynamic(_) => {
+            Children::Dynamic(_) => {
                 write!(buf, "dynamic content")?;
             }
         }
@@ -187,7 +193,7 @@ pub trait Template {
     }
 }
 
-pub fn unit(name: &'static str, content: Content) -> tags::Unit {
+pub fn unit(name: &'static str, content: Children) -> tags::Unit {
     tags::Unit {
         name,
         content,
@@ -196,6 +202,41 @@ pub fn unit(name: &'static str, content: Content) -> tags::Unit {
         listeners: Default::default(),
     }
 }
+
+/// html element content
+pub enum Children {
+    /// empty tag
+    Null,
+    /// this element has children
+    List(TemplateList),
+    // TODO add html escape checking
+    /// normal text content
+    Text(String),
+    Dynamic(ViewCredential),
+}
+
+impl Default for Children {
+    fn default() -> Self {
+        Self::Null
+    }
+}
+
+pub type Subs = Rc<RefCell<Vec<(Element, Box<dyn Fn() -> Children>)>>>;
+pub struct ViewCredential {
+    pub(crate) view: Cell<Box<dyn Fn() -> Children>>,
+    pub(crate) subs: Subs,
+}
+impl ViewCredential {
+    pub fn new(subs: Subs, view: Box<dyn Fn() -> Children + 'static>) -> Self {
+        Self {
+            view: Cell::new(view),
+            subs,
+        }
+    }
+}
+
+pub type TemplateList = Vec<Box<dyn Template>>;
+pub type Listeners = HashMap<&'static str, Box<dyn Fn() -> Box<dyn Fn(JsValue)>>>;
 
 /// default entry point of app, mount top most element
 /// to document body directory.
