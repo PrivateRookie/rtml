@@ -20,56 +20,66 @@ pub fn start() {
         data.val().save().unwrap();
     });
 
-    let wrapper = div(attr! {class="todomvc-wrapper"}).children((
-        section(attr! {class="todoapp"}).children((
-            header((
-                attr! {class="header"},
-                (
-                    h1("RTML - Todos"),
-                    input_view(records.clone()),
-                ),
-            )),
+    let wrapper = div((
+        attr! {class="todomvc-wrapper"},
+        (
             section((
-                attr! {class="main"},
+                attr! {class="todoapp"},
                 (
-                    input(attr! {type="checkbox", class="toggle-all", id="toggle-all"})
-                        .on(Click, toggle_all),
-                    label(attr! {for="toggle-all"}),
-                    todo_list(records.clone()),
+                    header((
+                        attr! {class="header"},
+                        (
+                            h1("RTML - Todos"),
+                            input_view(records.clone()),
+                        ),
+                    )),
+                    section((
+                        attr! {class="main"},
+                        (
+                            input(attr! {type="checkbox", class="toggle-all", id="toggle-all"})
+                                .on(Click, toggle_all),
+                            label(attr! {for="toggle-all"}),
+                            todo_list(records.clone()),
+                        ),
+                    )),
+                    footer((
+                        attr! {class="footer"},
+                        span((
+                            attr! {class="todo-count"},
+                            (
+                                // TODO use view here
+                                strong(records.view(|data| data.val().items.len().into())),
+                                span(" item(s) left"),
+                                // TODO use view here
+                                ul((attr! {class="filters"}, ())),
+                                // TODO use view
+                                button(attr! {class = "clear-completed"}),
+                            ),
+                        )),
+                    )),
                 ),
             )),
             footer((
-                attr! {class="footer"},
-                span(attr! {class="todo-count"}).children((
-                    // TODO use view here
-                    strong(records.view(|data| data.val().items.len().into())),
-                    span(" item(s) left"),
-                    // TODO use view here
-                    ul(attr! {class="filters"}).children(()),
-                    // TODO use view
-                    button(attr!(
-                        class = "clear-completed"
+                attr! {class="info"},
+                (
+                    p("Double-click to edit a todo"),
+                    p((
+                        span("Written by "),
+                        a((
+                            attr! {href="https://github.com/PrivateRookie", target="_blank"},
+                            "PrivateRookie",
+                        )),
                     )),
-                )),
+                    p((
+                        span("Part of "),
+                        a((
+                            attr! {href="http://todomvc.com/", target="_blank"},
+                            "TodoMVC",
+                        )),
+                    )),
+                ),
             )),
-        )),
-        footer(attr! {class="info"}).children((
-            p("Double-click to edit a todo"),
-            p((
-                span("Written by "),
-                a((
-                    attr! {href="", target="_blank"},
-                    "PrivateRookie",
-                )),
-            )),
-            p((
-                span("Part of "),
-                a((
-                    attr! {href="", target="_blank"},
-                    "TodoMVC",
-                )),
-            )),
-        )),
+        ),
     ));
 
     mount_body(wrapper).unwrap();
@@ -99,28 +109,32 @@ fn todo_list(records: Reactive<Store>) -> Ul {
             .enumerate()
             .map(|(idx, item)| {
                 li((
-                    div(attr! {class="view"}).children((
-                        input(attr! {type="checkbox", class="toggle", checked=item.completed}).on(
-                            Click,
-                            data.change(move |store| {
-                                store.val_mut().items.remove(idx);
-                                store.val_mut().save().unwrap();
-                            }),
-                        ),
-                        label(&item.description).on(
-                            Click,
-                            data.change(move |store| {
-                                if let Some(item) = store.val_mut().items.get_mut(idx) {
-                                    item.editing = !item.editing;
-                                }
-                                store.val().save().unwrap();
-                            }),
-                        ),
-                        button(attr! {class="destroy"}).on(
-                            Click,
-                            data.change(move |store| {
-                                store.val_mut().remove(idx);
-                            }),
+                    div((
+                        attr! {class="view"},
+                        (
+                            input(attr! {type="checkbox", class="toggle", checked=item.completed})
+                                .on(
+                                    Click,
+                                    data.change(move |store| {
+                                        store.val_mut().items.remove(idx);
+                                        store.val_mut().save().unwrap();
+                                    }),
+                                ),
+                            label(&item.description).on(
+                                Click,
+                                data.change(move |store| {
+                                    if let Some(item) = store.val_mut().items.get_mut(idx) {
+                                        item.editing = !item.editing;
+                                    }
+                                    store.val().save().unwrap();
+                                }),
+                            ),
+                            button(attr! {class="destroy"}).on(
+                                Click,
+                                data.change(move |store| {
+                                    store.val_mut().remove(idx);
+                                }),
+                            ),
                         ),
                     )),
                     item_edit_input(item, idx, data.clone()),
