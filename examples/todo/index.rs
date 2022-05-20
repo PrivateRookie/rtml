@@ -1,7 +1,7 @@
 use rtml::{attr, tags::*};
 
 #[rtml::page]
-fn main() -> Html {
+fn index() -> Html {
     let pkg = env!("CARGO_PKG_NAME").replace('-', "_");
     html((
         attr! {lang="zh-cn"},
@@ -9,17 +9,13 @@ fn main() -> Html {
             head((
                 meta(attr! { charset="utf-8" }),
                 meta(attr! { name = "viewport", content="width=device-width, initial-scale=1" }),
-                meta(
-                    attr! { http-equiv="Cache-Control", content="no-cache, no-store, must-revalidate" },
-                ),
+                title("RTML • TodoMVC"),
                 script((
                     attr! { type="module" },
                     format!("\nimport init from \"./{pkg}.js\";\ninit();\n"),
                 )),
-                style(include_str!("assets/bootstrap.min.css")),
-                style(include_str!("assets/bootstrap-icons.css")),
-                script(include_str!("assets/bootstrap.bundle.min.js")),
-                title("TODO"),
+                style(include_str!("assets/base.css")),
+                style(include_str!("assets/index.css")),
             )),
             body(()),
         ),

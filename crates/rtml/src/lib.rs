@@ -5,7 +5,7 @@ use std::{
 };
 use tag_fmt::TagFormatter;
 use wasm_bindgen::{prelude::*, JsCast};
-use web_sys::{Document, Element, HtmlElement, Event};
+use web_sys::{Document, Element, Event, HtmlElement};
 
 mod basic_impl;
 mod events;
@@ -20,6 +20,30 @@ pub use reactive::{reactive, CombinedReactive, IntoReactive, Reactive};
 pub use rtml_macro::page;
 /// print template as html, instead of create them by dom api
 pub mod tag_fmt;
+
+fn get_ele_pos(ele: &Element) -> (usize, usize) {
+    let mut depth = 0;
+    let mut parent = ele.parent_element();
+    loop {
+        if let Some(par) = parent {
+            depth += 1;
+            parent = par.parent_element();
+        } else {
+            break;
+        }
+    }
+    let mut offset = 0;
+    let mut prev = ele.previous_element_sibling();
+    loop {
+        if let Some(pre) = prev {
+            offset += 1;
+            prev = pre.previous_element_sibling();
+        } else {
+            break;
+        }
+    }
+    (depth, offset)
+}
 
 pub(crate) fn render_children(
     children: &Children,
@@ -41,7 +65,12 @@ pub(crate) fn render_children(
             let subs = view.subs.clone();
             let view = view.view.replace(Box::new(|| Children::Null));
             let content = view();
-            subs.borrow_mut().push((ele.clone(), view));
+            let ele_pos = get_ele_pos(ele);
+            let pos = subs
+                .borrow()
+                .binary_search_by(|item| item.0.cmp(&ele_pos))
+                .unwrap_or_else(|e| e);
+            subs.borrow_mut().insert(pos, (ele_pos, ele.clone(), view));
             render_children(&content, ele, doc)?;
         }
     };
@@ -225,7 +254,7 @@ impl Default for Children {
     }
 }
 
-pub type Subs = Rc<RefCell<Vec<(Element, Box<dyn Fn() -> Children>)>>>;
+pub type Subs = Rc<RefCell<Vec<((usize, usize), Element, Box<dyn Fn() -> Children>)>>>;
 pub struct ViewCredential {
     pub(crate) view: Cell<Box<dyn Fn() -> Children>>,
     pub(crate) subs: Subs,

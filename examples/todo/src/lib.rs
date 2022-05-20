@@ -1,114 +1,170 @@
-use std::ops::Add;
-
-use js_sys::Reflect;
-use rtml::EventKind::{self, Click};
-use rtml::{attr, mount_body, style, tags::*, IntoReactive};
+use rtml::EventKind::{Blur, Click, Keypress, Mouseover};
+use rtml::{attr, mount_body, tags::*, IntoReactive, Reactive};
+use store::Store;
 use wasm_bindgen::prelude::*;
+use web_sys::{HtmlInputElement, KeyboardEvent};
 
-struct Item {
-    id: usize,
-    msg: String,
-    done: bool,
-}
-
-impl Item {
-    fn new<S: Into<String>>(id: usize, msg: S) -> Self {
-        Self {
-            id,
-            msg: msg.into(),
-            done: false,
-        }
-    }
-
-    fn toggle(&mut self) {
-        self.done = !self.done;
-    }
-}
+mod store;
 
 #[wasm_bindgen(start)]
 pub fn start() {
     tracing_wasm::set_as_global_default();
 
-    let items = vec![
-        Item::new(1, "eat"),
-        Item::new(2, "sleep"),
-        Item::new(3, "coding"),
-    ]
-    .reactive();
+    let records = store::Store::load().reactive();
 
-    let msg = String::new().reactive();
-    let new_item = form((
-        h2("New Record"),
-        input(attr! {type="text", id="xpr"}).on(
-            EventKind::Change,
-            msg.evt(|evt, msg| {
-                if let Some(target) = evt.target() {
-                    let value = Reflect::get(&target, &JsValue::from_str("value")).unwrap();
-                    if let Some(val) = value.as_string() {
-                        *msg.val_mut() = val;
-                    }
-                }
-            }),
-        ),
-        button("+").on(
-            Click,
-            msg.add(items.clone()).evt(|event, (msg, items)| {
-                event.prevent_default();
-                if msg.val().is_empty() {
-                } else {
-                    let text = msg.val().clone();
-                    items.val_mut().push(Item::new(100, text));
-                }
-            }),
-        ),
+    let toggle_all = records.change(|data| {
+        data.val_mut()
+            .items
+            .iter_mut()
+            .for_each(|item| item.completed = !item.completed);
+        data.val().save().unwrap();
+    });
+
+    let wrapper = div(attr! {class="todomvc-wrapper"}).children((
+        section(attr! {class="todoapp"}).children((
+            header((
+                attr! {class="header"},
+                (
+                    h1("RTML - Todos"),
+                    input_view(records.clone()),
+                ),
+            )),
+            section((
+                attr! {class="main"},
+                (
+                    input(attr! {type="checkbox", class="toggle-all", id="toggle-all"})
+                        .on(Click, toggle_all),
+                    label(attr! {for="toggle-all"}),
+                    todo_list(records.clone()),
+                ),
+            )),
+            footer((
+                attr! {class="footer"},
+                span(attr! {class="todo-count"}).children((
+                    // TODO use view here
+                    strong(records.view(|data| data.val().items.len().into())),
+                    span(" item(s) left"),
+                    // TODO use view here
+                    ul(attr! {class="filters"}).children(()),
+                    // TODO use view
+                    button(attr!(
+                        class = "clear-completed"
+                    )),
+                )),
+            )),
+        )),
+        footer(attr! {class="info"}).children((
+            p("Double-click to edit a todo"),
+            p((
+                span("Written by "),
+                a((
+                    attr! {href="", target="_blank"},
+                    "PrivateRookie",
+                )),
+            )),
+            p((
+                span("Part of "),
+                a((
+                    attr! {href="", target="_blank"},
+                    "TodoMVC",
+                )),
+            )),
+        )),
     ));
-    let cards = div((
-        attr! {class="out-most"},
-        items.view(|cards| {
-            cards
-                .val()
-                .iter()
-                .enumerate()
-                .map(|(idx, data)| {
-                    div((
-                        attr! {class="container"},
-                        (
-                            p(format!("ID: {}", data.id)),
-                            p(format!("Content: {}", data.msg)),
-                            p(format!("status: {}", data.done)),
-                            button((
-                                style! {
-                                    margin: "0 5px 0 0"
-                                },
-                                "toggle",
-                            ))
-                            .on(
-                                Click,
-                                cards.change(move |records| {
-                                    if let Some(item) = records.val_mut().get_mut(idx) {
-                                        item.toggle();
-                                    }
-                                }),
-                            ),
-                            button((
-                                style! {
-                                    margin: "0 5px 0 0"
-                                },
-                                "delete",
-                            ))
-                            .on(
-                                Click,
-                                cards.change(move |records| {
-                                    records.val_mut().remove(idx);
-                                }),
-                            ),
-                            hr(()),
+
+    mount_body(wrapper).unwrap();
+}
+
+fn input_view(records: Reactive<Store>) -> Input {
+    let update_and_reset = records.evt(|event, data| {
+        let event: KeyboardEvent = JsValue::from(event).into();
+        if event.key() == "Enter" {
+            if let Some(target) = event.target() {
+                let input: HtmlInputElement = JsValue::from(target).into();
+                let value = input.value();
+                data.val_mut().add(value);
+                input.set_value("");
+            }
+        }
+    });
+    input(attr! {id="edit-input",class="new-todo", placeholder="What needs to be done?"})
+        .on(Keypress, update_and_reset)
+}
+
+fn todo_list(records: Reactive<Store>) -> Ul {
+    ul(records.view(|data| {
+        data.val()
+            .items
+            .iter()
+            .enumerate()
+            .map(|(idx, item)| {
+                li((
+                    div(attr! {class="view"}).children((
+                        input(attr! {type="checkbox", class="toggle", checked=item.completed}).on(
+                            Click,
+                            data.change(move |store| {
+                                store.val_mut().items.remove(idx);
+                                store.val_mut().save().unwrap();
+                            }),
                         ),
-                    ))
-                })
-                .collect::<Vec<_>>()
-                .into()
-        }),
-    ));
-    mount_body(div((new_item, hr(()), cards))).unwrap();
+                        label(&item.description).on(
+                            Click,
+                            data.change(move |store| {
+                                if let Some(item) = store.val_mut().items.get_mut(idx) {
+                                    item.editing = !item.editing;
+                                }
+                                store.val().save().unwrap();
+                            }),
+                        ),
+                        button(attr! {class="destroy"}).on(
+                            Click,
+                            data.change(move |store| {
+                                store.val_mut().remove(idx);
+                            }),
+                        ),
+                    )),
+                    item_edit_input(item, idx, data.clone()),
+                ))
+            })
+            .collect::<Vec<_>>()
+            .into()
+    }))
+}
+
+fn item_edit_input(item: &store::Item, idx: usize, data: Reactive<Store>) -> Input {
+    fn edit(event: web_sys::Event, store: Reactive<Store>, idx: usize) {
+        let event: KeyboardEvent = JsValue::from(event).into();
+        if let Some(target) = event.target() {
+            let input: HtmlInputElement = JsValue::from(target).into();
+            let value = input.value();
+            store.val_mut().edit(idx, value);
+            input.set_value("");
+        }
+    }
+
+    if item.editing {
+        let on_mouseover = data.evt(|event, _| {
+            if let Some(target) = event.target() {
+                let input: HtmlInputElement = JsValue::from(target).into();
+                input.focus().unwrap();
+            }
+        });
+
+        let on_blur = data.evt(move |event, store| {
+            edit(event, store, idx);
+        });
+
+        let on_keypress = data.evt(move |event, store| {
+            let event: KeyboardEvent = JsValue::from(event).into();
+            if event.key() == "Entry" {
+                edit(event.into(), store, idx);
+            }
+        });
+        input(attr! {class="edit", type="text", value=item.description})
+            .on(Mouseover, on_mouseover)
+            .on(Blur, on_blur)
+            .on(Keypress, on_keypress)
+    } else {
+        input(attr! {type="hidden"})
+    }
 }

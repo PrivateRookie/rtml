@@ -67,7 +67,10 @@ impl<T: 'static> Reactive<T> {
         let data = self.clone();
         Box::new(move || {
             let data = data.clone();
-            Box::new(move |event| m(event, data.clone()))
+            Box::new(move |event| {
+                m(event, data.clone());
+                update_and_clear(&data);
+            })
         })
     }
 
@@ -92,7 +95,7 @@ impl<T: 'static> Reactive<T> {
 }
 
 fn update_and_clear<T>(rea: &Reactive<T>) {
-    for (ele, view) in rea.subscribers.borrow().iter() {
+    for (_, ele, view) in rea.subscribers.borrow().iter() {
         let children = ele.children();
         for _ in 0..children.length() {
             if let Some(child) = children.get_with_index(0) {
@@ -107,17 +110,17 @@ fn update_and_clear<T>(rea: &Reactive<T>) {
         }
     }
     // remove not active elements
-    rea.subscribers
-        .borrow_mut()
-        .sort_by(|a, b| (!a.0.is_connected()).cmp(&(!b.0.is_connected())));
-    let pos = rea
-        .subscribers
-        .borrow()
-        .iter()
-        .position(|i| !i.0.is_connected());
-    if let Some(pos) = pos {
-        rea.subscribers.borrow_mut().drain(pos..);
-    }
+    // rea.subscribers
+    //     .borrow_mut()
+    //     .sort_by(|a, b| (!a.1.is_connected()).cmp(&(!b.1.is_connected())));
+    // let pos = rea
+    //     .subscribers
+    //     .borrow()
+    //     .iter()
+    //     .position(|i| !i.1.is_connected());
+    // if let Some(pos) = pos {
+    //     rea.subscribers.borrow_mut().drain(pos..);
+    // }
 }
 
 pub struct CombinedReactive<T> {
