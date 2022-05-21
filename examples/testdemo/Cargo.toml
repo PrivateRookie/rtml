@@ -1,0 +1,28 @@
+[package]
+name = "testdemo"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rtml = { path = "../../crates/rtml" }
+wasm-bindgen = { version = "0.2" }
+web-sys = { version = "0.3", features = [
+    "Document",
+    "Element",
+    "HtmlElement",
+    "Node",
+    "Window",
+    "DateTimeValue"
+] }
+js-sys = {version = "0.3" }
+tracing = { version = "0.1" }
+tracing-wasm = "0.2.1"
+
+[lib]
+crate-type =["cdylib", "rlib"]
+
+[[bin]]
+name = "index"
+path = "index.rs"

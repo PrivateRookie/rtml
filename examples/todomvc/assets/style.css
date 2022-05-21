@@ -1,0 +1,165 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  background-color: rgb(237, 237, 237);
+}
+
+#todo-app {
+  width: 100vw;
+  height: 100vh;
+  margin: 0 auto;
+  /* overflow: hidden; */
+}
+
+#todo-app>header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+#todo-app>header>h2 {
+  margin: 20px auto;
+  text-align: center;
+  font-size: 32px;
+  color: rgb(167, 54, 28);
+  font-style: oblique;
+  font-weight: normal;
+}
+
+#todo-app>header div #new-todo {
+  border: none;
+  outline: none;
+  width: 430px;
+  display: inline-block;
+}
+
+#todo-app>header div {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+#todo-app>header div button {
+  width: 70px;
+  height: 70px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-size: 32px;
+  background-color: #fff;
+  color: gray;
+  box-shadow: 1px 1px 3px rgba(132, 132, 132, .8);
+}
+
+.box {
+  position: relative;
+  display: block;
+  margin: 0 auto;
+  width: 500px;
+  height: 50px;
+  padding: 10px 20px;
+  font-size: 20px;
+  box-shadow: 1px 1px 3px rgba(132, 132, 132, .8);
+}
+
+
+
+section>#todo input {
+  width: 15px;
+  height: 15px;
+  margin: 1px;
+}
+
+#todo>ul li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+#todo>ul li input[type="checkbox"] {
+  margin-right: 15px;
+}
+
+#todo>ul>.list button {
+  position: absolute;
+  right: 30px;
+  visibility: hidden;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  font-size: 24px;
+  color: rgb(161, 161, 161);
+  cursor: pointer;
+  transition: color .5s linear;
+}
+
+#todo>ul>.list:hover button {
+  visibility: visible;
+}
+
+#todo>ul>.list button:hover {
+  color: rgb(167, 54, 28);
+}
+
+section>#todo>.card {
+  font-size: 16px;
+}
+
+section>#todo>.card p {
+  display: inline-block;
+  margin-right: 30px;
+  color: brown;
+}
+
+/* section > #todo > .card input{
+  display: none;
+} */
+#todo>.card label {
+  display: inline-block;
+  margin: 5px;
+  padding: 5px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: border .4s linear;
+}
+
+section>#todo label:hover {
+  border: 1px solid rgb(167, 54, 28);
+}
+
+/* section>#todo .show-border {
+  border: 1px solid rgb(167, 54, 28);
+} */
+
+#todo-app footer {
+  margin: 20px;
+  text-align: center;
+  color: gray;
+}
+
+.check {
+  text-decoration: line-through;
+  color: rgb(44, 44, 249);
+}
+
+.hide-card {
+  visibility: hidden;
+}
+
+.show-card {
+  visibility: visible;
+}
+
+footer div a {
+  color: black;
+}
+
+footer div a:hover {
+  color: skyblue;
+}
