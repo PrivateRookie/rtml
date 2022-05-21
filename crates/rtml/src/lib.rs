@@ -12,10 +12,9 @@ mod events;
 /// html tags
 pub mod tags;
 pub use events::*;
-use tags::{Attrs, Styles};
+use tags::{Attrs, StaticAttrs, StaticStyles, Styles};
 mod attr;
 mod reactive;
-mod style;
 pub use reactive::{reactive, CombinedReactive, IntoReactive, Reactive};
 pub use rtml_macro::page;
 /// print template as html, instead of create them by dom api
@@ -62,16 +61,34 @@ pub(crate) fn render_children(
             }
         }
         Children::Dynamic(view) => {
-            let subs = view.subs.clone();
-            let view = view.view.replace(Box::new(|| Children::Null));
-            let content = view();
             let ele_pos = get_ele_pos(ele);
-            let pos = subs
-                .borrow()
-                .binary_search_by(|item| item.0.cmp(&ele_pos))
-                .unwrap_or_else(|e| e);
-            subs.borrow_mut().insert(pos, (ele_pos, ele.clone(), view));
-            render_children(&content, ele, doc)?;
+            match view {
+                ViewToken::Owned { view, subs } => {
+                    let subs = subs.clone();
+                    let view = view.replace(Box::new(|| Children::Null));
+                    let content = view();
+                    let pos = subs
+                        .borrow()
+                        .binary_search_by(|item| item.0.cmp(&ele_pos))
+                        .unwrap_or_else(|e| e);
+                    subs.borrow_mut()
+                        .insert(pos, (ele_pos, ele.clone(), ViewFunc::Owned(view)));
+                    render_children(&content, ele, doc)?;
+                }
+                ViewToken::Shared { view, subs } => {
+                    let content = view.borrow()();
+                    let ele_pos = get_ele_pos(ele);
+                    for item in subs.iter() {
+                        let pos = item
+                            .borrow()
+                            .binary_search_by(|item| item.0.cmp(&ele_pos))
+                            .unwrap_or_else(|e| e);
+                        item.borrow_mut()
+                            .insert(pos, (ele_pos, ele.clone(), ViewFunc::Shared(view.clone())));
+                    }
+                    render_children(&content, ele, doc)?;
+                }
+            }
         }
     };
     Ok(())
@@ -97,25 +114,16 @@ pub trait Template {
             tracing::error!("failed to create element {}: {:?}", name, e);
             e
         })?;
-        for (name, value) in attrs.0.iter() {
+
+        let attrs = attrs.val();
+        for (name, value) in attrs.iter() {
             ele.set_attribute(name, value).map_err(|e| {
                 tracing::error!("failed to set attribute {}=\"{}\", {:?}", name, value, e);
                 e
             })?;
         }
 
-        if !styles.0.is_empty() {
-            let styles = styles
-                .0
-                .iter()
-                .map(|(k, v)| format!("{k}:{v};"))
-                .collect::<Vec<_>>()
-                .join("");
-            ele.set_attribute("style", &styles).map_err(|e| {
-                tracing::error!("failed to set style on {}: {:?}", name, e);
-                e
-            })?;
-        }
+        styles.config_element(&ele)?;
 
         for (kind, factory) in other_listeners.into_iter() {
             let cb = Closure::wrap(factory);
@@ -158,7 +166,8 @@ pub trait Template {
             buf.push_str(f.line_sep);
             let pad = pad + 1;
             write!(buf, "{:pad$}", "")?;
-            for (name, val) in attrs.0.iter() {
+            let attrs = attrs.val();
+            for (name, val) in attrs.iter() {
                 if val.is_empty() {
                     write!(buf, r#"{:pad$}{}"#, "", name)?;
                 } else {
@@ -166,10 +175,11 @@ pub trait Template {
                 }
                 buf.push_str(f.line_sep);
             }
-            if !styles.0.is_empty() {
+            let styles = styles.val();
+            if !styles.is_empty() {
                 write!(buf, "{:pad$}", "")?;
                 write!(buf, "style=\"")?;
-                for (name, val) in styles.0.iter() {
+                for (name, val) in styles.iter() {
                     write!(buf, "{}: {}; ", name, val)?;
                 }
                 write!(buf, "\"")?;
@@ -178,16 +188,18 @@ pub trait Template {
             write!(buf, "{:pad$}>", "")?;
             buf.push_str(f.line_sep);
         } else {
-            for (name, val) in attrs.0.iter() {
+            let attrs = attrs.val();
+            for (name, val) in attrs.iter() {
                 if val.is_empty() {
                     write!(buf, r#" {}"#, name)?;
                 } else {
                     write!(buf, r#" {}="{}""#, name, val)?;
                 }
             }
-            if !styles.0.is_empty() {
+            let styles = styles.val();
+            if !styles.is_empty() {
                 write!(buf, " style=\"")?;
-                for (name, val) in styles.0.iter() {
+                for (name, val) in styles.iter() {
                     write!(buf, "{}: {}; ", name, val)?;
                 }
                 write!(buf, "\"")?;
@@ -245,7 +257,7 @@ pub enum Children {
     // TODO add html escape checking
     /// normal text content
     Text(String),
-    Dynamic(ViewCredential),
+    Dynamic(ViewToken),
 }
 
 impl Default for Children {
@@ -254,16 +266,101 @@ impl Default for Children {
     }
 }
 
-pub type Subs = Rc<RefCell<Vec<((usize, usize), Element, Box<dyn Fn() -> Children>)>>>;
-pub struct ViewCredential {
-    pub(crate) view: Cell<Box<dyn Fn() -> Children>>,
-    pub(crate) subs: Subs,
+type ChildrenFunc = dyn Fn() -> Children;
+
+pub type ViewSubs = Rc<RefCell<Vec<((usize, usize), Element, ViewFunc)>>>;
+pub type AttrSubs = Rc<RefCell<Vec<(Element, AttrFunc)>>>;
+pub type StyleSubs = Rc<RefCell<Vec<(Element, StyleFunc)>>>;
+
+pub enum ViewFunc {
+    Owned(Box<ChildrenFunc>),
+    Shared(Rc<RefCell<ChildrenFunc>>),
 }
-impl ViewCredential {
-    pub fn new(subs: Subs, view: Box<dyn Fn() -> Children + 'static>) -> Self {
-        Self {
-            view: Cell::new(view),
-            subs,
+
+impl ViewFunc {
+    pub fn get_children(&self) -> Children {
+        match self {
+            ViewFunc::Owned(func) => func(),
+            ViewFunc::Shared(func) => func.borrow()(),
+        }
+    }
+}
+
+pub enum ViewToken {
+    Owned {
+        view: Cell<Box<ChildrenFunc>>,
+        subs: ViewSubs,
+    },
+    Shared {
+        view: Rc<RefCell<ChildrenFunc>>,
+        subs: Vec<ViewSubs>,
+    },
+}
+
+pub enum AttrToken {
+    Owned {
+        view: RefCell<Box<dyn Fn() -> StaticAttrs>>,
+        subs: AttrSubs,
+    },
+    Shared {
+        view: Rc<RefCell<dyn Fn() -> StaticAttrs>>,
+        subs: Vec<AttrSubs>,
+    },
+}
+
+impl AttrToken {
+    pub fn val(&self) -> StaticAttrs {
+        match self {
+            AttrToken::Owned { view, .. } => view.borrow()(),
+            AttrToken::Shared { view, .. } => view.borrow()(),
+        }
+    }
+}
+
+pub enum AttrFunc {
+    Owned(Box<dyn Fn() -> StaticAttrs>),
+    Shared(Rc<RefCell<dyn Fn() -> StaticAttrs>>),
+}
+
+impl AttrFunc {
+    pub fn val(&self) -> StaticAttrs {
+        match self {
+            AttrFunc::Owned(func) => func(),
+            AttrFunc::Shared(func) => func.borrow()(),
+        }
+    }
+}
+
+pub enum StyleToken {
+    Owned {
+        view: RefCell<Box<dyn Fn() -> StaticStyles>>,
+        subs: StyleSubs,
+    },
+    Shared {
+        view: Rc<RefCell<dyn Fn() -> StaticStyles>>,
+        subs: Vec<StyleSubs>,
+    },
+}
+
+impl StyleToken {
+    pub fn val(&self) -> StaticStyles {
+        match self {
+            StyleToken::Owned { view, .. } => view.borrow()(),
+            StyleToken::Shared { view, .. } => view.borrow()(),
+        }
+    }
+}
+
+pub enum StyleFunc {
+    Owned(Box<dyn Fn() -> StaticStyles>),
+    Shared(Rc<RefCell<dyn Fn() -> StaticStyles>>),
+}
+
+impl StyleFunc {
+    pub fn val(&self) -> StaticStyles {
+        match self {
+            StyleFunc::Owned(func) => func(),
+            StyleFunc::Shared(func) => func.borrow()(),
         }
     }
 }

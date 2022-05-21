@@ -25,33 +25,33 @@ macro_rules! def {
         }
 
         impl $struct {
-            /// update component style with passed styles
-            pub fn s(mut self, styles: $crate::tags::Styles) -> Self {
-                styles.0.into_iter().for_each(|(key, value)| {
-                    self.0.styles.0.insert(key, value);
-                });
-                self
-            }
+            // /// update component style with passed styles
+            // pub fn s(mut self, styles: $crate::tags::Styles) -> Self {
+            //     styles.0.into_iter().for_each(|(key, value)| {
+            //         self.0.styles.0.insert(key, value);
+            //     });
+            //     self
+            // }
 
-            /// replace origin component style
-            pub fn s_replace(mut self, styles: $crate::tags::Styles) -> Self {
-                self.0.styles = styles;
-                self
-            }
+            // /// replace origin component style
+            // pub fn s_replace(mut self, styles: $crate::tags::Styles) -> Self {
+            //     self.0.styles = styles;
+            //     self
+            // }
 
-            /// update component attributes with passed attrs
-            pub fn a(mut self, attrs: $crate::tags::Attrs) -> Self {
-                attrs.0.into_iter().for_each(| (key, value)| {
-                    self.0.attrs.0.insert(key, value);
-                });
-                self
-            }
+            // /// update component attributes with passed attrs
+            // pub fn a(mut self, attrs: $crate::tags::Attrs) -> Self {
+            //     attrs.0.into_iter().for_each(| (key, value)| {
+            //         self.0.attrs.0.insert(key, value);
+            //     });
+            //     self
+            // }
 
-            /// replace component attributes with passed attrs
-            pub fn a_replace(mut self, attrs: $crate::tags::Attrs) -> Self {
-                self.0.attrs = attrs;
-                self
-            }
+            // /// replace component attributes with passed attrs
+            // pub fn a_replace(mut self, attrs: $crate::tags::Attrs) -> Self {
+            //     self.0.attrs = attrs;
+            //     self
+            // }
 
             /// set element children
             pub fn children<C: Into<$crate::Children>>(mut self, children: C) -> Self {

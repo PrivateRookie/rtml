@@ -1,8 +1,8 @@
 mod impl_children {
-    use crate::{Children, Template, ViewCredential};
+    use crate::{Children, Template, ViewToken};
 
-    impl From<ViewCredential> for Children {
-        fn from(view: ViewCredential) -> Self {
+    impl From<ViewToken> for Children {
+        fn from(view: ViewToken) -> Self {
             Self::Dynamic(view)
         }
     }

@@ -47,7 +47,6 @@ pub fn start() {
                         span((
                             attr! {class="todo-count"},
                             (
-                                // TODO use view here
                                 strong(records.view(|data| data.val().items.len().into())),
                                 span(" item(s) left"),
                                 // TODO use view here
