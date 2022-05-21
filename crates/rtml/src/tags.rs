@@ -171,6 +171,7 @@ impl ViewCredential {
         }
     }
 }
+
 pub struct Reactive<T> {
     pub data: Rc<RefCell<T>>,
     pub subscribers: Subs,
@@ -281,6 +282,30 @@ fn update_and_clear<T>(rea: &Reactive<T>) {
         .position(|i| !i.0.is_connected());
     if let Some(pos) = pos {
         rea.subscribers.borrow_mut().drain(pos..);
+    }
+}
+
+//Reactive<T> impl Display ,Print data status
+/// let any_data = any_data.reactive();
+/// let data = format!("{}",any_data);
+/// console.log(data);
+impl<T: 'static + std::fmt::Debug> std::fmt::Display for Reactive<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let data = self.data.borrow();
+        write!(f, "{:?}", *data)
+    }
+}
+// !!!!
+impl<T> From<T> for Reactive<T> {
+    fn from(t:T) -> Reactive<T> {
+        reactive(t)
+    }
+}
+
+// !!!!
+impl<T> Into<Rc<RefCell<T>>> for Reactive<T> {
+    fn into(self) -> Rc<RefCell<T>> {
+        self.data
     }
 }
 
