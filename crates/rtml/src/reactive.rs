@@ -1,30 +1,116 @@
 use std::{
-    cell::{Cell, Ref, RefCell, RefMut},
+    cell::{Ref, RefCell, RefMut},
+    ops::DerefMut,
     rc::Rc,
 };
 
 use web_sys::{Element, Event};
 
 use crate::{
-    render_children,
-    tags::{config_attr, config_style, StaticAttrs, StaticStyles},
-    AttrFunc, AttrToken, Children, StyleFunc, StyleToken, ViewSubs, ViewToken,
+    tags::{config_attr, config_style, EleContent, StaticAttrs, StaticStyles},
+    StaticContent,
 };
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct DomPosition {
+    pub depth: usize,
+    pub index: usize,
+}
+
+impl std::fmt::Display for DomPosition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("dom")
+            .field(&self.depth)
+            .field(&self.index)
+            .finish()
+    }
+}
+
+impl From<(usize, usize)> for DomPosition {
+    fn from((depth, index): (usize, usize)) -> Self {
+        Self { depth, index }
+    }
+}
+
+pub struct Dom {
+    path: Vec<usize>,
+    children: Vec<Dom>,
+    updater: Option<(Element, UpdateFunc)>,
+}
+
+#[derive(Clone)]
+pub struct UpdateFunc {
+    pub attr: Option<Rc<RefCell<dyn Fn() -> StaticAttrs>>>,
+    pub style: Option<Rc<RefCell<dyn Fn() -> StaticStyles>>>,
+    pub children: Option<Rc<RefCell<dyn Fn() -> StaticContent>>>,
+}
+
+impl Dom {
+    pub fn pad(path: Vec<usize>) -> Self {
+        Self {
+            path,
+            children: vec![],
+            updater: None,
+        }
+    }
+
+    pub(crate) fn detach_child(&mut self) {
+        while let Some(mut child) = self.children.pop() {
+            child.detach_child();
+            if let Some((ele, _)) = child.updater {
+                tracing::debug!("detach {}", ele.local_name());
+                ele.remove()
+            }
+        }
+    }
+
+    pub(crate) fn register(&mut self, path: Vec<usize>, ele: Element, func: UpdateFunc) {
+        let mut path_clone = path.clone();
+        path_clone.remove(0);
+        path_clone.push(0);
+        let mut dom = self;
+        let mut dom_path = dom.path.clone();
+        for (level, (offset, next)) in path.iter().zip(path_clone.iter()).enumerate() {
+            let dom_level = if dom_path.is_empty() {
+                0
+            } else {
+                dom_path.len() - 1
+            };
+            let dom_offset = dom.path.last().unwrap();
+            if (level, *offset) == (dom_level, *dom_offset) && level + 1 == path.len() {
+                dom.updater = Some((ele, func));
+                break;
+            } else {
+                if dom.children.get_mut(*next).is_none() {
+                    let mut idx = if dom.children.is_empty() {
+                        0
+                    } else {
+                        dom.children.len() - 1
+                    };
+                    while idx <= *next {
+                        let mut path = dom_path.clone();
+                        path.push(idx);
+                        dom.children.push(Dom::pad(path));
+                        idx += 1;
+                    }
+                }
+                dom = dom.children.get_mut(*next).unwrap();
+                dom_path = dom.path.clone();
+            }
+        }
+    }
+}
 
 pub struct Reactive<T> {
     pub data: Rc<RefCell<T>>,
-    pub view_subs: ViewSubs,
-    pub style_subs: Rc<RefCell<Vec<(Element, StyleFunc)>>>,
-    pub attr_subs: Rc<RefCell<Vec<(Element, AttrFunc)>>>,
+    pub subs: Rc<RefCell<Dom>>,
 }
 
 impl<T> Clone for Reactive<T> {
     fn clone(&self) -> Self {
         Self {
             data: self.data.clone(),
-            view_subs: self.view_subs.clone(),
-            style_subs: self.style_subs.clone(),
-            attr_subs: self.attr_subs.clone(),
+            subs: self.subs.clone(),
         }
     }
 }
@@ -32,9 +118,7 @@ impl<T> Clone for Reactive<T> {
 pub fn reactive<T>(data: T) -> Reactive<T> {
     Reactive {
         data: Rc::new(RefCell::new(data)),
-        view_subs: Rc::new(RefCell::new(vec![])),
-        style_subs: Rc::new(RefCell::new(vec![])),
-        attr_subs: Rc::new(RefCell::new(vec![])),
+        subs: Rc::new(RefCell::new(Dom::pad(vec![0]))),
     }
 }
 
@@ -65,34 +149,44 @@ impl<T: 'static> Reactive<T> {
     }
 
     /// subscribe data change and return children
-    pub fn attr<V: Fn(Self) -> StaticAttrs + 'static>(&self, v: V) -> AttrToken {
+    pub fn attr<V: Fn(Self) -> crate::tags::StaticAttrs + 'static>(
+        &self,
+        v: V,
+    ) -> crate::tags::Attrs {
+        use crate::tags::Attrs;
+
         let data = self.clone();
-        AttrToken::Owned {
-            subs: self.attr_subs.clone(),
-            view: RefCell::new(Box::new(move || v(data.clone()))),
+        Attrs::Dynamic {
+            subs: vec![self.subs.clone()],
+            func: Rc::new(RefCell::new(move || v(data.clone()))),
         }
     }
 
     /// subscribe data change and return children
-    pub fn style<V: Fn(Self) -> StaticStyles + 'static>(&self, v: V) -> StyleToken {
+    pub fn style<V: Fn(Self) -> crate::tags::StaticStyles + 'static>(
+        &self,
+        v: V,
+    ) -> crate::tags::Styles {
+        use crate::tags::Styles;
+
         let data = self.clone();
-        StyleToken::Owned {
-            subs: self.style_subs.clone(),
-            view: RefCell::new(Box::new(move || v(data.clone()))),
+        Styles::Dynamic {
+            subs: vec![self.subs.clone()],
+            func: Rc::new(RefCell::new(move || v(data.clone()))),
         }
     }
 
     /// subscribe data change and return children
-    pub fn view<V: Fn(Self) -> Children + 'static>(&self, v: V) -> ViewToken {
+    pub fn view<V: Fn(Self) -> StaticContent + 'static>(&self, v: V) -> EleContent {
         let data = self.clone();
-        ViewToken::Owned {
-            subs: self.view_subs.clone(),
-            view: Cell::new(Box::new(move || v(data.clone()))),
+        EleContent::Dynamic {
+            subs: vec![self.subs.clone()],
+            func: Rc::new(RefCell::new(move || v(data.clone()))),
         }
     }
 
     /// handle event and reactive data
-    pub fn evt<M: Fn(Event, Self) + 'static + Copy>(
+    pub fn evt<M: Fn(Event, Self) -> bool + 'static + Copy>(
         &self,
         m: M,
     ) -> Box<dyn Fn() -> Box<dyn Fn(Event)> + 'static> {
@@ -100,14 +194,15 @@ impl<T: 'static> Reactive<T> {
         Box::new(move || {
             let data = data.clone();
             Box::new(move |event| {
-                m(event, data.clone());
-                update_and_clear(&data);
+                if m(event, data.clone()) {
+                    data.update_and_clear().unwrap();
+                }
             })
         })
     }
 
     /// mutate data and update view
-    pub fn change<M: Fn(Self) + 'static + Copy>(
+    pub fn change<M: Fn(Self) -> bool + 'static + Copy>(
         &self,
         m: M,
     ) -> Box<dyn Fn() -> Box<dyn Fn(Event)> + 'static> {
@@ -115,55 +210,73 @@ impl<T: 'static> Reactive<T> {
         Box::new(move || {
             let rea = rea.clone();
             Box::new(move |_| {
-                m(rea.clone());
-                update_and_clear(&rea);
+                if m(rea.clone()) {
+                    rea.update_and_clear().unwrap();
+                }
             })
         })
     }
 
     pub fn update(&self) {
-        update_and_clear(self);
+        self.update_and_clear().unwrap();
+    }
+
+    fn update_and_clear(&self) -> Result<(), wasm_bindgen::JsValue> {
+        let mut dom = self.subs.borrow_mut();
+        let dom = dom.deref_mut();
+        update_dom(dom)?;
+        Ok(())
     }
 }
 
-fn update_and_clear<T>(rea: &Reactive<T>) {
-    for (_, ele, view) in rea.view_subs.borrow().iter() {
-        let children = ele.children();
-        for _ in 0..children.length() {
-            if let Some(child) = children.get_with_index(0) {
-                ele.remove_child(&child).unwrap();
+fn update_dom(dom: &mut Dom) -> Result<(), wasm_bindgen::JsValue> {
+    let dom_path = dom.path.clone();
+    let mut go_on = true;
+    if let Some((ele, updater)) = dom.updater.clone() {
+        if let Some(c_func) = updater.children.as_ref() {
+            let children = c_func.borrow()();
+            match children {
+                StaticContent::Null => {
+                    ele.set_inner_html("");
+                }
+                StaticContent::Text(text) => {
+                    ele.set_inner_html(&text);
+                }
+                StaticContent::List(children) => {
+                    let window = web_sys::window().expect("no global `window` exists");
+                    let document = window.document().expect("should have a document on window");
+                    dom.detach_child();
+                    while ele.child_element_count() > 0 {
+                        if let Some(child) = ele.first_element_child() {
+                            child.remove();
+                        }
+                    }
+                    for (idx, child) in children.iter().enumerate() {
+                        let mut path = dom_path.clone();
+                        path.push(idx);
+                        let child = child.render(path, &ele, &document)?;
+                        ele.append_child(&child)?;
+                    }
+                    go_on = false;
+                }
             }
+        };
+        if let Some(a_func) = updater.attr.as_ref() {
+            let attrs = a_func.borrow()();
+            config_attr(&attrs, &ele)?;
         }
-        let content = view.get_children();
-        let window = web_sys::window().expect("no global `window` exists");
-        let document = window.document().expect("should have a document on window");
-        if let Err(e) = render_children(&content, ele, &document) {
-            tracing::error!("failed to update content: {:?}", e);
+        if let Some(s_func) = updater.style.as_ref() {
+            let styles = s_func.borrow()();
+            config_style(&styles, &ele)?;
+        }
+    };
+
+    if go_on {
+        for child in dom.children.iter_mut() {
+            update_dom(child)?;
         }
     }
-
-    // remove not active elements
-    // rea.subscribers
-    //     .borrow_mut()
-    //     .sort_by(|a, b| (!a.1.is_connected()).cmp(&(!b.1.is_connected())));
-    // let pos = rea
-    //     .subscribers
-    //     .borrow()
-    //     .iter()
-    //     .position(|i| !i.1.is_connected());
-    // if let Some(pos) = pos {
-    //     rea.subscribers.borrow_mut().drain(pos..);
-    // }
-
-    for (ele, func) in rea.attr_subs.borrow().iter() {
-        let attrs = func.val();
-        config_attr(&attrs, ele).unwrap();
-    }
-
-    for (ele, func) in rea.style_subs.borrow().iter() {
-        let styles = func.val();
-        config_style(&styles, ele).unwrap();
-    }
+    Ok(())
 }
 
 pub struct CombinedReactive<T> {
@@ -204,11 +317,11 @@ macro_rules! impl_combine {
             pub fn attr<Func: Fn(($crate::Reactive<This>, $($crate::Reactive<$t>),+)) -> $crate::tags::StaticAttrs + 'static>(
                 &self,
                 func: Func,
-            ) -> $crate::AttrToken  {
+            ) -> $crate::tags::Attrs  {
                 let data = self.data.clone();
-                $crate::AttrToken::Shared {
-                    view: ::std::rc::Rc::new(::std::cell::RefCell::new(move || func(data.clone()))),
-                    subs: vec![$(self.data.$i.attr_subs.clone()),+]
+                crate::tags::Attrs::Dynamic {
+                    func: ::std::rc::Rc::new(::std::cell::RefCell::new(move || func(data.clone()))),
+                    subs: vec![$(self.data.$i.subs.clone()),+]
                 }
             }
 
@@ -216,29 +329,29 @@ macro_rules! impl_combine {
             pub fn style<Func: Fn(($crate::Reactive<This>, $($crate::Reactive<$t>),+)) -> $crate::tags::StaticStyles + 'static>(
                 &self,
                 func: Func,
-            ) -> $crate::StyleToken  {
+            ) -> $crate::tags::Styles  {
                 let data = self.data.clone();
-                $crate::StyleToken::Shared {
-                    view: ::std::rc::Rc::new(::std::cell::RefCell::new(move || func(data.clone()))),
-                    subs: vec![$(self.data.$i.style_subs.clone()),+]
+                crate::tags::Styles::Dynamic {
+                    func: ::std::rc::Rc::new(::std::cell::RefCell::new(move || func(data.clone()))),
+                    subs: vec![$(self.data.$i.subs.clone()),+]
                 }
             }
 
 
             /// subscribe data change
-            pub fn view<View: Fn(($crate::Reactive<This>, $($crate::Reactive<$t>),+)) -> $crate::Children + 'static>(
+            pub fn view<View: Fn(($crate::Reactive<This>, $($crate::Reactive<$t>),+)) -> $crate::StaticContent + 'static>(
                 &self,
                 view: View,
-            ) -> $crate::ViewToken  {
+            ) -> $crate::EleContent  {
                 let data = self.data.clone();
-                $crate::ViewToken::Shared {
-                    view: ::std::rc::Rc::new(::std::cell::RefCell::new(move || view(data.clone()))),
-                    subs: vec![$(self.data.$i.view_subs.clone()),+]
+                $crate::EleContent::Dynamic {
+                    func: ::std::rc::Rc::new(::std::cell::RefCell::new(move || view(data.clone()))),
+                    subs: vec![$(self.data.$i.subs.clone()),+]
                 }
             }
 
             /// mutate data and update view
-            pub fn change<Method: Fn(($crate::Reactive<This>, $($crate::Reactive<$t>),+)) + 'static + Copy>(
+            pub fn change<Method: Fn(($crate::Reactive<This>, $($crate::Reactive<$t>),+)) -> bool + 'static + Copy>(
                 &self,
                 m: Method,
             ) -> Box<dyn Fn() -> Box<dyn Fn(web_sys::Event)> + 'static>  {
@@ -246,16 +359,17 @@ macro_rules! impl_combine {
                 Box::new(move|| {
                     let data = data.clone();
                     Box::new(move |_| {
-                        m(data.clone());
-                        $(
-                            data.$i.update();
-                        )+
+                        if m(data.clone()) {
+                            $(
+                                data.$i.update();
+                            )+
+                        }
                     })
                 })
             }
 
             /// mutate data and update view
-            pub fn evt<Method: Fn(web_sys::Event, ($crate::Reactive<This>, $($crate::Reactive<$t>),+)) + 'static + Copy>(
+            pub fn evt<Method: Fn(web_sys::Event, ($crate::Reactive<This>, $($crate::Reactive<$t>),+)) -> bool + 'static + Copy>(
                 &self,
                 m: Method,
             ) -> Box<dyn Fn() -> Box<dyn Fn(web_sys::Event)> + 'static>  {
@@ -263,10 +377,11 @@ macro_rules! impl_combine {
                 Box::new(move|| {
                     let data = data.clone();
                     Box::new(move |event| {
-                        m(event, data.clone());
-                        $(
-                            data.$i.update();
-                        )+
+                        if m(event, data.clone()) {
+                            $(
+                                data.$i.update();
+                            )+
+                        }
                     })
                 })
             }

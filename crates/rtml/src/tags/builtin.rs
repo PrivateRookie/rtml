@@ -54,7 +54,7 @@ macro_rules! def {
             // }
 
             /// set element children
-            pub fn children<C: Into<$crate::Children>>(mut self, children: C) -> Self {
+            pub fn children<C: Into<$crate::tags::EleContent>>(mut self, children: C) -> Self {
                 self.0.content = children.into();
                 self
             }
@@ -73,12 +73,12 @@ macro_rules! def {
         }
 
         pub struct $arg {
-            pub content: $crate::Children,
+            pub content: $crate::tags::EleContent,
             pub attrs: $crate::tags::Attrs,
             pub styles: $crate::tags::Styles,
         }
 
-        impl<C: Into<$crate::Children>> From<C> for $arg {
+        impl<C: Into<$crate::tags::EleContent>> From<C> for $arg {
             fn from(src:  C) -> Self {
                 Self {
                     content: src.into(),
@@ -88,7 +88,7 @@ macro_rules! def {
             }
         }
 
-        impl<C: Into<$crate::Children>> From<($crate::tags::Attrs, C)> for $arg {
+        impl<C: Into<$crate::tags::EleContent>> From<($crate::tags::Attrs, C)> for $arg {
             fn from(src: ( $crate::tags::Attrs, C)) -> Self {
                 Self {
                     content: src.1.into(),
@@ -99,7 +99,7 @@ macro_rules! def {
         }
 
 
-        impl<C: Into<$crate::Children>> From<($crate::tags::Styles, C)> for $arg {
+        impl<C: Into<$crate::tags::EleContent>> From<($crate::tags::Styles, C)> for $arg {
             fn from(src: ( $crate::tags::Styles, C)) -> Self {
                 Self {
                     content: src.1.into(),
@@ -109,7 +109,7 @@ macro_rules! def {
             }
         }
 
-        impl<C: Into<$crate::Children>> From<($crate::tags::Attrs, $crate::tags::Styles, C)> for $arg {
+        impl<C: Into<$crate::tags::EleContent>> From<($crate::tags::Attrs, $crate::tags::Styles, C)> for $arg {
             fn from(src: ( $crate::tags::Attrs, $crate::tags::Styles, C)) -> Self {
                 Self {
                     content: src.2.into(),
@@ -118,7 +118,7 @@ macro_rules! def {
                 }
             }
         }
-        impl<C: Into<$crate::Children>> From<($crate::tags::Styles, $crate::tags::Attrs, C)> for $arg {
+        impl<C: Into<$crate::tags::EleContent>> From<($crate::tags::Styles, $crate::tags::Attrs, C)> for $arg {
             fn from(src: ( $crate::tags::Styles, $crate::tags::Attrs, C)) -> Self {
                 Self {
                     content: src.2.into(),

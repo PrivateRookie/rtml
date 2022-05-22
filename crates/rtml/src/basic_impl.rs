@@ -1,18 +1,24 @@
 mod impl_children {
-    use crate::{Children, Template, ViewToken};
+    use crate::{tags::StaticContent, EleContent, Template};
 
-    impl From<ViewToken> for Children {
-        fn from(view: ViewToken) -> Self {
-            Self::Dynamic(view)
-        }
-    }
-
-    impl<T> From<Vec<T>> for Children
+    impl<T> From<Vec<T>> for EleContent
     where
         T: Template + 'static,
     {
         fn from(src: Vec<T>) -> Self {
-            Self::List(
+            Self::Static(StaticContent::List(
+                src.into_iter()
+                    .map(|item| Box::new(item) as Box<dyn Template>)
+                    .collect(),
+            ))
+        }
+    }
+    impl<T> From<Vec<T>> for StaticContent
+    where
+        T: Template + 'static,
+    {
+        fn from(src: Vec<T>) -> Self {
+            StaticContent::List(
                 src.into_iter()
                     .map(|item| Box::new(item) as Box<dyn Template>)
                     .collect(),
@@ -20,32 +26,57 @@ mod impl_children {
         }
     }
 
-    impl<T> From<T> for Children
+    impl<T> From<T> for EleContent
     where
         T: Template + 'static,
     {
         fn from(src: T) -> Self {
-            Self::List(vec![Box::new(src)])
+            Self::Static(StaticContent::List(vec![Box::new(src)]))
+        }
+    }
+    impl<T> From<T> for StaticContent
+    where
+        T: Template + 'static,
+    {
+        fn from(src: T) -> Self {
+            StaticContent::List(vec![Box::new(src)])
         }
     }
 
-    impl<const N: usize> From<[Box<dyn Template>; N]> for Children {
+    impl<const N: usize> From<[Box<dyn Template>; N]> for EleContent {
         fn from(src: [Box<dyn Template>; N]) -> Self {
-            Self::List(src.into_iter().collect())
+            Self::Static(StaticContent::List(src.into_iter().collect()))
         }
     }
 
-    impl From<()> for Children {
+    impl<const N: usize> From<[Box<dyn Template>; N]> for StaticContent {
+        fn from(src: [Box<dyn Template>; N]) -> Self {
+            StaticContent::List(src.into_iter().collect())
+        }
+    }
+
+    impl From<()> for EleContent {
         fn from(_: ()) -> Self {
-            Self::Null
+            Self::Static(StaticContent::Null)
+        }
+    }
+
+    impl From<()> for StaticContent {
+        fn from(_: ()) -> Self {
+            StaticContent::Null
         }
     }
 
     macro_rules! prime_impl {
         ($ty:ty) => {
-            impl From<$ty> for Children {
+            impl From<$ty> for EleContent {
                 fn from(src: $ty) -> Self {
-                    Self::Text(src.to_string())
+                    Self::Static(StaticContent::Text(src.to_string()))
+                }
+            }
+            impl From<$ty> for StaticContent {
+                fn from(src: $ty) -> Self {
+                    StaticContent::Text(src.to_string())
                 }
             }
         };
@@ -70,12 +101,12 @@ mod impl_children {
 
     macro_rules! tuple_impl {
         ($($t:tt),+ | $($i:tt),+) => {
-            impl <$($t ),+ > From<($($t,)+)> for Children
+            impl <$($t ),+ > From<($($t,)+)> for EleContent
                 where
                     $($t: Template + 'static),+
             {
                 fn from(src: ($($t,)+)) -> Self {
-                    Self::List(vec![$(Box::new(src.$i) as Box<dyn Template>),+])
+                    Self::Static(StaticContent::List(vec![$(Box::new(src.$i) as Box<dyn Template>),+]))
                 }
             }
         };

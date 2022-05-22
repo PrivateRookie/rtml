@@ -1,5 +1,5 @@
 use rtml::EventKind::{Blur, Click, Keypress, Mouseover};
-use rtml::{attr, mount_body, tags::*, IntoReactive, Reactive};
+use rtml::{attr, mount_body, s_attr, tags::*, IntoReactive, Reactive};
 use store::Store;
 use wasm_bindgen::prelude::*;
 use web_sys::{HtmlInputElement, KeyboardEvent};
@@ -18,6 +18,7 @@ pub fn start() {
             .iter_mut()
             .for_each(|item| item.completed = !item.completed);
         data.val().save().unwrap();
+        true
     });
 
     let wrapper = div((
@@ -34,7 +35,13 @@ pub fn start() {
                         ),
                     )),
                     section((
-                        attr! {class="main"},
+                        records.attr(|data| {
+                            if data.val().items.is_empty() {
+                                s_attr! { class= "main hidden"}
+                            } else {
+                                s_attr! { class="main"}
+                            }
+                        }),
                         (
                             input(attr! {type="checkbox", class="toggle-all", id="toggle-all"})
                                 .on(Click, toggle_all),
@@ -87,14 +94,17 @@ pub fn start() {
 fn input_view(records: Reactive<Store>) -> Input {
     let update_and_reset = records.evt(|event, data| {
         let event: KeyboardEvent = JsValue::from(event).into();
+        let mut update = false;
         if event.key() == "Enter" {
             if let Some(target) = event.target() {
                 let input: HtmlInputElement = JsValue::from(target).into();
                 let value = input.value();
                 data.val_mut().add(value);
                 input.set_value("");
+                update = true;
             }
         }
+        update
     });
     input(attr! {id="edit-input",class="new-todo", placeholder="What needs to be done?"})
         .on(Keypress, update_and_reset)
@@ -117,6 +127,7 @@ fn todo_list(records: Reactive<Store>) -> Ul {
                                     data.change(move |store| {
                                         store.val_mut().items.remove(idx);
                                         store.val_mut().save().unwrap();
+                                        true
                                     }),
                                 ),
                             label(&item.description).on(
@@ -126,12 +137,14 @@ fn todo_list(records: Reactive<Store>) -> Ul {
                                         item.editing = !item.editing;
                                     }
                                     store.val().save().unwrap();
+                                    true
                                 }),
                             ),
                             button(attr! {class="destroy"}).on(
                                 Click,
                                 data.change(move |store| {
                                     store.val_mut().remove(idx);
+                                    true
                                 }),
                             ),
                         ),
@@ -160,18 +173,25 @@ fn item_edit_input(item: &store::Item, idx: usize, data: Reactive<Store>) -> Inp
             if let Some(target) = event.target() {
                 let input: HtmlInputElement = JsValue::from(target).into();
                 input.focus().unwrap();
+                // input.set_value("hello");
             }
+            true
         });
 
         let on_blur = data.evt(move |event, store| {
             edit(event, store, idx);
+            true
         });
 
         let on_keypress = data.evt(move |event, store| {
+            let mut update = false;
             let event: KeyboardEvent = JsValue::from(event).into();
+            tracing::debug!("key {}", event.key());
             if event.key() == "Entry" {
                 edit(event.into(), store, idx);
-            }
+                update = true;
+            };
+            update
         });
         input(attr! {class="edit", type="text", value=item.description})
             .on(Mouseover, on_mouseover)

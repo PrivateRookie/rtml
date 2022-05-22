@@ -37,5 +37,5 @@
         "timeupdate",
         "volumechange"
     ],
-    "rust-analyzer.cargo.allFeatures": false
+    "rust-analyzer.cargo.allFeatures": false,
 }

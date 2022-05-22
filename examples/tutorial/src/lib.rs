@@ -30,6 +30,7 @@ pub fn reactive_view() {
     // to update content
     let incr = count.change(|data| {
         *data.val_mut() += 1;
+        true
     });
 
     // view can be pass like normal content
@@ -59,6 +60,7 @@ pub fn reactive_if_else() {
     let toggle = user.change(|data| {
         let mut user = data.val_mut();
         user.logged_in = !user.logged_in;
+        true
     });
 
     let btn_view = user.view(|data| {

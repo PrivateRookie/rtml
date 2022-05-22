@@ -1,13 +1,13 @@
-use crate::{tag_fmt::TagFormatter, Listeners, Template};
-use std::collections::HashMap;
+use crate::{reactive::Dom, tag_fmt::TagFormatter, Listeners, Template, TemplateList};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 mod builtin;
 pub use builtin::*;
-use web_sys::Event;
+use web_sys::{Document, Event};
 
 pub struct Unit {
     pub name: &'static str,
-    pub content: crate::Children,
+    pub content: EleContent,
     pub attrs: Attrs,
     pub styles: Styles,
     pub listeners: Listeners,
@@ -29,7 +29,7 @@ impl Template for Unit {
         &'static str,
         &Attrs,
         &Styles,
-        &crate::Children,
+        &EleContent,
         HashMap<&str, Box<dyn Fn(Event)>>,
     ) {
         let other_factories: HashMap<&'static str, _> = self
@@ -61,6 +61,87 @@ impl Unit {
     }
 }
 
+/// html element content
+pub enum StaticContent {
+    /// empty tag
+    Null,
+    /// this element has children
+    List(TemplateList),
+    // TODO add html escape checking
+    /// normal text content
+    Text(String),
+}
+
+pub enum EleContent {
+    Static(StaticContent),
+    Dynamic {
+        subs: Vec<Rc<RefCell<Dom>>>,
+        func: Rc<RefCell<dyn Fn() -> StaticContent>>,
+    },
+}
+
+impl Default for EleContent {
+    fn default() -> Self {
+        Self::Static(Default::default())
+    }
+}
+
+impl Default for StaticContent {
+    fn default() -> Self {
+        Self::Null
+    }
+}
+
+fn render_static(
+    content: &StaticContent,
+    path: Vec<usize>,
+    ele: &web_sys::Element,
+    doc: &Document,
+) -> Result<(), wasm_bindgen::JsValue> {
+    match content {
+        StaticContent::Null => {}
+        StaticContent::Text(text) => {
+            ele.set_inner_html(text);
+        }
+        StaticContent::List(children) => {
+            for (idx, child) in children.iter().enumerate() {
+                let mut child_path = path.clone();
+                child_path.push(idx);
+                let child = child.render(child_path, ele, doc)?;
+                ele.append_child(&child)?;
+            }
+        }
+    }
+    Ok(())
+}
+
+pub type ContentRegisterData = Option<(
+    Vec<Rc<RefCell<Dom>>>,
+    Rc<RefCell<dyn Fn() -> StaticContent>>,
+)>;
+
+impl EleContent {
+    pub fn render(
+        &self,
+        path: Vec<usize>,
+        ele: &web_sys::Element,
+        doc: &Document,
+    ) -> Result<ContentRegisterData, wasm_bindgen::JsValue> {
+        let ret = match self {
+            EleContent::Static(content) => {
+                render_static(content, path, ele, doc)?;
+                None
+            }
+            EleContent::Dynamic { subs, func } => {
+                let content = func.borrow()();
+                render_static(&content, path, ele, doc)?;
+                Some((subs.clone(), func.clone()))
+            }
+        };
+        Ok(ret)
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct StaticStyles(pub HashMap<String, String>);
 
@@ -83,175 +164,122 @@ pub(crate) fn config_style(
     Ok(())
 }
 
-#[cfg(not(target_family = "wasm"))]
-mod style {
-    use std::collections::HashMap;
+pub enum Styles {
+    Static(StaticStyles),
+    Dynamic {
+        subs: Vec<Rc<RefCell<Dom>>>,
+        func: Rc<RefCell<dyn Fn() -> StaticStyles>>,
+    },
+}
 
-    use wasm_bindgen::JsValue;
-    use web_sys::Element;
-
-    use super::{config_style, StaticStyles};
-
-    pub type Styles = StaticStyles;
-
-    impl Styles {
-        pub fn val(&self) -> HashMap<String, String> {
-            self.0.clone()
-        }
-
-        pub fn config_element(&self, ele: &Element) -> Result<(), JsValue> {
-            config_style(&self, ele)
-        }
-    }
-
-    // /// simple wrapper of tag style
-    // #[derive(Debug, Clone, Default)]
-    // pub struct Styles(pub HashMap<String, String>);
-
-    /// helper macro to create css style
-    ///
-    /// ```no_run
-    /// let s = style! {
-    ///     background-color: "#fffff";
-    ///     bar: "bxx";
-    ///     font-size: 100;
-    ///     escaped: r#""abc""#
-    /// };
-    /// ```
-    /// generated
-    /// ```css
-    /// background-color: #fffff;
-    /// bar: bxx;
-    /// font-size: 100;
-    /// escaped: "abc";
-    /// ```
-    #[macro_export]
-    macro_rules! style {
-        ($($($name:ident)-+: $value:expr);+ $(;)?) => {
-            {
-                let mut map: std::collections::HashMap<String, String> = std::collections::HashMap::new();
-                $(
-                    let name = vec![$(stringify!($name)),*];
-                    map.insert(name.join("-"), $value.to_string());
-                )+
-                $crate::tags::StaticStyles(map)
-            }
-        };
-        () => {
-            $crate::tags::StaticStyles::default()
-        }
+impl Default for Styles {
+    fn default() -> Self {
+        Self::Static(Default::default())
     }
 }
 
-#[cfg(target_family = "wasm")]
-mod style {
-    use crate::{StyleFunc, StyleToken};
-
-    use super::{config_style, StaticStyles};
-    use std::collections::HashMap;
-    use wasm_bindgen::JsValue;
-    use web_sys::Element;
-
-    pub enum Styles {
-        Static(StaticStyles),
-        Dynamic(StyleToken),
-    }
-
-    impl Default for Styles {
-        fn default() -> Self {
-            Self::Static(Default::default())
-        }
-    }
-
-    impl From<StaticStyles> for Styles {
-        fn from(src: StaticStyles) -> Self {
-            Self::Static(src)
-        }
-    }
-
-    impl From<StyleToken> for Styles {
-        fn from(src: StyleToken) -> Self {
-            Self::Dynamic(src)
-        }
-    }
-
-    impl Styles {
-        pub fn val(&self) -> HashMap<String, String> {
-            match self {
-                Self::Static(val) => val.0.clone(),
-                Self::Dynamic(val) => val.val().0,
-            }
-        }
-
-        pub fn config_element(&self, ele: &Element) -> Result<(), JsValue> {
-            match self {
-                Self::Static(val) => {
-                    config_style(&val, ele)?;
-                }
-                Self::Dynamic(token) => match token {
-                    StyleToken::Owned { view, subs } => {
-                        let subs = subs.clone();
-                        let view = view.replace(Box::new(|| StaticStyles::default()));
-                        let static_styles = view();
-                        config_style(&static_styles, ele)?;
-                        subs.borrow_mut()
-                            .push((ele.clone(), StyleFunc::Owned(view)));
-                    }
-                    StyleToken::Shared { view, subs } => {
-                        let static_styles = view.borrow()();
-                        config_style(&static_styles, ele)?;
-                        for item in subs.iter() {
-                            item.borrow_mut()
-                                .push((ele.clone(), StyleFunc::Shared(view.clone())))
-                        }
-                    }
-                },
-            }
-            Ok(())
-        }
-    }
-
-    // /// simple wrapper of tag style
-    // #[derive(Debug, Clone, Default)]
-    // pub struct Styles(pub HashMap<String, String>);
-
-    /// helper macro to create css style
-    ///
-    /// ```no_run
-    /// let s = style! {
-    ///     background-color: "#fffff";
-    ///     bar: "bxx";
-    ///     font-size: 100;
-    ///     escaped: r#""abc""#
-    /// };
-    /// ```
-    /// generated
-    /// ```css
-    /// background-color: #fffff;
-    /// bar: bxx;
-    /// font-size: 100;
-    /// escaped: "abc";
-    /// ```
-    #[macro_export]
-    macro_rules! style {
-        ($($($name:ident)-+: $value:expr);+ $(;)?) => {
-            {
-                let mut map: std::collections::HashMap<String, String> = std::collections::HashMap::new();
-                $(
-                    let name = vec![$(stringify!($name)),*];
-                    map.insert(name.join("-"), $value.to_string());
-                )+
-                $crate::tags::Styles::Static($crate::tags::StaticStyles(map))
-            }
-        };
-        () => {
-            $crate::tags::Styles::default()
-        }
+impl From<StaticStyles> for Styles {
+    fn from(src: StaticStyles) -> Self {
+        Self::Static(src)
     }
 }
 
-pub use style::*;
+pub type StyleRegisterData = Option<(Vec<Rc<RefCell<Dom>>>, Rc<RefCell<dyn Fn() -> StaticStyles>>)>;
 
+impl Styles {
+    pub fn val(&self) -> HashMap<String, String> {
+        match self {
+            Self::Static(val) => val.0.clone(),
+            Self::Dynamic { func, .. } => func.borrow()().0,
+        }
+    }
+
+    pub fn config_element(
+        &self,
+        ele: &web_sys::Element,
+    ) -> Result<StyleRegisterData, wasm_bindgen::JsValue> {
+        let ret = match self {
+            Self::Static(val) => {
+                config_style(val, ele)?;
+                None
+            }
+            Self::Dynamic { subs, func } => {
+                let static_style = func.borrow()();
+                config_style(&static_style, ele)?;
+                Some((subs.clone(), func.clone()))
+            }
+        };
+        Ok(ret)
+    }
+}
+
+/// helper macro to create css style
+///
+/// ```no_run
+/// let s = style! {
+///     background-color: "#fffff";
+///     bar: "bxx";
+///     font-size: 100;
+///     escaped: r#""abc""#
+/// };
+/// ```
+/// generated
+/// ```css
+/// background-color: #fffff;
+/// bar: bxx;
+/// font-size: 100;
+/// escaped: "abc";
+/// ```
+#[macro_export]
+macro_rules! style {
+    ($($($name:ident)-+: $value:expr);+ $(;)?) => {
+        {
+            let mut map: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+            $(
+                let name = vec![$(stringify!($name)),*];
+                map.insert(name.join("-"), $value.to_string());
+            )+
+            $crate::tags::Styles::Static($crate::tags::StaticStyles(map))
+        }
+    };
+    () => {
+        $crate::tags::Styles::default()
+    }
+}
+
+/// helper macro to create css style
+///
+/// ```no_run
+/// let s = style! {
+///     background-color: "#fffff";
+///     bar: "bxx";
+///     font-size: 100;
+///     escaped: r#""abc""#
+/// };
+/// ```
+/// generated
+/// ```css
+/// background-color: #fffff;
+/// bar: bxx;
+/// font-size: 100;
+/// escaped: "abc";
+/// ```
+#[macro_export]
+macro_rules! s_style {
+    ($($($name:ident)-+: $value:expr);+ $(;)?) => {
+        {
+            let mut map: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+            $(
+                let name = vec![$(stringify!($name)),*];
+                map.insert(name.join("-"), $value.to_string());
+            )+
+            $crate::tags::StaticStyles(map)
+        }
+    };
+    () => {
+        Default::default()
+    }
+}
 impl From<Vec<(String, String)>> for StaticStyles {
     fn from(src: Vec<(String, String)>) -> Self {
         Self(src.into_iter().collect())
@@ -279,89 +307,74 @@ pub(crate) fn config_attr(
     }
     Ok(())
 }
-#[cfg(target_family = "wasm")]
-mod attr {
-    use crate::{AttrFunc, AttrToken};
 
-    use super::{config_attr, StaticAttrs};
-    use std::collections::HashMap;
+pub enum Attrs {
+    Static(StaticAttrs),
+    Dynamic {
+        subs: Vec<Rc<RefCell<Dom>>>,
+        func: Rc<RefCell<dyn Fn() -> StaticAttrs>>,
+    },
+}
 
-    pub enum Attrs {
-        Static(StaticAttrs),
-        Dynamic(AttrToken),
+impl Default for Attrs {
+    fn default() -> Self {
+        Self::Static(Default::default())
     }
+}
 
-    impl Default for Attrs {
-        fn default() -> Self {
-            Self::Static(Default::default())
+impl From<StaticAttrs> for Attrs {
+    fn from(src: StaticAttrs) -> Self {
+        Self::Static(src)
+    }
+}
+
+pub type AttrRegisterData = Option<(Vec<Rc<RefCell<Dom>>>, Rc<RefCell<dyn Fn() -> StaticAttrs>>)>;
+
+impl Attrs {
+    pub fn val(&self) -> HashMap<String, String> {
+        match self {
+            Self::Static(val) => val.0.clone(),
+            Self::Dynamic { func, .. } => func.borrow()().0,
         }
     }
 
-    impl From<StaticAttrs> for Attrs {
-        fn from(src: StaticAttrs) -> Self {
-            Self::Static(src)
-        }
-    }
-
-    impl From<AttrToken> for Attrs {
-        fn from(src: AttrToken) -> Self {
-            Self::Dynamic(src)
-        }
-    }
-
-    impl Attrs {
-        pub fn val(&self) -> HashMap<String, String> {
-            match self {
-                Self::Static(val) => val.0.clone(),
-                Self::Dynamic(val) => val.val().0,
+    pub fn config_element(
+        &self,
+        ele: &web_sys::Element,
+    ) -> Result<AttrRegisterData, wasm_bindgen::JsValue> {
+        let ret = match self {
+            Self::Static(val) => {
+                config_attr(val, ele)?;
+                None
             }
-        }
-
-        pub fn config_element(&self, ele: &web_sys::Element) -> Result<(), wasm_bindgen::JsValue> {
-            match self {
-                Self::Static(val) => {
-                    config_attr(&val, ele)?;
-                }
-                Self::Dynamic(token) => match token {
-                    AttrToken::Owned { view, subs } => {
-                        let subs = subs.clone();
-                        let view = view.replace(Box::new(|| StaticAttrs::default()));
-                        let static_attrs = view();
-                        config_attr(&static_attrs, ele)?;
-                        subs.borrow_mut().push((ele.clone(), AttrFunc::Owned(view)));
-                    }
-                    AttrToken::Shared { view, subs } => {
-                        let static_attrs = view.borrow()();
-                        config_attr(&static_attrs, ele)?;
-                        for item in subs.iter() {
-                            item.borrow_mut()
-                                .push((ele.clone(), AttrFunc::Shared(view.clone())))
-                        }
-                    }
-                },
+            Self::Dynamic { subs, func } => {
+                let static_attrs = func.borrow()();
+                config_attr(&static_attrs, ele)?;
+                Some((subs.clone(), func.clone()))
             }
-            Ok(())
-        }
+        };
+        Ok(ret)
     }
+}
 
-    /// helper macro to set html element attributes, like id, class, hidden etc
-    ///
-    /// ```no_run
-    /// div((
-    ///     attr! { id="app", data-some-demo },
-    ///     "hello"
-    ///  ))
-    /// ```
-    ///
-    /// create such a html element
-    ///
-    /// ```html
-    /// <div id="app" data-some-demo>hello</div>
-    /// ```
-    ///
-    /// **NOTE**: style should be set by `style!` macro
-    #[macro_export]
-    macro_rules! attr {
+/// helper macro to set html element attributes, like id, class, hidden etc
+///
+/// ```no_run
+/// div((
+///     attr! { id="app", data-some-demo },
+///     "hello"
+///  ))
+/// ```
+///
+/// create such a html element
+///
+/// ```html
+/// <div id="app" data-some-demo>hello</div>
+/// ```
+///
+/// **NOTE**: style should be set by `style!` macro
+#[macro_export]
+macro_rules! attr {
         ($($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
             #[allow(unused_assignments)]
             { let mut attrs: std::collections::HashMap<String, String> = std::collections::HashMap::new();
@@ -391,44 +404,25 @@ mod attr {
             $crate::tags::Attrs::default()
         }}
     }
-}
 
-#[cfg(not(target_family = "wasm"))]
-mod attr {
-    use std::collections::HashMap;
-
-    use super::{config_attr, StaticAttrs};
-
-    pub type Attrs = StaticAttrs;
-
-    impl Attrs {
-        pub fn val(&self) -> HashMap<String, String> {
-            self.0.clone()
-        }
-
-        pub fn config_element(&self, ele: &web_sys::Element) -> Result<(), wasm_bindgen::JsValue> {
-            config_attr(&self, ele)
-        }
-    }
-
-    /// helper macro to set html element attributes, like id, class, hidden etc
-    ///
-    /// ```no_run
-    /// div((
-    ///     attr! { id="app", data-some-demo },
-    ///     "hello"
-    ///  ))
-    /// ```
-    ///
-    /// create such a html element
-    ///
-    /// ```html
-    /// <div id="app" data-some-demo>hello</div>
-    /// ```
-    ///
-    /// **NOTE**: style should be set by `style!` macro
-    #[macro_export]
-    macro_rules! attr {
+/// helper macro to set html element attributes, like id, class, hidden etc
+///
+/// ```no_run
+/// div((
+///     attr! { id="app", data-some-demo },
+///     "hello"
+///  ))
+/// ```
+///
+/// create such a html element
+///
+/// ```html
+/// <div id="app" data-some-demo>hello</div>
+/// ```
+///
+/// **NOTE**: style should be set by `style!` macro
+#[macro_export]
+macro_rules! s_attr {
         ($($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
             #[allow(unused_assignments)]
             { let mut attrs: std::collections::HashMap<String, String> = std::collections::HashMap::new();
@@ -455,9 +449,6 @@ mod attr {
             $crate::tags::StaticAttrs(attrs)
         }};
         () => {{
-            $crate::tags::StaticAttrs::default()
+            Default::default()
         }}
     }
-}
-
-pub use attr::*;

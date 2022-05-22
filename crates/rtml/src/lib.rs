@@ -1,8 +1,5 @@
-use std::{
-    cell::{Cell, RefCell},
-    collections::HashMap,
-    rc::Rc,
-};
+use reactive::UpdateFunc;
+use std::collections::HashMap;
 use tag_fmt::TagFormatter;
 use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{Document, Element, Event, HtmlElement};
@@ -12,93 +9,20 @@ mod events;
 /// html tags
 pub mod tags;
 pub use events::*;
-use tags::{Attrs, StaticAttrs, StaticStyles, Styles};
-mod attr;
+use tags::{AttrRegisterData, Attrs, ContentRegisterData, EleContent, StyleRegisterData, Styles};
 mod reactive;
 pub use reactive::{reactive, CombinedReactive, IntoReactive, Reactive};
 pub use rtml_macro::page;
+
+use crate::tags::StaticContent;
 /// print template as html, instead of create them by dom api
 pub mod tag_fmt;
-
-fn get_ele_pos(ele: &Element) -> (usize, usize) {
-    let mut depth = 0;
-    let mut parent = ele.parent_element();
-    loop {
-        if let Some(par) = parent {
-            depth += 1;
-            parent = par.parent_element();
-        } else {
-            break;
-        }
-    }
-    let mut offset = 0;
-    let mut prev = ele.previous_element_sibling();
-    loop {
-        if let Some(pre) = prev {
-            offset += 1;
-            prev = pre.previous_element_sibling();
-        } else {
-            break;
-        }
-    }
-    (depth, offset)
-}
-
-pub(crate) fn render_children(
-    children: &Children,
-    ele: &Element,
-    doc: &Document,
-) -> Result<(), JsValue> {
-    match children {
-        Children::Null => {}
-        Children::Text(text) => {
-            ele.set_inner_html(text);
-        }
-        Children::List(children) => {
-            for child in children {
-                let child = child.render(ele, doc)?;
-                ele.append_child(&child)?;
-            }
-        }
-        Children::Dynamic(view) => {
-            let ele_pos = get_ele_pos(ele);
-            match view {
-                ViewToken::Owned { view, subs } => {
-                    let subs = subs.clone();
-                    let view = view.replace(Box::new(|| Children::Null));
-                    let content = view();
-                    let pos = subs
-                        .borrow()
-                        .binary_search_by(|item| item.0.cmp(&ele_pos))
-                        .unwrap_or_else(|e| e);
-                    subs.borrow_mut()
-                        .insert(pos, (ele_pos, ele.clone(), ViewFunc::Owned(view)));
-                    render_children(&content, ele, doc)?;
-                }
-                ViewToken::Shared { view, subs } => {
-                    let content = view.borrow()();
-                    let ele_pos = get_ele_pos(ele);
-                    for item in subs.iter() {
-                        let pos = item
-                            .borrow()
-                            .binary_search_by(|item| item.0.cmp(&ele_pos))
-                            .unwrap_or_else(|e| e);
-                        item.borrow_mut()
-                            .insert(pos, (ele_pos, ele.clone(), ViewFunc::Shared(view.clone())));
-                    }
-                    render_children(&content, ele, doc)?;
-                }
-            }
-        }
-    };
-    Ok(())
-}
 
 pub type TplResources<'a> = (
     &'static str,
     &'a Attrs,
     &'a Styles,
-    &'a Children,
+    &'a EleContent,
     HashMap<&'a str, Box<dyn Fn(Event)>>,
 );
 
@@ -108,22 +32,20 @@ pub trait Template {
     fn resources(&self) -> TplResources;
 
     /// generate html element and add event bindings
-    fn render(&self, parent: &Element, doc: &Document) -> Result<Element, JsValue> {
+    fn render(
+        &self,
+        path: Vec<usize>,
+        parent: &Element,
+        doc: &Document,
+    ) -> Result<Element, JsValue> {
         let (name, attrs, styles, content, other_listeners) = self.resources();
         let ele = doc.create_element(name).map_err(|e| {
             tracing::error!("failed to create element {}: {:?}", name, e);
             e
         })?;
 
-        let attrs = attrs.val();
-        for (name, value) in attrs.iter() {
-            ele.set_attribute(name, value).map_err(|e| {
-                tracing::error!("failed to set attribute {}=\"{}\", {:?}", name, value, e);
-                e
-            })?;
-        }
-
-        styles.config_element(&ele)?;
+        let attr_subs = attrs.config_element(&ele)?;
+        let style_subs = styles.config_element(&ele)?;
 
         for (kind, factory) in other_listeners.into_iter() {
             let cb = Closure::wrap(factory);
@@ -149,7 +71,8 @@ pub trait Template {
             );
             e
         })?;
-        render_children(content, &ele, doc)?;
+        let content_subs = content.render(path.clone(), &ele, doc)?;
+        register(attr_subs, style_subs, content_subs, path, &ele);
         Ok(ele)
     }
 
@@ -207,30 +130,12 @@ pub trait Template {
             buf.push('>');
         }
         match content {
-            Children::Null => {
-                write!(buf, "</{name}>")?;
+            EleContent::Static(content) => {
+                fmt_static_content(name, content, buf, f)?;
             }
-            Children::Text(text) => {
-                buf.write_str(text)?;
-                write!(buf, "</{name}>")?;
-            }
-            Children::List(children) => {
-                buf.push_str(f.line_sep);
-                f.indent += 1;
-                for child in children.iter() {
-                    child.format(f, buf)?
-                }
-                f.indent -= 1;
-                if f.newline_on_attr {
-                    buf.push_str(f.line_sep);
-                    let pad = f.pad_size();
-                    write!(buf, "{:pad$}</{name}>", "")?;
-                } else {
-                    write!(buf, "</{name}>")?;
-                }
-            }
-            Children::Dynamic(_) => {
-                write!(buf, "dynamic content")?;
+            EleContent::Dynamic { subs: _, func } => {
+                let content = func.borrow()();
+                fmt_static_content(name, &content, buf, f)?;
             }
         }
         buf.push_str(f.line_sep);
@@ -238,7 +143,148 @@ pub trait Template {
     }
 }
 
-pub fn unit(name: &'static str, content: Children) -> tags::Unit {
+fn register(
+    attr_subs: AttrRegisterData,
+    style_subs: StyleRegisterData,
+    content_subs: ContentRegisterData,
+    path: Vec<usize>,
+    ele: &Element,
+) {
+    match (attr_subs, style_subs, content_subs) {
+        (None, None, None) => {}
+        (None, None, Some((subs, func))) => {
+            for dom in subs {
+                dom.borrow_mut().register(
+                    path.clone(),
+                    ele.clone(),
+                    UpdateFunc {
+                        attr: None,
+                        style: None,
+                        children: Some(func.clone()),
+                    },
+                );
+            }
+        }
+        (None, Some((subs, func)), None) => {
+            for dom in subs {
+                dom.borrow_mut().register(
+                    path.clone(),
+                    ele.clone(),
+                    UpdateFunc {
+                        attr: None,
+                        style: Some(func.clone()),
+                        children: None,
+                    },
+                );
+            }
+        }
+        (None, Some((s_subs, s_func)), Some((c_subs, c_func))) => {
+            assert_eq!(s_subs.len(), c_subs.len());
+            for dom in s_subs {
+                dom.borrow_mut().register(
+                    path.clone(),
+                    ele.clone(),
+                    UpdateFunc {
+                        attr: None,
+                        style: Some(s_func.clone()),
+                        children: Some(c_func.clone()),
+                    },
+                );
+            }
+        }
+        (Some((subs, func)), None, None) => {
+            for dom in subs {
+                dom.borrow_mut().register(
+                    path.clone(),
+                    ele.clone(),
+                    UpdateFunc {
+                        attr: Some(func.clone()),
+                        style: None,
+                        children: None,
+                    },
+                );
+            }
+        }
+        (Some((a_subs, a_func)), None, Some((c_subs, c_func))) => {
+            assert_eq!(a_subs.len(), c_subs.len());
+            for dom in a_subs {
+                dom.borrow_mut().register(
+                    path.clone(),
+                    ele.clone(),
+                    UpdateFunc {
+                        attr: Some(a_func.clone()),
+                        style: None,
+                        children: Some(c_func.clone()),
+                    },
+                );
+            }
+        }
+        (Some((a_subs, a_func)), Some((s_subs, s_func)), None) => {
+            assert_eq!(a_subs.len(), s_subs.len());
+            for dom in a_subs {
+                dom.borrow_mut().register(
+                    path.clone(),
+                    ele.clone(),
+                    UpdateFunc {
+                        attr: Some(a_func.clone()),
+                        style: Some(s_func.clone()),
+                        children: None,
+                    },
+                );
+            }
+        }
+        (Some((a_subs, a_func)), Some((s_subs, s_func)), Some((c_subs, c_func))) => {
+            assert!(a_subs.len() == s_subs.len() && s_subs.len() == c_subs.len());
+            for dom in a_subs {
+                dom.borrow_mut().register(
+                    path.clone(),
+                    ele.clone(),
+                    UpdateFunc {
+                        attr: Some(a_func.clone()),
+                        style: Some(s_func.clone()),
+                        children: Some(c_func.clone()),
+                    },
+                );
+            }
+        }
+    }
+}
+
+fn fmt_static_content(
+    name: &str,
+    content: &StaticContent,
+    buf: &mut String,
+    f: &mut TagFormatter,
+) -> Result<(), std::fmt::Error> {
+    use std::fmt::Write;
+    match content {
+        StaticContent::Null => {
+            write!(buf, "</{name}>")?;
+        }
+        StaticContent::Text(text) => {
+            buf.write_str(text)?;
+            write!(buf, "</{name}>")?;
+        }
+        StaticContent::List(children) => {
+            buf.push_str(f.line_sep);
+            f.indent += 1;
+            for child in children.iter() {
+                child.format(f, buf)?
+            }
+            f.indent -= 1;
+            if f.newline_on_attr {
+                buf.push_str(f.line_sep);
+                let pad = f.pad_size();
+                write!(buf, "{:pad$}</{name}>", "")?;
+            } else {
+                write!(buf, "</{name}>")?;
+            }
+        }
+    };
+    Ok(())
+}
+
+pub fn unit(name: &'static str, content: EleContent) -> tags::Unit {
     tags::Unit {
         name,
         content,
@@ -248,135 +294,38 @@ pub fn unit(name: &'static str, content: Children) -> tags::Unit {
     }
 }
 
-/// html element content
-pub enum Children {
-    /// empty tag
-    Null,
-    /// this element has children
-    List(TemplateList),
-    // TODO add html escape checking
-    /// normal text content
-    Text(String),
-    Dynamic(ViewToken),
-}
-
-impl Default for Children {
-    fn default() -> Self {
-        Self::Null
-    }
-}
-
-type ChildrenFunc = dyn Fn() -> Children;
-
-pub type ViewSubs = Rc<RefCell<Vec<((usize, usize), Element, ViewFunc)>>>;
-pub type AttrSubs = Rc<RefCell<Vec<(Element, AttrFunc)>>>;
-pub type StyleSubs = Rc<RefCell<Vec<(Element, StyleFunc)>>>;
-
-pub enum ViewFunc {
-    Owned(Box<ChildrenFunc>),
-    Shared(Rc<RefCell<ChildrenFunc>>),
-}
-
-impl ViewFunc {
-    pub fn get_children(&self) -> Children {
-        match self {
-            ViewFunc::Owned(func) => func(),
-            ViewFunc::Shared(func) => func.borrow()(),
-        }
-    }
-}
-
-pub enum ViewToken {
-    Owned {
-        view: Cell<Box<ChildrenFunc>>,
-        subs: ViewSubs,
-    },
-    Shared {
-        view: Rc<RefCell<ChildrenFunc>>,
-        subs: Vec<ViewSubs>,
-    },
-}
-
-pub enum AttrToken {
-    Owned {
-        view: RefCell<Box<dyn Fn() -> StaticAttrs>>,
-        subs: AttrSubs,
-    },
-    Shared {
-        view: Rc<RefCell<dyn Fn() -> StaticAttrs>>,
-        subs: Vec<AttrSubs>,
-    },
-}
-
-impl AttrToken {
-    pub fn val(&self) -> StaticAttrs {
-        match self {
-            AttrToken::Owned { view, .. } => view.borrow()(),
-            AttrToken::Shared { view, .. } => view.borrow()(),
-        }
-    }
-}
-
-pub enum AttrFunc {
-    Owned(Box<dyn Fn() -> StaticAttrs>),
-    Shared(Rc<RefCell<dyn Fn() -> StaticAttrs>>),
-}
-
-impl AttrFunc {
-    pub fn val(&self) -> StaticAttrs {
-        match self {
-            AttrFunc::Owned(func) => func(),
-            AttrFunc::Shared(func) => func.borrow()(),
-        }
-    }
-}
-
-pub enum StyleToken {
-    Owned {
-        view: RefCell<Box<dyn Fn() -> StaticStyles>>,
-        subs: StyleSubs,
-    },
-    Shared {
-        view: Rc<RefCell<dyn Fn() -> StaticStyles>>,
-        subs: Vec<StyleSubs>,
-    },
-}
-
-impl StyleToken {
-    pub fn val(&self) -> StaticStyles {
-        match self {
-            StyleToken::Owned { view, .. } => view.borrow()(),
-            StyleToken::Shared { view, .. } => view.borrow()(),
-        }
-    }
-}
-
-pub enum StyleFunc {
-    Owned(Box<dyn Fn() -> StaticStyles>),
-    Shared(Rc<RefCell<dyn Fn() -> StaticStyles>>),
-}
-
-impl StyleFunc {
-    pub fn val(&self) -> StaticStyles {
-        match self {
-            StyleFunc::Owned(func) => func(),
-            StyleFunc::Shared(func) => func.borrow()(),
-        }
-    }
-}
-
 pub type TemplateList = Vec<Box<dyn Template>>;
 pub type Listeners = HashMap<&'static str, Box<dyn Fn() -> Box<dyn Fn(Event)>>>;
 
 fn get_document() -> Document {
     let window = web_sys::window().expect("no global `window` exists");
-    let document = window.document().expect("should have a document on window");
-    document
+    window.document().expect("should have a document on window")
+}
+
+fn get_element_offset(ele: &Element) -> usize {
+    let mut offset = 0;
+    let mut prev = ele.previous_element_sibling();
+    while let Some(pre) = prev {
+        offset += 1;
+        prev = pre.previous_element_sibling();
+    }
+    offset
+}
+
+fn get_target_path(target: &Element) -> Vec<usize> {
+    let mut reversed_path = vec![get_element_offset(target)];
+    let mut parent = target.parent_element();
+    while let Some(p) = parent {
+        reversed_path.push(get_element_offset(&p));
+        parent = p.parent_element();
+    }
+    reversed_path.reverse();
+    reversed_path
 }
 
 /// default entry point of app, mount top most element
 /// to document body directory.
-pub fn mount_body<C: Into<Children>>(children: C) -> Result<(Document, HtmlElement), JsValue> {
+pub fn mount_body<C: Into<EleContent>>(children: C) -> Result<(Document, HtmlElement), JsValue> {
     let document = get_document();
     let body = document.body().expect("document should have a body");
 
@@ -384,13 +333,15 @@ pub fn mount_body<C: Into<Children>>(children: C) -> Result<(Document, HtmlEleme
         tracing::warn!("body children is not empty");
     }
     let children = children.into();
-    render_children(&children, &body, &document)?;
+    let path = get_target_path(&body);
+    children.render(path, &body, &document)?;
     Ok((document, body))
 }
 
-pub fn mount<C: Into<Children>>(target: &Element, children: C) -> Result<(), JsValue> {
+pub fn mount<C: Into<EleContent>>(target: &Element, children: C) -> Result<(), JsValue> {
     let doc = get_document();
     let children = children.into();
-    render_children(&children, target, &doc)?;
+    let path = get_target_path(target);
+    children.render(path, target, &doc)?;
     Ok(())
 }
