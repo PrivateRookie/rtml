@@ -79,17 +79,9 @@ pub fn start() {
 
     // 控制台 print Reactive 类型的数据
     let test: Reactive<&str> = "hello ,我是正在学编程的小伙伴.前端 and Rust".into();
-    log(*test.val());
+    log(&test.val());
 
-    let is_show;
-    let show_card_enum = status_store.val().is_show.clone();
-    // log(&format!("{}", show_card_enum));
-    // span(format!("{} items left", store.val().task_lists_len.val())).into()
-    match *show_card_enum.val() {
-        IsShow::SHOW => is_show = "show-card",
-        IsShow::HIDE => is_show = "hide-card",
-    }
-
+    let is_show = status_store.val().is_show.clone();
     log(&format!("is {}",is_show));
 
     // header component
@@ -120,7 +112,7 @@ pub fn start() {
         // }
         if !store.val().message.val().is_empty() {
             let text = store.val().message.clone();
-            let msg: Rc<RefCell<String>> = text.into();
+            let msg:Rc<RefCell<String>>= text.into();
             let msg = msg.borrow().clone();
             if !msg.is_empty() {
                 store
@@ -229,77 +221,87 @@ pub fn start() {
         attr! {id="todo"},
         (
             ul_li,
-            div((
-                attr! {class=format!("box card {}",is_show),id="card"},
-                (
-                    p(status_store.view(|store| {
-                        span(format!("{} items left", store.val().task_lists_len.val())).into()
-                    })),
-                    label((attr! {for="all",class="show-border"}, "All")),
-                    input(attr! {type="radio",id="all",name="btn",checked="true"}).on(
-                        Click,
-                        status_store.evt(|event, store| {
-                            let evt: Event = event.into();
-                            if let Some(target) = evt.target() {
-                                let input_element: HtmlInputElement = JsValue::from(target).into();
-                                let checked = input_element.checked();
-                                let list_map = store.val().task_lists.clone();
-                                if checked {
-                                    store.val_mut().active_status_data = ActiveStatusData(list_map.val().to_vec()).reactive();
-                                    store.update();
-                                    console_log!("{}", "all");
-                                    let s = format!("{} ActiveStatusData", store.val().active_status_data);
-                                    console_log!("{}",s);
+            div((attr!{class="todo--first__div"},status_store.view(|_store|{
+                div((
+                    attr! {class=format!("box card {}",
+                    match *_store.val().is_show.val(){
+                        IsShow::SHOW => "show-card",
+                        IsShow::HIDE => "hide-card",
+                    }),
+                    id="card"},
+                    (
+                        p(_store.val().task_lists_len.view(|len| {
+                            span(format!("{} items left", len.val())).into()
+                        })),
+                        label((attr! {for="all"}, "All")),
+                        input(attr! {type="radio",id="all",name="btn"}).on(
+                            Click,
+                            _store.evt(|event, store| {
+                                let evt: Event = event.into();
+                                if let Some(target) = evt.target() {
+                                    let input_element: HtmlInputElement = JsValue::from(target).into();
+                                    let checked = input_element.checked();
+                                    let list_map = store.val().task_lists.clone();
+                                    if checked {
+                                        store.val_mut().active_status_data = ActiveStatusData(list_map.val().to_vec()).reactive();
+                                        store.update();
+                                        console_log!("{}", "all");
+                                        let s = format!("ActiveStatusData: {}", store.val().active_status_data);
+                                        console_log!("{}",s);
+                                    }
                                 }
-                            }
-                        }),
-                    ),
-                    label((attr! {for="active"}, "Active")),
-                    input(attr! {type="radio",id="active",name="btn"}).on(
-                        Click,
-                        status_store.evt(|event, store| {
+                            }),
+                        ),
+                        label((attr! {for="active"}, "Active")),
+                        input(attr! {type="radio",id="active",name="btn"}).on(
+                            Click,
+                            _store.evt(|event, store| {
+                                let evt: Event = event.into();
+                                if let Some(target) = evt.target() {
+                                    let input_element: HtmlInputElement = JsValue::from(target).into();
+                                    let checked = input_element.checked();
+                
+                                    let task_lists = store.val().task_lists.clone();
+                                    let list = task_lists
+                                        .val()
+                                        .clone()
+                                        .into_iter()
+                                        .filter(|item| !item.done)
+                                        .collect::<Vec<_>>();
+                                    if checked {
+                                        store.val_mut().active_status_data = ActiveStatusData(list).reactive();
+                                        store.update();
+                                        console_log!("{}", "active");
+                                        let s = format!("list: {}", task_lists);
+                                        console_log!("task_lists: {}",s);
+                                    }
+                                }
+                            }),
+                        ),
+                        label((attr! {for="completed"}, "Completed")),
+                        input(attr! {type="radio",id="completed",name="btn"}).on(
+                            Click,_store.evt(|event,store| {
                             let evt: Event = event.into();
                             if let Some(target) = evt.target() {
-                                let input_element: HtmlInputElement = JsValue::from(target).into();
+                                let input_element:HtmlInputElement = JsValue::from(target).into();
                                 let checked = input_element.checked();
-
                                 let task_lists = store.val().task_lists.clone();
                                 let list = task_lists
-                                    .val()
-                                    .clone()
-                                    .into_iter()
-                                    .filter(|item| !item.done)
-                                    .collect::<Vec<_>>();
+                                .val()
+                                .clone()
+                                .into_iter()
+                                .filter(|item| item.done)
+                                .collect::<Vec<_>>();
                                 if checked {
                                     store.val_mut().active_status_data = ActiveStatusData(list).reactive();
                                     store.update();
-                                    console_log!("{}", "active");
+                                    console_log!("{}", "completed");
                                 }
                             }
-                        }),
+                        })),
                     ),
-                    label((attr! {for="completed"}, "Completed")),
-                    input(attr! {type="radio",id="completed",name="btn"}).on(Click,status_store.evt(|event,store| {
-                        let evt: Event = event.into();
-                        if let Some(target) = evt.target() {
-                            let input_element:HtmlInputElement = JsValue::from(target).into();
-                            let checked = input_element.checked();
-                            let task_lists = store.val().task_lists.clone();
-                            let list = task_lists
-                            .val()
-                            .clone()
-                            .into_iter()
-                            .filter(|item| item.done)
-                            .collect::<Vec<_>>();
-                            if checked {
-                                store.val_mut().active_status_data = ActiveStatusData(list).reactive();
-                                store.update();
-                                console_log!("{}", "completed");
-                            }
-                        }
-                    })),
-                ),
-            )),
+                )).into()
+            })))
         ),
     )));
 
@@ -323,3 +325,5 @@ pub fn start() {
 // for list in lists.val().iter() {
 //     li_html.push(format!("<li class=\"box list\"><p style=\"display:\"inline-block\";width:\"20px\";height:\"20px\"\"><i class=\" bi bi-file-check-fill\"></i></p><span>s-{}</span><button>X</button></li>",list.msg));
 // }
+
+

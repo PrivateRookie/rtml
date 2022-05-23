@@ -70,7 +70,7 @@ body {
 
 
 
-section>#todo input {
+section>#todo > input {
   width: 15px;
   height: 15px;
   margin: 1px;
@@ -107,45 +107,34 @@ section>#todo input {
   color: rgb(167, 54, 28);
 }
 
-section>#todo>.card {
+section>#todo>.todo--first__div .card {
   font-size: 16px;
 }
 
-section>#todo>.card p {
+section>#todo>.todo--first__div .card p {
   display: inline-block;
   margin-right: 30px;
   color: brown;
 }
 
-/* section > #todo > .card input{
-  display: none;
-} */
-#todo>.card label {
+#todo>.todo--first__div .card label {
   display: inline-block;
   margin: 5px;
   padding: 5px;
   border: 1px solid transparent;
+  font-size: 24px;
   cursor: pointer;
   transition: border .4s linear;
 }
 
-section>#todo label:hover {
+section>#todo >.todo--first__div .card label:hover {
   border: 1px solid rgb(167, 54, 28);
 }
-
-/* section>#todo .show-border {
-  border: 1px solid rgb(167, 54, 28);
-} */
 
 #todo-app footer {
   margin: 20px;
   text-align: center;
   color: gray;
-}
-
-.check {
-  text-decoration: line-through;
-  color: rgb(44, 44, 249);
 }
 
 .hide-card {
