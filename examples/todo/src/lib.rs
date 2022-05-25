@@ -128,7 +128,6 @@ fn input_view(records: Reactive<Store>) -> Input {
                 let value = input.value();
                 data.val_mut().add(value);
                 input.set_value("");
-                tracing::info!("should rerender");
                 update = true;
             }
         }
@@ -211,7 +210,7 @@ fn todo_list(records: Reactive<Store>, filter: Reactive<FilterStatus>) -> Ul {
                                     true
                                 }),
                             ),
-                            button((attr! {class="destroy"}, style! {margin: "10px"} ,"delete")).on(
+                            button((attr! {class="destroy"}, style! {margin: "10px"} ,"🚮")).on(
                                 Click,
                                 records.change(move |store| {
                                     store.val_mut().remove(idx);
@@ -240,15 +239,8 @@ fn item_edit_input(item: &store::Item, idx: usize, data: Reactive<Store>) -> Inp
     }
 
     if item.editing {
-        let on_mouseover = data.evt(|event, _| {
-            if let Some(target) = event.target() {
-                let input: HtmlInputElement = JsValue::from(target).into();
-                input.focus().unwrap();
-            }
-            true
-        });
-
         let on_blur = data.evt(move |event, store| {
+            tracing::info!("on blur");
             edit(event, store, idx);
             true
         });
@@ -256,15 +248,14 @@ fn item_edit_input(item: &store::Item, idx: usize, data: Reactive<Store>) -> Inp
         let on_keypress = data.evt(move |event, store| {
             let mut update = false;
             let event: KeyboardEvent = JsValue::from(event).into();
-            tracing::debug!("key {}", event.key());
-            if event.key() == "Entry" {
+            if event.key() == "Enter" {
                 edit(event.into(), store, idx);
+                tracing::info!("should update");
                 update = true;
             };
             update
         });
         input(attr! {class="edit", type="text", value=item.description})
-            .on(Mouseover, on_mouseover)
             .on(Blur, on_blur)
             .on(Keypress, on_keypress)
     } else {
