@@ -112,4 +112,3 @@ def! {
 
 	在发送跨域请求时携带验证信息。换句话说，在发送<code>Origin:</code> HTTP 请求首部时将携带 cookie、安全令牌、并且执行 HTTP 基本认证。如果服务器没有给予源站信任（通过设置<code>Access-Control-Allow-Credentials:</code> 响应首部）那么图片就被认为是污染的，它就会被限制使用。"#####
 }
-

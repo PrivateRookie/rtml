@@ -1,16 +1,26 @@
-use rtml::EventKind::{Blur, Click, Keypress, Mouseover};
-use rtml::{attr, mount_body, s_attr, tags::*, IntoReactive, Reactive};
+use std::ops::Deref;
+
+use rtml::EventKind::{Blur, Click, Keypress, Mouseover, DblClick};
+use rtml::{attr, mount_body, s_attr, tags::*, IntoReactive, Reactive, style};
 use store::Store;
 use wasm_bindgen::prelude::*;
 use web_sys::{HtmlInputElement, KeyboardEvent};
 
 mod store;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum FilterStatus {
+    All,
+    Active,
+    Completed,
+}
+
 #[wasm_bindgen(start)]
 pub fn start() {
     tracing_wasm::set_as_global_default();
 
     let records = store::Store::load().reactive();
+    let filter = FilterStatus::Active.reactive();
 
     let toggle_all = records.change(|data| {
         data.val_mut()
@@ -18,6 +28,11 @@ pub fn start() {
             .iter_mut()
             .for_each(|item| item.completed = !item.completed);
         data.val().save().unwrap();
+        true
+    });
+
+    let clear_complete = records.change(|data| {
+        data.val_mut().clear_completed();
         true
     });
 
@@ -43,25 +58,37 @@ pub fn start() {
                             }
                         }),
                         (
-                            input(attr! {type="checkbox", class="toggle-all", id="toggle-all"})
-                                .on(Click, toggle_all),
+                            input(records.attr(|data| {
+                                let checked = data.val().items.iter().all(|i| i.completed);
+                                s_attr! { type="checkbox", class="toggle-all", id="toggle-all", checked=checked }
+                            }))
+                            .on(Click, toggle_all),
                             label(attr! {for="toggle-all"}),
-                            todo_list(records.clone()),
+                            todo_list(records.clone(), filter.clone()),
                         ),
                     )),
                     footer((
-                        attr! {class="footer"},
-                        span((
+                        records.attr(|data| {
+                            let cls = if data.val().items.is_empty() {
+                                "footer hidden"
+                            } else {
+                                "footer"
+                            };
+                            s_attr! {class=cls}
+                        }),
+                        (span((
                             attr! {class="todo-count"},
                             (
                                 strong(records.view(|data| data.val().items.len().into())),
                                 span(" item(s) left"),
-                                // TODO use view here
-                                ul((attr! {class="filters"}, ())),
-                                // TODO use view
-                                button(attr! {class = "clear-completed"}),
+                                
                             ),
-                        )),
+                        )), 
+                        filter_view(filter),
+                        button((attr!{class="clear-completed"}, records.view(|data| {
+                            format!("Clear Completed {}", data.val().items.iter().filter(|i| i.completed).count()).into()
+                        }))).on(Click, clear_complete)
+                    ),
                     )),
                 ),
             )),
@@ -101,6 +128,7 @@ fn input_view(records: Reactive<Store>) -> Input {
                 let value = input.value();
                 data.val_mut().add(value);
                 input.set_value("");
+                tracing::info!("should rerender");
                 update = true;
             }
         }
@@ -110,11 +138,54 @@ fn input_view(records: Reactive<Store>) -> Input {
         .on(Keypress, update_and_reset)
 }
 
-fn todo_list(records: Reactive<Store>) -> Ul {
-    ul(records.view(|data| {
-        data.val()
+fn filter_view(filter: Reactive<FilterStatus>) -> Ul {
+    use FilterStatus::*;
+    let options = vec![All, Completed, Active];
+    ul((
+        attr! {class="filters"},
+        options
+            .into_iter()
+            .map(|opt| {
+                let s = format!("{:?}", opt);
+                let opt_c = opt.clone();
+                li(a((
+                    filter.attr(move |data| {
+                        let cls = if *data.val() == opt_c {
+                            "selected"
+                        } else {
+                            "not-selected"
+                        };
+                        s_attr! { class=cls }
+                    }),
+                    s,
+                ))
+                .on(
+                    Click,
+                    filter.change(move |data| {
+                        *data.val_mut() = opt.clone();
+                        true
+                    }),
+                ))
+            })
+            .collect::<Vec<_>>(),
+    ))
+}
+
+fn todo_list(records: Reactive<Store>, filter: Reactive<FilterStatus>) -> Ul {
+    let combine = records + filter;
+    ul(combine.view(|(records, filter)| {
+        let opt = filter.val();
+        let opt = opt.deref();
+        records.val()
             .items
             .iter()
+            .filter(|item| {
+                match opt {
+                    FilterStatus::All => true,
+                    FilterStatus::Active => !item.completed,
+                    FilterStatus::Completed => item.completed,
+                }
+            })
             .enumerate()
             .map(|(idx, item)| {
                 li((
@@ -124,15 +195,15 @@ fn todo_list(records: Reactive<Store>) -> Ul {
                             input(attr! {type="checkbox", class="toggle", checked=item.completed})
                                 .on(
                                     Click,
-                                    data.change(move |store| {
-                                        store.val_mut().items.remove(idx);
-                                        store.val_mut().save().unwrap();
+                                    records.change(move |store| {
+                                        store.val_mut().toggle(idx);
                                         true
                                     }),
                                 ),
                             label(&item.description).on(
-                                Click,
-                                data.change(move |store| {
+                                DblClick,
+                                records.change(move |store| {
+                                    tracing::info!("pop up edit");
                                     if let Some(item) = store.val_mut().items.get_mut(idx) {
                                         item.editing = !item.editing;
                                     }
@@ -140,16 +211,16 @@ fn todo_list(records: Reactive<Store>) -> Ul {
                                     true
                                 }),
                             ),
-                            button(attr! {class="destroy"}).on(
+                            button((attr! {class="destroy"}, style! {margin: "10px"} ,"delete")).on(
                                 Click,
-                                data.change(move |store| {
+                                records.change(move |store| {
                                     store.val_mut().remove(idx);
                                     true
                                 }),
                             ),
                         ),
                     )),
-                    item_edit_input(item, idx, data.clone()),
+                    item_edit_input(item, idx, records.clone()),
                 ))
             })
             .collect::<Vec<_>>()
@@ -173,7 +244,6 @@ fn item_edit_input(item: &store::Item, idx: usize, data: Reactive<Store>) -> Inp
             if let Some(target) = event.target() {
                 let input: HtmlInputElement = JsValue::from(target).into();
                 input.focus().unwrap();
-                // input.set_value("hello");
             }
             true
         });

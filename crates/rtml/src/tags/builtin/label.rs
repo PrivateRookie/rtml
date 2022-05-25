@@ -38,4 +38,3 @@ Any element that accepts <a href="/en-US/docs/Web/Guide/HTML/Content_categories#
 
 	表示与 label 元素关联的&nbsp;<a href="/zh-CN/docs/Web/HTML/Element/form"><code>&lt;form&gt;</code></a> 元素（即它的表单拥有者）。如果声明了该属性，其值应是同一文档中 <a href="/zh-CN/docs/Web/HTML/Element/form"><code>&lt;form&gt;</code></a> 元素的 <code>id</code>。因此你可以将 label 元素放在文档的任何位置，而不仅作为&nbsp;<a href="/zh-CN/docs/Web/HTML/Element/form"><code>&lt;form&gt;</code></a> 元素的后代。"#####
 }
-

@@ -10,14 +10,18 @@ fn reactive_view() -> Html {
         (
             head((
                 meta(attr! { charset="utf-8" }),
-                meta(attr! { http-equiv="Cache-Control", content="no-cache, no-store, must-revalidate" }),
+                meta(
+                    attr! { http-equiv="Cache-Control", content="no-cache, no-store, must-revalidate" },
+                ),
                 script((
                     attr! { type="module" },
-                    format!(r#"
+                    format!(
+                        r#"
                     import init from "./{pkg}.js";
                     import {{ {bin} }} from "./{pkg}.js";
                     init().then(() => {bin}());
-                    "#),
+                    "#
+                    ),
                 )),
                 title("Tutorial - RTML"),
             )),

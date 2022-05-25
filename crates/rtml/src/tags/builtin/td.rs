@@ -166,4 +166,3 @@ The start tag is mandatory.<br>
  <div id="sect12" class="note notecard"><strong>Note:</strong> Do not use this attribute as it is obsolete in the latest standard: use the CSS <a href="/zh-CN/docs/Web/CSS/width"><code>width</code></a> property instead.</div>
  "#####
 }
-

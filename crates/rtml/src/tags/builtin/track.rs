@@ -77,4 +77,3 @@ def! {
 
 	track 文本数据的语言。它必须是合法的 <a href="http://people.w3.org/rishida/utils/subtags/" rel=" noopener" class="external">BCP 47</a> 语言标签。如果 <code>kind</code> 属性被设为&nbsp;<code>subtitles,</code> 那么<code>srclang</code> 必须定义。"#####
 }
-

@@ -47,9 +47,25 @@ impl Store {
         Self { items, ls }
     }
 
+    pub fn toggle(&mut self, index: usize) {
+        if let Some(item) = self.items.get_mut(index) {
+            item.completed = !item.completed;
+        }
+        self.save().unwrap();
+    }
+
     pub fn remove(&mut self, index: usize) {
         self.items.remove(index);
         self.save().unwrap();
+    }
+
+    pub fn clear_completed(&mut self) -> usize {
+        let mut count = 0;
+        while let Some(idx) = self.items.iter().position(|i| i.completed) {
+            self.items.remove(idx);
+            count += 1;
+        }
+        count
     }
 
     pub fn save(&self) -> Result<(), JsValue> {

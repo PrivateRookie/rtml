@@ -105,4 +105,3 @@ def! {
  <p>此值可以被 <a href="/zh-CN/docs/Web/HTML/Element/button"><code>&lt;button&gt;</code></a>、 <code><a href="/zh-CN/docs/Web/HTML/Element/Input/submit">&lt;input type="submit"&gt;</a></code> 或 <code><a href="/zh-CN/docs/Web/HTML/Element/Input/image">&lt;input type="image"&gt;</a></code> 元素中的 <a href="/zh-CN/docs/Web/HTML/Element/button#attr-formtarget"><code>formtarget</code></a> 属性覆盖。</p>
  "#####
 }
-

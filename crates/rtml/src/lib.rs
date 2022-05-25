@@ -150,6 +150,11 @@ fn register(
     path: Vec<usize>,
     ele: &Element,
 ) {
+    // tracing::info!(
+    //     "register dyn for {:?} {}",
+    //     path.iter().enumerate().collect::<Vec<_>>(),
+    //     ele.local_name()
+    // );
     match (attr_subs, style_subs, content_subs) {
         (None, None, None) => {}
         (None, None, Some((subs, func))) => {

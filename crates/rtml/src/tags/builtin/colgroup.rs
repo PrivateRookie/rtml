@@ -134,4 +134,3 @@ If the <a href="/zh-CN/docs/Web/HTML/Element/colgroup#attr-span" aria-current="p
 
 	This attribute specifies a default width for each column in the current column group. In addition to the standard pixel and percentage values, this attribute might take the special form <code>0*</code>, which means that the width of each column in the group should be the minimum width necessary to hold the column's contents. Relative widths such as <code>0.5*</code> also can be used."#####
 }
-

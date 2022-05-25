@@ -42,4 +42,3 @@ A <a href="/zh-CN/docs/Web/HTML/Element/table"><code>&lt;table&gt;</code></a> el
  <div id="sect1" class="note notecard"><strong>使用说明：</strong>不要使用这个属性，它已经被弃用：&nbsp;<a href="/zh-CN/docs/Web/HTML/Element/caption" aria-current="page"><code>&lt;caption&gt;</code></a> 元素应该使用&nbsp;<a title="CSS" href="/en-US/docs/Web/CSS">CSS</a>设置样式。要得到类似<code>align</code>属性的效果，使用&nbsp;<a href="/en-US/docs/Web/CSS" title="CSS">CSS</a> 属性 <a href="/zh-CN/docs/Web/CSS/caption-side"><code>caption-side</code></a> 和 <a href="/zh-CN/docs/Web/CSS/text-align"><code>text-align</code></a>.</div>
  "#####
 }
-

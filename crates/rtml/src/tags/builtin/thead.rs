@@ -131,4 +131,3 @@ A <a href="/zh-CN/docs/Web/HTML/Element/table"><code>&lt;table&gt;</code></a> el
  <div class="note notecard" id="sect5"><strong>Note: </strong>Do not use this attribute as it is obsolete (and not supported) in the latest standard: instead set the CSS&nbsp;<a href="/zh-CN/docs/Web/CSS/vertical-align"><code>vertical-align</code></a> property on it.</div>
  "#####
 }
-

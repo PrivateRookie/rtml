@@ -36,4 +36,3 @@ def! {
 
 	默认浏览上下文的关键字或作者定义的名称，当没有明确目标的链接 <code><a href="/zh-CN/docs/Web/HTML/Element/a"><code>&lt;a&gt;</code></a></code>&nbsp;或表单 <code><a href="/zh-CN/docs/Web/HTML/Element/form"><code>&lt;form&gt;</code></a></code>&nbsp;导致导航被激活时显示其结果。该属性值定位到<em>浏览上下文</em>（例如选项卡，窗口或内联框&nbsp;<code><a href="/zh-CN/docs/Web/HTML/Element/iframe"><code>&lt;iframe&gt;</code></a></code>&nbsp;）。"#####
 }
-

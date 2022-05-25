@@ -36,4 +36,3 @@ def! {
 
 	这个属性说明修改的时间和日期，这里的时间和日期格式要符合<a class="external" rel=" noopener" href="https://html.spec.whatwg.org/multipage/infrastructure.html#valid-date-string-with-optional-time">规范</a>。如果设置的值不符合该规范，那么它将没有任何意义。"#####
 }
-

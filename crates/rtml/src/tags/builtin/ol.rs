@@ -53,4 +53,3 @@ Any element that accepts <a href="/en-US/docs/Web/Guide/HTML/Content_categories#
  <div id="sect3" class="note notecard"><strong>Note: </strong>这个属性在 HTML4 中弃用，但是在 HTML5 中被重新引入。除非列表中序号很重要（比如，在法律或者技术文件中条目通常被需要所引用），否则请使用 CSS <a href="/zh-CN/docs/Web/CSS/list-style-type"><code>list-style-type</code></a> 属性替代。</div>
  "#####
 }
-

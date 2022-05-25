@@ -5,12 +5,12 @@ pub struct TagFormatter {
     /// init ident
     pub indent: usize,
     /// line if tag has attrs
-    /// 
+    ///
     /// when false
     /// ```html
     /// <div id="nice">...</div>
     /// ```
-    /// 
+    ///
     /// when true
     /// ```html
     /// <div
@@ -40,5 +40,3 @@ impl TagFormatter {
         self.indent * self.tab_size
     }
 }
-
-

@@ -44,4 +44,3 @@ Any element that accepts <a href="/en-US/docs/Web/Guide/HTML/Content_categories#
  </ul>
  "#####
 }
-

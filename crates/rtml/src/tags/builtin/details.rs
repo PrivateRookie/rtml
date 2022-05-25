@@ -33,4 +33,3 @@ Any element that accepts <a href="/en-US/docs/Web/Guide/HTML/Content_categories#
 
 	This Boolean attribute indicates whether or not the details — that is, the contents of the <code>&lt;details&gt;</code> element — are currently visible. The default, <code>false</code>, means the details are not visible."#####
 }
-

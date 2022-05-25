@@ -137,4 +137,3 @@ def! {
  <div class="note notecard" id="sect5"><strong>Note: </strong> 请勿使用此属性，因为在最新标准中此属性被废弃（且不受支持）：使用 CSS 属性<a href="/zh-CN/docs/Web/CSS/vertical-align"><code>vertical-align</code></a>作为替代。</div>
  "#####
 }
-

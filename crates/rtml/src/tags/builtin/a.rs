@@ -104,4 +104,3 @@ def! {
 
 	该属性指定在一个 <a href="/zh-CN/docs/Glossary/MIME_type">MIME type</a> 链接目标的形式的媒体类型。其仅提供建议，并没有内置的功能。"#####
 }
-

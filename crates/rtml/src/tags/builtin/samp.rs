@@ -30,4 +30,3 @@ Any element that accepts&nbsp;<a title="HTML/Content_categories#Phrasing_content
  包含全局属性: true
 "#####
 }
-

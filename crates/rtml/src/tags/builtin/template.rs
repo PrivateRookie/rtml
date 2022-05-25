@@ -30,4 +30,3 @@ No restrictions
  包含全局属性: true
 "#####
 }
-

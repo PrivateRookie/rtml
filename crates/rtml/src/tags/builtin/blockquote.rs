@@ -33,4 +33,3 @@ Any element that accepts <a href="/en-US/docs/Web/Guide/HTML/Content_categories#
 
 	是一个标注引用的信息的来源文档或者相关信息的 URL。通常用来描述能够解释引文的上下文或者引用的信息。"#####
 }
-

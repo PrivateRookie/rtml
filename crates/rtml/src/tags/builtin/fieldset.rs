@@ -41,4 +41,3 @@ Any element that accepts&nbsp;<a title="Currently only available in English (US)
  <div class="note notecard" id="sect5"><strong>注意：</strong>fieldset 的标题由第一个 <a href="/zh-CN/docs/Web/HTML/Element/legend"><code>&lt;legend&gt;</code></a> 子元素确定。</div>
  "#####
 }
-

@@ -40,4 +40,3 @@ def! {
 	<p>The URL of the page to embed.</p>
   "#####
 }
-

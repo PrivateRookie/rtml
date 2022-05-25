@@ -58,7 +58,6 @@ impl Dom {
         while let Some(mut child) = self.children.pop() {
             child.detach_child();
             if let Some((ele, _)) = child.updater {
-                tracing::debug!("detach {}", ele.local_name());
                 ele.remove()
             }
         }
@@ -85,7 +84,7 @@ impl Dom {
                     let mut idx = if dom.children.is_empty() {
                         0
                     } else {
-                        dom.children.len() - 1
+                        dom.children.len()
                     };
                     while idx <= *next {
                         let mut path = dom_path.clone();
@@ -186,13 +185,14 @@ impl<T: 'static> Reactive<T> {
     }
 
     /// handle event and reactive data
-    pub fn evt<M: Fn(Event, Self) -> bool + 'static + Copy>(
+    pub fn evt<M: Fn(Event, Self) -> bool + 'static + Clone>(
         &self,
         m: M,
     ) -> Box<dyn Fn() -> Box<dyn Fn(Event)> + 'static> {
         let data = self.clone();
         Box::new(move || {
             let data = data.clone();
+            let m = m.clone();
             Box::new(move |event| {
                 if m(event, data.clone()) {
                     data.update_and_clear().unwrap();
@@ -202,13 +202,14 @@ impl<T: 'static> Reactive<T> {
     }
 
     /// mutate data and update view
-    pub fn change<M: Fn(Self) -> bool + 'static + Copy>(
+    pub fn change<M: Fn(Self) -> bool + 'static + Clone>(
         &self,
         m: M,
     ) -> Box<dyn Fn() -> Box<dyn Fn(Event)> + 'static> {
         let rea = self.clone();
         Box::new(move || {
             let rea = rea.clone();
+            let m = m.clone();
             Box::new(move |_| {
                 if m(rea.clone()) {
                     rea.update_and_clear().unwrap();
@@ -312,9 +313,9 @@ macro_rules! impl_combine {
         }
 
 
-        impl<This: 'static, $($t: 'static),+> $crate::CombinedReactive<($crate::Reactive<This>, $($crate::Reactive<$t>),+)> {
+        impl<$($t: 'static),+> $crate::CombinedReactive<($($crate::Reactive<$t>,)+)> {
             /// subscribe data change
-            pub fn attr<Func: Fn(($crate::Reactive<This>, $($crate::Reactive<$t>),+)) -> $crate::tags::StaticAttrs + 'static>(
+            pub fn attr<Func: Fn(($($crate::Reactive<$t>,)+)) -> $crate::tags::StaticAttrs + 'static>(
                 &self,
                 func: Func,
             ) -> $crate::tags::Attrs  {
@@ -326,7 +327,7 @@ macro_rules! impl_combine {
             }
 
             /// subscribe data change
-            pub fn style<Func: Fn(($crate::Reactive<This>, $($crate::Reactive<$t>),+)) -> $crate::tags::StaticStyles + 'static>(
+            pub fn style<Func: Fn(($($crate::Reactive<$t>,)+)) -> $crate::tags::StaticStyles + 'static>(
                 &self,
                 func: Func,
             ) -> $crate::tags::Styles  {
@@ -339,19 +340,20 @@ macro_rules! impl_combine {
 
 
             /// subscribe data change
-            pub fn view<View: Fn(($crate::Reactive<This>, $($crate::Reactive<$t>),+)) -> $crate::StaticContent + 'static>(
+            pub fn view<View: Fn(($($crate::Reactive<$t>,)+)) -> $crate::StaticContent + 'static>(
                 &self,
                 view: View,
             ) -> $crate::EleContent  {
                 let data = self.data.clone();
+                let subs = vec![$(self.data.$i.subs.clone()),+];
                 $crate::EleContent::Dynamic {
                     func: ::std::rc::Rc::new(::std::cell::RefCell::new(move || view(data.clone()))),
-                    subs: vec![$(self.data.$i.subs.clone()),+]
+                    subs: subs
                 }
             }
 
             /// mutate data and update view
-            pub fn change<Method: Fn(($crate::Reactive<This>, $($crate::Reactive<$t>),+)) -> bool + 'static + Copy>(
+            pub fn change<Method: Fn(($($crate::Reactive<$t>,)+)) -> bool + 'static + Copy>(
                 &self,
                 m: Method,
             ) -> Box<dyn Fn() -> Box<dyn Fn(web_sys::Event)> + 'static>  {
@@ -361,6 +363,7 @@ macro_rules! impl_combine {
                     Box::new(move |_| {
                         if m(data.clone()) {
                             $(
+                                tracing::info!("call to update {}", $i);
                                 data.$i.update();
                             )+
                         }
@@ -369,7 +372,7 @@ macro_rules! impl_combine {
             }
 
             /// mutate data and update view
-            pub fn evt<Method: Fn(web_sys::Event, ($crate::Reactive<This>, $($crate::Reactive<$t>),+)) -> bool + 'static + Copy>(
+            pub fn evt<Method: Fn(web_sys::Event, ($($crate::Reactive<$t>,)+)) -> bool + 'static + Copy>(
                 &self,
                 m: Method,
             ) -> Box<dyn Fn() -> Box<dyn Fn(web_sys::Event)> + 'static>  {
@@ -379,6 +382,7 @@ macro_rules! impl_combine {
                     Box::new(move |event| {
                         if m(event, data.clone()) {
                             $(
+                                tracing::info!("call to update {}", $i);
                                 data.$i.update();
                             )+
                         }

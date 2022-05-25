@@ -33,4 +33,3 @@ Any element that accepts <a href="/en-US/docs/Web/Guide/HTML/Content_categories#
 
 	该属性指定元素内容所对应的数据，或者说 “机器可读的翻译”。"#####
 }
-

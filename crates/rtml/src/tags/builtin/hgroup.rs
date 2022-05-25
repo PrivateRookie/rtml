@@ -30,4 +30,3 @@ Any element that accepts <a title="HTML/Content categories#Flow content" href="/
  包含全局属性: true
 "#####
 }
-

@@ -56,4 +56,3 @@ None, it is an <a href="/zh-CN/docs/Glossary/Empty_element">empty element</a>.
 
 	The MIME-type of the resource, optionally with a <code>codecs</code> parameter. See <a href="https://tools.ietf.org/html/rfc4281" rel=" noopener" class="external">RFC 4281</a> for information about how to specify codecs."#####
 }
-

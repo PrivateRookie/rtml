@@ -53,4 +53,3 @@ Any element that accepts <a href="/en-US/docs/Web/Guide/HTML/Content_categories#
  <div class="note notecard" id="sect2"><strong>使用备注：</strong>除非值域在 0 到 1（闭区间）, 否则最小值和最大值属性需要定义，以保证 value 属性在值域范围内。换言之，默认的 min 和 max 值分别为 0 和 1。</div>
  "#####
 }
-

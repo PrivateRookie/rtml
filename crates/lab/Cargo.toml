@@ -23,6 +23,7 @@ web-sys = { version = "0.3", features = [
     "Node",
     "Window",
 ] }
+ptree = "0.4"
 
 [[bin]]
 name = "index"

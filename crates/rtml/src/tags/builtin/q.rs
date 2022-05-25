@@ -33,4 +33,3 @@ Any element that accepts <a href="/en-US/docs/Web/Guide/HTML/Content_categories#
 
 	这个属性的值是 URL，意在指出被引用的文本的源文档或者源信息。这个属性重在解释这个引用的参考或者是上下文。"#####
 }
-

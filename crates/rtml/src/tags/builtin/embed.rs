@@ -42,4 +42,3 @@ Any element that accepts embedded content.
 
 	资源显示的宽度，in <a href="https://drafts.csswg.org/css-values/#px" class="external" rel=" noopener">CSS pixels</a>. &nbsp;-- (Absolute values&nbsp;only. &nbsp;<a rel=" noopener" class="external" href="https://html.spec.whatwg.org/multipage/embedded-content.html#dimension-attributes">NO&nbsp;percentages</a>)"#####
 }
-

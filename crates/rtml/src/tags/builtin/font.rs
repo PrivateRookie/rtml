@@ -39,4 +39,3 @@ def! {
 
 	这个属性使用数字或相对值指定文字大小。数字在最小的 7 到最大的 7 之间，默认值为 3。也可以用诸如 +2 或 -3 的相对值指定，这会将其设置为，相对于 <a href="/zh-CN/docs/Web/HTML/Element/basefont"><code>&lt;basefont&gt;</code></a> 元素 <a href="/zh-CN/docs/Web/HTML/Element/basefont#attr-size"><code>size</code></a>属性的值，或者如果不存在，则是相对于 3 也就是默认值的值。"#####
 }
-

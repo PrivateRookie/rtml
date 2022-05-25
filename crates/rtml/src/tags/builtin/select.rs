@@ -54,4 +54,3 @@ Any element that accepts&nbsp;<a title="Currently only available in English (US)
 
 	如果控件显示为滚动列表框（如声明了 <code>multiple</code>），则此属性表示为控件中同时可见的行数。浏览器不需要将选择元素呈现为滚动列表框。默认值为 0。"#####
 }
-

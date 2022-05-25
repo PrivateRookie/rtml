@@ -81,4 +81,3 @@ The <code>&lt;tbody&gt;</code> element is not a required child element for a par
 	<p>As this attribute is deprecated, use the CSS <a href="/en-US/docs/Web/CSS/vertical-align"><code>vertical-align</code></a> property instead.</p>
   "#####
 }
-

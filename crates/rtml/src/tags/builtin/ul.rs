@@ -50,4 +50,3 @@ def! {
  <div id="sect3" class="note notecard"><strong>使用说明：</strong> 不要使用这个属性，它已经被废弃了：使用 <a href="/en-US/CSS" title="en/CSS">CSS</a> <a href="/zh-CN/docs/Web/CSS/list-style-type"><code>list-style-type</code></a> 属性作为代替。</div>
  "#####
 }
-

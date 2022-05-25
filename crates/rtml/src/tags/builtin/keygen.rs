@@ -48,4 +48,3 @@ Any element that accepts <a title="HTML/Content_categories#Phrasing_content" hre
 
 	The name of the control, which is submitted with the form data."#####
 }
-

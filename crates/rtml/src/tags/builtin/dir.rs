@@ -35,4 +35,3 @@ def! {
  <div class="note notecard" id="sect4">用法注解：不要使用这个属性，因为它已经废除了：&nbsp;<a aria-current="page" href="/zh-CN/docs/Web/HTML/Element/dir"><code>&lt;dir&gt;</code></a> 元素应该使用 CSS 来设计。为了提供 <code>compact</code>&nbsp;属性的相似效果，可以使用 <a title="CSS" href="/en-US/docs/Web/CSS">CSS</a>&nbsp;属性 <a href="/zh-CN/docs/Web/CSS/line-height"><code>line-height</code></a>，值为 <code>80%</code>&nbsp;。</div>
  "#####
 }
-

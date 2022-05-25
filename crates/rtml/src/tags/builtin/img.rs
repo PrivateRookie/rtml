@@ -257,4 +257,3 @@ def! {
 
 	图像的宽度，在 <span class="badge inline html-version"><a href="/zh-CN/docs/HTML/HTML5" class="page-not-created" title="This is a link to an unwritten page">HTML5</a></span> 中单位是 CSS 像素， 在 <span class="badge inline html-version"><a href="/zh-CN/docs/Web/HTML">HTML 4</a></span> 中可以是像素也可以是百分比。"#####
 }
-

@@ -41,4 +41,3 @@ def! {
  <p>指派文档的 XML 命名空间。默认的值是<code>"http://www.w3.org/1999/xhtml"</code>。这在 XHTML 中是必要的，而在 HTML 中则是可选的。</p>
  "#####
 }
-

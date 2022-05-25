@@ -36,4 +36,3 @@ def! {
 
 	该特性指示的此修改发生的时间和日期，并且该特性的值必须是<a class="external" rel=" noopener" href="https://www.w3.org/TR/2011/WD-html5-20110525/common-microsyntaxes.html#valid-date-string-with-optional-time">一个有效的日期或者时间字符串</a>。如果该值不能被解析为日期或者时间，则该元素不具有相关联的时间标记。"#####
 }
-

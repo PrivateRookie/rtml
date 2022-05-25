@@ -30,4 +30,3 @@ A <a href="/zh-CN/docs/Web/HTML/Element/figcaption"><code>&lt;figcaption&gt;</co
  包含全局属性: true
 "#####
 }
-

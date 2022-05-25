@@ -36,4 +36,3 @@ def! {
 
 	(该属性仍在被 WHATWG 和 W3C 组织设计和讨论中.) This Boolean attribute specifies that the date and time given by the element is the publication date of a document. The document it applies to is either the nearest ancestor article element or the document as a whole (if there is no ancestor <a title="zh-cn/HTML/Element/Article" href="/zh-CN/docs/Web/HTML/Element/article">article</a> element). If true, the <code>time</code> element must have a corresponding date. Additionally, each <code>time</code> element indicating a publication date must be the only <code>time</code> element that does so for that document."#####
 }
-

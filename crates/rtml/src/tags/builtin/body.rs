@@ -114,4 +114,3 @@ The start tag may be omitted if the first thing inside it is not a space charact
 
 	访问过的超链接的文本颜色。&nbsp;此方法不符合规范，请使用<em> CSS <a href="/zh-CN/docs/Web/CSS/color"><code>color</code></a> 属性和 <a href="/zh-CN/docs/Web/CSS/:visited"><code>:visited</code></a> 伪类替代。</em>"#####
 }
-

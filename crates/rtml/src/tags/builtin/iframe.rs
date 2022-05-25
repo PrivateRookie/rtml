@@ -149,4 +149,3 @@ def! {
 
 	以 CSS 像素格式<span class="badge inline html-version"><a class="page-not-created" href="/zh-CN/docs/HTML/HTML5" title="This is a link to an unwritten page">HTML5</a></span>，或以像素格式<span class="badge inline html-version">HTML 4.01</span>，或以百分比格式指定的 frame 的宽度。默认值是<code>300</code>。"#####
 }
-
