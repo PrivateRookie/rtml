@@ -6,3 +6,4 @@ members = [
     "crates/project",
     "examples/*",
 ]
+exclude = ["examples/rtml-tauri"]
