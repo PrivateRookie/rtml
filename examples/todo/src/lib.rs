@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use rtml::EventKind::{Blur, Click, Keypress, Mouseover, DblClick};
+use rtml::EventKind::{Blur, Click, Keypress, DblClick};
 use rtml::{attr, mount_body, s_attr, tags::*, IntoReactive, Reactive, style};
 use store::Store;
 use wasm_bindgen::prelude::*;
@@ -202,7 +202,6 @@ fn todo_list(records: Reactive<Store>, filter: Reactive<FilterStatus>) -> Ul {
                             label(&item.description).on(
                                 DblClick,
                                 records.change(move |store| {
-                                    tracing::info!("pop up edit");
                                     if let Some(item) = store.val_mut().items.get_mut(idx) {
                                         item.editing = !item.editing;
                                     }
@@ -240,24 +239,11 @@ fn item_edit_input(item: &store::Item, idx: usize, data: Reactive<Store>) -> Inp
 
     if item.editing {
         let on_blur = data.evt(move |event, store| {
-            tracing::info!("on blur");
             edit(event, store, idx);
             true
         });
-
-        let on_keypress = data.evt(move |event, store| {
-            let mut update = false;
-            let event: KeyboardEvent = JsValue::from(event).into();
-            if event.key() == "Enter" {
-                edit(event.into(), store, idx);
-                tracing::info!("should update");
-                update = true;
-            };
-            update
-        });
         input(attr! {class="edit", type="text", value=item.description})
             .on(Blur, on_blur)
-            .on(Keypress, on_keypress)
     } else {
         input(attr! {type="hidden"})
     }
