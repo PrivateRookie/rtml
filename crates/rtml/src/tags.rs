@@ -424,7 +424,6 @@ macro_rules! attr {
 #[macro_export]
 macro_rules! s_attr {
         ($($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
-            #[allow(unused_assignments)]
             { let mut attrs: std::collections::HashMap<String, String> = std::collections::HashMap::new();
             $(
                 let name = vec![$(stringify!($name)),*];

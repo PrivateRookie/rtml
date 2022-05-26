@@ -187,11 +187,15 @@ fn todo_list(records: Reactive<Store>, filter: Reactive<FilterStatus>) -> Ul {
             })
             .enumerate()
             .map(|(idx, item)| {
+                let mut input_attr = s_attr! { type="checkbox", class="toggle" };
+                if item.completed {
+                    input_attr.0.insert("checked".into(), "".into());
+                }
                 li((
                     div((
                         attr! {class="view"},
                         (
-                            input(attr! {type="checkbox", class="toggle", checked=item.completed})
+                            input(Attrs::Static(input_attr))
                                 .on(
                                     Click,
                                     records.change(move |store| {
