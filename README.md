@@ -218,23 +218,7 @@ rtml 之所以采用如此编译步骤的原因将会在下面和设计思考一
 
 #### 绑定数据和处理事件
 
-rtml 让用户可以将数据绑定到某个标签上, 并在随后事件处理函数中将绑定的数据当作参数传进去. 在开始之前需要介绍下 rtml 中 Marker 概念. 在 rtml 中每个标签都对应一个 Marker, Marker 包含标签绑定数据和调用 dom api 创建标签成功后拿到的 web_sys::Element 元素. 这些 Marker 会被当作事件处理函数的参数传进去, 用户就可以在事件处理函数中拿到某标签绑定数据和标签, 并根据需要更新.
-
-在 [wasm/src/lib.rs](examples/wasm/src/lib.rs) count_card 函数中展示了如何将点击次数这个数据绑定到 button 上, 并在 click 事件被触发时拿到并更新这个数据, 接着更新展示的 p 元素内容. 
-
-值得说明的是在代码中新出现的 inject, link 和 on 函数.
-
-除了 inject 函数, 还有 bind 函数也能将数据绑定到某个标签上, 区别只是 inject 参数类型为 T, 而 bind 为 Rc\<RefCell\<T\>\>.
-
-除了绑定数据, 通常某些元素是带有"联动"的, 比如 incr 按钮在被点击后不单需要更新自身 count, 还需要更新显示 count 的 p 标签内容. 这时候用户可以用 link 函数, 将 incr 按钮和 p 结合起来. 这样在事件处理函数里, 参数类型会自动变成 (btn, show).
-
-on 函数正如 js 原生的 onClick 等函数一样, 提供了事件处理逻辑接口. on有两个参数, 第一个为事件类型, 用户可以在 rtml::events::EventKind 里拿到常用的事件类型, 也可以传一个自定义 &str. on 第二参数是一个 impl Fn(M) -> Box\<dyn FnMut()\> + 'static, 此处的 M 代表由 link 函数产生的 Marker 列表.
-
-当标签没有创建 link 过其标签, 那 M 为 Marker, 代表正在被创建的标签 Marker, 如果 link 过其他元素, 第一个 Marker 总是代表正在被创建的标签, 第二个以后则保持 link 参数的顺序. 即
-
-```
-Marker<This>.link((Marker<A>, Marker<B>, Marker<C>,) -> M类型为 (Marker<This>, Marker<A>, Marker<B>, Marker<C>)
-```
+在 [counter](examples/counter/) 例子里展示了如何绑定数据, 并在数据变动时刷新由此数据渲染的内容. 
 
 #### wasm 编译说明
 
