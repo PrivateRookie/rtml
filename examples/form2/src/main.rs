@@ -1,6 +1,6 @@
 use rtml::attr;
 use rtml::tags::*;
-#[rtml::page]
+
 fn index() -> Html {
     html((
         attr! {lang="en"},
@@ -59,4 +59,8 @@ fn index() -> Html {
             ))
         ),
     ))
+}
+
+fn main() {
+    println!("{}", index());
 }

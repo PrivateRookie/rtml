@@ -1,6 +1,5 @@
 use rtml::tags::{html, p, style, Html};
 
-#[rtml::page]
 fn styling() -> Html {
     html((
         p("This is a paragraph."),
@@ -14,4 +13,8 @@ fn styling() -> Html {
         "#,
         ),
     ))
+}
+
+fn main() {
+    println!("{}", styling());
 }

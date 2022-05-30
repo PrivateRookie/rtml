@@ -5,7 +5,6 @@ fn nested() -> P {
     p("This is another paragraph.")
 }
 
-#[rtml::page]
 fn nested_components() -> Html {
     html((
         p("This is a paragraph."),
@@ -20,4 +19,8 @@ fn nested_components() -> Html {
         "#,
         ),
     ))
+}
+
+fn main() {
+    println!("{}", nested_components());
 }

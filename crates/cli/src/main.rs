@@ -1,9 +1,9 @@
 use std::{
     io::{Read, Seek, Write},
     net::ToSocketAddrs,
-    path::PathBuf,
+    path::{Path, PathBuf},
     process,
-    sync::mpsc::channel,
+    sync::mpsc::{channel, Sender},
     time::Duration,
 };
 
@@ -62,11 +62,12 @@ fn main() {
     match cmd {
         Commands::New { path, name } => {
             run_cargo_new(&path, name);
+            add_lib_rs(&path);
             config_cargo(&path);
             add_build_rs(&path);
         }
         Commands::Init { path } => {
-            init_project(path.unwrap_or_else(|| PathBuf::from(".")));
+            init_project(&path.unwrap_or_else(|| PathBuf::from(".")));
         }
         Commands::Dev {
             package,
@@ -180,12 +181,10 @@ fn run_wasm_bindgen(package: Option<String>, release: bool) -> PathBuf {
     )
     .expect("copy wasm file failed");
 
-    for path in std::fs::read_dir(get_out_dir(release)).unwrap() {
-        if let Ok(entry) = path {
-            let src = entry.path();
-            let dest: PathBuf = src.components().skip(4).collect();
-            std::fs::copy(src, target_dir.join(dest)).unwrap();
-        }
+    for entry in std::fs::read_dir(get_out_dir(release)).unwrap().flatten() {
+        let src = entry.path();
+        let dest: PathBuf = src.components().skip(5).collect();
+        std::fs::copy(src, target_dir.join(dest)).unwrap();
     }
     target_dir
 }
@@ -221,6 +220,7 @@ fn get_built_wasm(package: Option<String>, release: bool) -> PathBuf {
 fn get_out_dir(release: bool) -> PathBuf {
     let mut out_dir = PathBuf::new();
     out_dir.push("target");
+    out_dir.push("wasm32-unknown-unknown");
     if release {
         out_dir.push("release");
     } else {
@@ -239,7 +239,8 @@ async fn start_http_server(dist: PathBuf, host: String, port: u16) {
         .and(warp::path::end())
         .and(warp::fs::file(index_html));
     let other = warp::any().and(warp::fs::dir(dist));
-    println!("listening on http://{host}:{port}");
+    let url = format!("http://{host}:{port}");
+    println!("listening on {url}");
     let mut addr = format!("{host}:{port}")
         .to_socket_addrs()
         .expect("invalid socket addr");
@@ -248,21 +249,25 @@ async fn start_http_server(dist: PathBuf, host: String, port: u16) {
 
 fn start_watch_thread(interval: u64, package: Option<String>, manifest_dir: PathBuf) {
     use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
+
+    fn start_watcher(path: &Path, interval: u64, tx: Sender<DebouncedEvent>) {
+        let mut watcher =
+            watcher(tx, Duration::from_millis(interval)).expect("unable to start watcher");
+        watcher
+            .watch(path, RecursiveMode::Recursive)
+            .expect("unable to start watcher");
+    }
     let (tx, rx) = channel();
-    let mut watcher =
-        watcher(tx, Duration::from_millis(interval)).expect("unable to start watcher");
-    println!(
-        "watch {} every {} milliseconds",
-        manifest_dir.display(),
-        interval
-    );
-    watcher
-        .watch(manifest_dir, RecursiveMode::Recursive)
-        .expect("unable to start watcher");
+    println!("watch repo  every {interval} milliseconds");
+    start_watcher(&manifest_dir.join("src"), interval, tx.clone());
+    start_watcher(&manifest_dir.join("build.rs"), interval, tx.clone());
+    start_watcher(&manifest_dir.join("Cargo.toml"), interval, tx.clone());
     let mut count = 1;
+    println!("waiting");
     loop {
         match rx.recv() {
             Ok(evt) => {
+                dbg!(&evt);
                 if matches!(
                     evt,
                     DebouncedEvent::Create(_)
@@ -294,12 +299,12 @@ fn run_cargo_new(path: &PathBuf, name: Option<String>) {
     cmd.output().expect("failed to create project");
 }
 
-fn init_project(path: PathBuf) {
-    config_cargo(&path);
-    add_build_rs(&path);
+fn init_project(path: &Path) {
+    config_cargo(path);
+    add_build_rs(path);
 }
 
-fn add_build_rs(path: &PathBuf) {
+fn add_build_rs(path: &Path) {
     let file_path = path.join("build.rs");
     if file_path.exists() {
         error!("build.rs already exists");
@@ -337,7 +342,38 @@ fn main() -> std::io::Result<()> {
 }"#.as_bytes()).unwrap();
 }
 
-fn config_cargo(path: &PathBuf) {
+fn add_lib_rs(path: &Path) {
+    let file_path = path.join("src").join("build.rs");
+    let mut file = std::fs::File::create(file_path).unwrap();
+    file.write_all(
+        r#"use rtml::tags::*;
+use rtml::{attr, mount_body, style};
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen(start)]
+pub fn start() {
+    tracing_wasm::set_as_global_default();
+
+    let page = div((
+        style! {text-align: "center"},
+        (
+            h1("hello World!"),
+            br(()),
+            strong(a((
+                attr! {href="http://"},
+                "Power By https://github.com/PrivateRookie/rtml",
+            ))),
+        ),
+    ));
+
+    mount_body(page).unwrap();
+}"#
+        .as_bytes(),
+    )
+    .unwrap();
+}
+
+fn config_cargo(path: &Path) {
     use toml_edit::{table, value, Document, Item};
     let cargo_path = path.join("Cargo.toml");
     if !cargo_path.exists() {
@@ -402,19 +438,13 @@ fn config_cargo(path: &PathBuf) {
 fn rtml_dep() -> toml_edit::Table {
     use toml_edit::value;
     let mut dep = toml_edit::Table::new();
-    dep.insert(
-        "git",
-        value("https://github.com/PrivateRookie/rtml"),
-    );
+    dep.insert("git", value("https://github.com/PrivateRookie/rtml"));
     dep
 }
 fn rtml_project_dep() -> toml_edit::Table {
     use toml_edit::value;
     let mut dep = toml_edit::Table::new();
-    dep.insert(
-        "git",
-        value("https://github.com/PrivateRookie/rtml"),
-    );
+    dep.insert("git", value("https://github.com/PrivateRookie/rtml"));
     dep
 }
 fn wasm_bindgen_dep() -> toml_edit::Table {

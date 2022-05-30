@@ -1,6 +1,6 @@
 [package]
 name = "rtml"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -15,7 +15,6 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 wasm-bindgen = { version = "0.2" }
-rtml-macro = { path = "../macro" }
 web-sys = { version = "0.3", features = [
     "Document",
     "Element",
@@ -28,6 +27,3 @@ web-sys = { version = "0.3", features = [
 ] }
 tracing = { version = "0.1" }
 tracing-wasm = "0.2.1"
-
-[dev-dependencies]
-opener = "0.5"

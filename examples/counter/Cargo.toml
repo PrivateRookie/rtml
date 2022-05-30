@@ -23,10 +23,9 @@ js-sys = { version = "0.3" }
 tracing = { version = "0.1" }
 tracing-wasm = "0.2.1"
 
+[build-dependencies]
+rtml = { path = "../../crates/rtml" }
+rtml-project = { path = "../../crates/project" }
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-
-[[bin]]
-name = "index"
-path = "index.rs"

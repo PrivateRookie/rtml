@@ -29,6 +29,7 @@ serde_json = { version = "1" }
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-[[bin]]
-name = "index"
-path = "index.rs"
+
+[build-dependencies]
+rtml = { path = "../../crates/rtml" }
+rtml-project = { path = "../../crates/project" }

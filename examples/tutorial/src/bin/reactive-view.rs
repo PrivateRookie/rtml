@@ -1,7 +1,6 @@
 use rtml::attr;
 use rtml::tags::*;
 
-#[rtml::page]
 fn reactive_view() -> Html {
     let pkg = env!("CARGO_PKG_NAME").replace('-', "_");
     let bin = env!("CARGO_BIN_NAME").replace('-', "_");
@@ -28,4 +27,8 @@ fn reactive_view() -> Html {
             body(()),
         ),
     ))
+}
+
+fn main() {
+    println!("{}", reactive_view());
 }

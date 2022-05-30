@@ -12,7 +12,6 @@ pub use events::*;
 use tags::{AttrRegisterData, Attrs, ContentRegisterData, EleContent, StyleRegisterData, Styles};
 mod reactive;
 pub use reactive::{reactive, CombinedReactive, IntoReactive, Reactive};
-pub use rtml_macro::page;
 
 use crate::tags::StaticContent;
 /// print template as html, instead of create them by dom api

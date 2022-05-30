@@ -1,6 +1,6 @@
-use rtml::tags::{h1, html, Html};
+use rtml::tags::{h1, html};
 
-#[rtml::page]
-fn adding_data() -> Html {
-    html(h1("hello world!"))
+fn main() {
+    let page = html(h1("hello world!"));
+    println!("{}", page);
 }

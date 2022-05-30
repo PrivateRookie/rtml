@@ -348,7 +348,7 @@ macro_rules! impl_combine {
                 let subs = vec![$(self.data.$i.subs.clone()),+];
                 $crate::EleContent::Dynamic {
                     func: ::std::rc::Rc::new(::std::cell::RefCell::new(move || view(data.clone()))),
-                    subs: subs
+                    subs
                 }
             }
 

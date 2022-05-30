@@ -6,7 +6,6 @@
 
 rtml 是一个让你以 Rust 代码实现编写网页的库, 换言之, rtml 让用户可以操作 html/css/js.
 
-
 以最简单的 hello world 为例, `cargo new` 新建一个项目, 在添加 rtml 依赖, 在 main.rs 中添加如下代码
 
 ```rust
