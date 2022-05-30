@@ -1,8 +1,8 @@
 use rtml::{attr, tags::*};
+use rtml_project::{add_file, get_pkg_id};
 
-#[rtml::page]
 fn index() -> Html {
-    let pkg = env!("CARGO_PKG_NAME").replace('-', "_");
+    let pkg = get_pkg_id();
     html((
         attr! {lang="zh-cn"},
         (
@@ -12,9 +12,7 @@ fn index() -> Html {
                 meta(
                     attr! { http-equiv="Cache-Control", content="no-cache, no-store, must-revalidate" },
                 ),
-                style(include_str!("assets/mvp.css")),
-                // title("RTML • TodoMVC"),
-                title("RTML • Counter"),
+                title(&pkg),
                 script((
                     attr! { type="module" },
                     format!("\nimport init from \"./{pkg}.js\";\ninit();\n"),
@@ -23,4 +21,8 @@ fn index() -> Html {
             body(()),
         ),
     ))
+}
+
+fn main() -> std::io::Result<()> {
+    add_file("index.html", index().to_string().as_bytes())
 }

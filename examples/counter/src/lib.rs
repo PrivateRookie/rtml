@@ -1,6 +1,6 @@
 use rtml::{
     mount_body,
-    tags::{button, div, p},
+    tags::{button, div, h2},
     EventKind::Click,
     IntoReactive,
 };
@@ -33,7 +33,7 @@ pub fn start() {
         }
     });
     let counter = div((
-        p(display),
+        h2(display),
         button("+1").on(Click, incr),
         button("-1").on(Click, dec),
     ));

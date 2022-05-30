@@ -11,23 +11,21 @@ zh-CN = []
 en-US = []
 
 [dependencies]
-adapton = "0.3"
 rtml = { path = "../rtml" }
 wasm-bindgen = "0.2"
-tracing = { version = "0.1" }
-tracing-wasm = "0.2.1"
-web-sys = { version = "0.3", features = [
-    "Document",
-    "Element",
-    "HtmlElement",
-    "Node",
-    "Window",
-] }
-ptree = "0.4"
+# tracing = { version = "0.1" }
+# tracing-wasm = "0.2.1"
+# web-sys = { version = "0.3", features = [
+#     "Document",
+#     "Element",
+#     "HtmlElement",
+#     "Node",
+#     "Window",
+# ] }
 
-[[bin]]
-name = "index"
-path = "index.rs"
+[build-dependencies]
+rtml = { path = "../rtml" }
+rtml-project = { path = "../project" }
 
 [lib]
 crate-type = ["cdylib", "rlib"]
