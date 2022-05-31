@@ -156,7 +156,7 @@ fn run_wasm_bindgen(package: Option<String>, release: bool) -> PathBuf {
     cmd.arg("--no-typescript");
     if release {
         cmd.arg("--remove-name-section");
-        cmd.arg("----remove-producers-section");
+        cmd.arg("--remove-producers-section");
     } else {
         cmd.arg("--debug");
         cmd.arg("--keep-debug");
