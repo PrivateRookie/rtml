@@ -3,7 +3,7 @@ use std::{
     net::ToSocketAddrs,
     path::{Path, PathBuf},
     process,
-    sync::mpsc::{channel, Sender},
+    sync::mpsc::channel,
     time::Duration,
 };
 
@@ -250,24 +250,23 @@ async fn start_http_server(dist: PathBuf, host: String, port: u16) {
 fn start_watch_thread(interval: u64, package: Option<String>, manifest_dir: PathBuf) {
     use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 
-    fn start_watcher(path: &Path, interval: u64, tx: Sender<DebouncedEvent>) {
-        let mut watcher =
-            watcher(tx, Duration::from_millis(interval)).expect("unable to start watcher");
-        watcher
-            .watch(path, RecursiveMode::Recursive)
-            .expect("unable to start watcher");
+    macro_rules! monitor {
+        ($path:expr, $interval:expr, $tx:expr) => {
+            let mut w =
+                watcher($tx, Duration::from_millis($interval)).expect("unable to start watcher");
+            w.watch($path, RecursiveMode::Recursive)
+                .expect("unable to start watcher");
+        };
     }
     let (tx, rx) = channel();
-    println!("watch repo  every {interval} milliseconds");
-    start_watcher(&manifest_dir.join("src"), interval, tx.clone());
-    start_watcher(&manifest_dir.join("build.rs"), interval, tx.clone());
-    start_watcher(&manifest_dir.join("Cargo.toml"), interval, tx.clone());
+    println!("watch repo every {interval} milliseconds");
+    monitor!(&manifest_dir.join("src"), interval, tx.clone());
+    monitor!(&manifest_dir.join("build.rs"), interval, tx.clone());
+    monitor!(&manifest_dir.join("Cargo.toml"), interval, tx.clone());
     let mut count = 1;
-    println!("waiting");
     loop {
         match rx.recv() {
             Ok(evt) => {
-                dbg!(&evt);
                 if matches!(
                     evt,
                     DebouncedEvent::Create(_)
