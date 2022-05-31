@@ -349,3 +349,34 @@ pub fn mount<C: Into<EleContent>>(target: &Element, children: C) -> Result<(), J
     children.render(path, target, &doc)?;
     Ok(())
 }
+
+/// auto reload page if source change, if you only want to auto
+/// reload in debug mode, [`check debug_auto_reload`]
+pub fn auto_reload() {
+    let window = web_sys::window().unwrap();
+    let loc = window.location();
+    let url = format!(
+        "ws://{}:{}/__dev__",
+        loc.hostname()
+            .map(|x| x.as_str().to_string())
+            .unwrap_or_else(|_| "127.0.0.1".into()),
+        loc.port()
+            .map(|x| x.as_str().to_string())
+            .unwrap_or_else(|_| "9001".into())
+    );
+    let ws = web_sys::WebSocket::new(&url).unwrap();
+    let reload = Closure::wrap(Box::new(move || {
+        if let Err(e) = loc.reload() {
+            tracing::error!("failed to reload {:?}", e)
+        }
+    }) as Box<dyn Fn()>);
+    ws.set_onmessage(Some(reload.as_ref().unchecked_ref()));
+    reload.forget();
+}
+
+pub fn debug_auto_reload() {
+    #[cfg(debug_assertions)]
+    {
+        auto_reload()
+    }
+}

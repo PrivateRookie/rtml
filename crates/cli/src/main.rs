@@ -8,7 +8,10 @@ use std::{
 };
 
 use clap::Parser;
+use futures_util::{stream::SplitSink, SinkExt};
 use termcolor::{Color, ColorSpec, StandardStream, WriteColor};
+use tokio::sync::mpsc::{self, Receiver, Sender};
+use warp::ws::{Message, WebSocket};
 
 mod metadata;
 
@@ -77,6 +80,7 @@ fn main() {
         } => {
             build_wasm(package.clone(), false);
             let dist = run_wasm_bindgen(package.clone(), false);
+            let (tx, rx) = mpsc::channel(1);
 
             if let Some(interval) = watch {
                 let meta = metadata::MetaData::load_current_meta();
@@ -87,10 +91,10 @@ fn main() {
                     }
                     None => meta.workspace_root,
                 };
-                std::thread::spawn(move || start_watch_thread(interval, package, manifest));
+                std::thread::spawn(move || start_watch_thread(interval, package, manifest, tx));
             }
             let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(start_http_server(dist, host, port))
+            rt.block_on(start_http_server(dist, host, port, rx))
         }
         Commands::Build { package, release } => {
             build_wasm(package.clone(), release);
@@ -231,23 +235,68 @@ fn get_out_dir(release: bool) -> PathBuf {
     out_dir
 }
 
-async fn start_http_server(dist: PathBuf, host: String, port: u16) {
-    use warp::Filter;
+async fn notify_after_rebuild(
+    mut rebuild_rx: Receiver<()>,
+    mut ws_rx: Receiver<SplitSink<WebSocket, Message>>,
+) {
+    let mut clients: Vec<SplitSink<WebSocket, Message>> = vec![];
+    loop {
+        tokio::select! {
+            client = ws_rx.recv() => {
+                if let Some(client) = client {
+                    clients.push(client)
+                }
+            },
+            _ = rebuild_rx.recv() => {
+                for client in clients.iter_mut() {
+                    if let Err(e) = client.send(Message::text("reload")).await {
+                        error!("{:?}",e);
+                    };
+                }
+            }
+        };
+    }
+}
 
+async fn start_http_server(dist: PathBuf, host: String, port: u16, rebuild_rx: Receiver<()>) {
+    use futures_util::StreamExt;
+    use warp::Filter;
     let index_html = dist.join("index.html");
+
+    let (tx, rx) = mpsc::channel(1);
+    tokio::spawn(notify_after_rebuild(rebuild_rx, rx));
+    async fn on_upgrade(websocket: WebSocket, tx: Sender<SplitSink<WebSocket, Message>>) {
+        let (ws_tx, _) = websocket.split();
+        tx.send(ws_tx).await.unwrap();
+    }
+
+    let dev_ws = warp::path("__dev__")
+        .and(warp::ws())
+        .map(move |ws: warp::ws::Ws| {
+            let tx = tx.clone();
+            ws.on_upgrade(move |websocket| on_upgrade(websocket, tx))
+        });
     let index = warp::get()
         .and(warp::path::end())
         .and(warp::fs::file(index_html));
     let other = warp::any().and(warp::fs::dir(dist));
+
     let url = format!("http://{host}:{port}");
     println!("listening on {url}");
     let mut addr = format!("{host}:{port}")
         .to_socket_addrs()
         .expect("invalid socket addr");
-    warp::serve(index.or(other)).run(addr.next().unwrap()).await;
+    warp::serve(dev_ws.or(index).or(other))
+        .run(addr.next().unwrap())
+        .await;
 }
 
-fn start_watch_thread(interval: u64, package: Option<String>, manifest_dir: PathBuf) {
+fn start_watch_thread(
+    interval: u64,
+    package: Option<String>,
+    manifest_dir: PathBuf,
+    rebuild_tx: Sender<()>,
+) {
     use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 
     macro_rules! monitor {
@@ -277,6 +326,9 @@ fn start_watch_thread(interval: u64, package: Option<String>, manifest_dir: Path
                     println!("🚧 {count} rebuilding...");
                     build_wasm(package.clone(), false);
                     run_wasm_bindgen(package.clone(), false);
+                    if let Err(e) = rebuild_tx.blocking_send(()) {
+                        error!("{:}", e);
+                    }
                     count += 1;
                 }
             }
