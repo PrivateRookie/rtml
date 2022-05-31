@@ -15,14 +15,14 @@ pub fn reactive_view() {
         let count = data.val();
         let s = if *count > 1 { "s" } else { "" };
         // return value can be string or single html tag
-        format!("Clicked {count} time{s}").into()
+        format!("Clicked {count} time{s}")
     });
 
     // another view
     let doubled = count.view(|data| {
         let count = data.val();
         let double = *count * 2;
-        format!("{count} doubled is {double}").into()
+        format!("{count} doubled is {double}")
     });
 
     // use change event to create data mutable closure
@@ -66,7 +66,7 @@ pub fn reactive_if_else() {
     let btn_view = user.view(|data| {
         let user = data.val();
         let btn = if user.logged_in { "Log out" } else { "Log in" };
-        btn.into()
+        btn
     });
 
     let btn = button(btn_view).on(Click, toggle);

@@ -79,14 +79,14 @@ pub fn start() {
                         (span((
                             attr! {class="todo-count"},
                             (
-                                strong(records.view(|data| data.val().items.len().into())),
+                                strong(records.view(|data| data.val().items.len())),
                                 span(" item(s) left"),
                                 
                             ),
                         )), 
                         filter_view(filter),
                         button((attr!{class="clear-completed"}, records.view(|data| {
-                            format!("Clear Completed {}", data.val().items.iter().filter(|i| i.completed).count()).into()
+                            format!("Clear Completed {}", data.val().items.iter().filter(|i| i.completed).count())
                         }))).on(Click, clear_complete)
                     ),
                     )),
@@ -226,7 +226,6 @@ fn todo_list(records: Reactive<Store>, filter: Reactive<FilterStatus>) -> Ul {
                 ))
             })
             .collect::<Vec<_>>()
-            .into()
     }))
 }
 

@@ -147,7 +147,7 @@ impl<T: 'static> Reactive<T> {
         self.data.borrow_mut()
     }
 
-    /// subscribe data change and return children
+    /// subscribe data change and modify element attributes
     pub fn attr<V: Fn(Self) -> crate::tags::StaticAttrs + 'static>(
         &self,
         v: V,
@@ -161,7 +161,7 @@ impl<T: 'static> Reactive<T> {
         }
     }
 
-    /// subscribe data change and return children
+    /// subscribe data change and modify element styles
     pub fn style<V: Fn(Self) -> crate::tags::StaticStyles + 'static>(
         &self,
         v: V,
@@ -176,11 +176,11 @@ impl<T: 'static> Reactive<T> {
     }
 
     /// subscribe data change and return children
-    pub fn view<V: Fn(Self) -> StaticContent + 'static>(&self, v: V) -> EleContent {
+    pub fn view<C: Into<StaticContent>, V: Fn(Self) -> C + 'static>(&self, v: V) -> EleContent {
         let data = self.clone();
         EleContent::Dynamic {
             subs: vec![self.subs.clone()],
-            func: Rc::new(RefCell::new(move || v(data.clone()))),
+            func: Rc::new(RefCell::new(move || v(data.clone()).into())),
         }
     }
 
@@ -340,14 +340,14 @@ macro_rules! impl_combine {
 
 
             /// subscribe data change
-            pub fn view<View: Fn(($($crate::Reactive<$t>,)+)) -> $crate::StaticContent + 'static>(
+            pub fn view<Content: ::std::convert::Into<$crate::StaticContent> ,View: Fn(($($crate::Reactive<$t>,)+)) -> Content + 'static>(
                 &self,
                 view: View,
             ) -> $crate::EleContent  {
                 let data = self.data.clone();
                 let subs = vec![$(self.data.$i.subs.clone()),+];
                 $crate::EleContent::Dynamic {
-                    func: ::std::rc::Rc::new(::std::cell::RefCell::new(move || view(data.clone()))),
+                    func: ::std::rc::Rc::new(::std::cell::RefCell::new(move || view(data.clone()).into())),
                     subs
                 }
             }

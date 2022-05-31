@@ -16,7 +16,7 @@ pub fn start() {
         } else {
             format!("count {count} time")
         };
-        content.into()
+        content
     });
 
     let incr = count.change(|data| {
