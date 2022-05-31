@@ -408,59 +408,73 @@ fn config_cargo(path: &Path) {
     }
     let deps = cargo["dependencies"].as_table_mut().unwrap();
     if !deps.contains_key("rtml") {
-        deps.insert("rtml", Item::Table(rtml_dep()));
+        deps.insert("rtml", Item::Value(rtml_dep()));
     }
     if !deps.contains_key("wasm-bindgen") {
-        deps.insert("wasm-bindgen", Item::Table(wasm_bindgen_dep()));
+        deps.insert("wasm-bindgen", Item::Value(wasm_bindgen_dep()));
     }
     if !deps.contains_key("tracing") {
-        deps.insert("tracing", Item::Table(tracing_dep()));
+        deps.insert("tracing", Item::Value(tracing_dep()));
     }
     if !deps.contains_key("tracing-wasm") {
-        deps.insert("tracing-wasm", Item::Table(tracing_wasm_dep()));
+        deps.insert("tracing-wasm", Item::Value(tracing_wasm_dep()));
     }
     if !cargo.contains_key("build-dependencies") {
         cargo["build-dependencies"] = table();
     }
     let build_deps = cargo["build-dependencies"].as_table_mut().unwrap();
     if !build_deps.contains_key("rtml") {
-        build_deps.insert("rtml", Item::Table(rtml_dep()));
+        build_deps.insert("rtml", Item::Value(rtml_dep()));
     }
     if !build_deps.contains_key("rtml-project") {
-        build_deps.insert("rtml-project", Item::Table(rtml_project_dep()));
+        build_deps.insert("rtml-project", Item::Value(rtml_project_dep()));
     }
 
     file.seek(std::io::SeekFrom::Start(0)).unwrap();
     file.write_all(cargo.to_string().as_bytes()).unwrap();
 }
 
-fn rtml_dep() -> toml_edit::Table {
-    use toml_edit::value;
-    let mut dep = toml_edit::Table::new();
-    dep.insert("git", value("https://github.com/PrivateRookie/rtml"));
-    dep
+fn rtml_dep() -> toml_edit::Value {
+    let mut dep = toml_edit::InlineTable::new();
+    dep.insert(
+        "git",
+        toml_edit::Value::String(toml_edit::Formatted::new(
+            "https://github.com/PrivateRookie/rtml".into(),
+        )),
+    );
+    toml_edit::Value::InlineTable(dep)
 }
-fn rtml_project_dep() -> toml_edit::Table {
-    use toml_edit::value;
-    let mut dep = toml_edit::Table::new();
-    dep.insert("git", value("https://github.com/PrivateRookie/rtml"));
-    dep
+fn rtml_project_dep() -> toml_edit::Value {
+    let mut dep = toml_edit::InlineTable::new();
+    dep.insert(
+        "git",
+        toml_edit::Value::String(toml_edit::Formatted::new(
+            "https://github.com/PrivateRookie/rtml".into(),
+        )),
+    );
+    toml_edit::Value::InlineTable(dep)
 }
-fn wasm_bindgen_dep() -> toml_edit::Table {
-    use toml_edit::value;
-    let mut dep = toml_edit::Table::new();
-    dep.insert("version", value("0.2"));
-    dep
+fn wasm_bindgen_dep() -> toml_edit::Value {
+    let mut dep = toml_edit::InlineTable::new();
+    dep.insert(
+        "version",
+        toml_edit::Value::String(toml_edit::Formatted::new("0.2".into())),
+    );
+    toml_edit::Value::InlineTable(dep)
 }
-fn tracing_dep() -> toml_edit::Table {
-    use toml_edit::value;
-    let mut dep = toml_edit::Table::new();
-    dep.insert("version", value("0.1"));
-    dep
+fn tracing_dep() -> toml_edit::Value {
+    let mut dep = toml_edit::InlineTable::new();
+    dep.insert(
+        "version",
+        toml_edit::Value::String(toml_edit::Formatted::new("0.1".into())),
+    );
+    toml_edit::Value::InlineTable(dep)
 }
-fn tracing_wasm_dep() -> toml_edit::Table {
-    use toml_edit::value;
-    let mut dep = toml_edit::Table::new();
-    dep.insert("version", value("0.2"));
-    dep
+fn tracing_wasm_dep() -> toml_edit::Value {
+    let mut dep = toml_edit::InlineTable::new();
+    dep.insert(
+        "version",
+        toml_edit::Value::String(toml_edit::Formatted::new("0.2".into())),
+    );
+    toml_edit::Value::InlineTable(dep)
 }
