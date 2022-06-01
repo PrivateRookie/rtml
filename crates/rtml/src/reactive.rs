@@ -11,6 +11,20 @@ use crate::{
     StaticContent,
 };
 
+#[macro_export]
+/// concat multi reactive data
+/// 
+/// ```no_run
+/// let name= String::new().reactive();
+/// let age = 0u0.reactive();
+/// let combined = add!(name, age);
+/// ```
+macro_rules! add {
+    ($($d:expr),+ $(,)?) => {
+        $crate::CombinedReactive::new(($($d.clone()),+))
+    };
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DomPosition {
     pub depth: usize,
@@ -284,6 +298,12 @@ pub struct CombinedReactive<T> {
     data: T,
 }
 
+impl<T> CombinedReactive<T> {
+    pub fn new(data: T) -> Self {
+        Self { data }
+    }
+}
+
 impl<T: Clone> Clone for CombinedReactive<T> {
     fn clone(&self) -> Self {
         Self {
@@ -312,6 +332,15 @@ macro_rules! impl_combine {
             }
         }
 
+        impl<This, $($t ),+> std::ops::Add<&($($crate::Reactive<$t>),+,)> for &$crate::Reactive<This> {
+            type Output = $crate::CombinedReactive<($crate::Reactive<This>, $($crate::Reactive<$t>),+)>;
+
+            fn add(self, rhs: &($($crate::Reactive<$t>),+,)) -> Self::Output {
+                $crate::CombinedReactive {
+                    data: (self.clone(), $(rhs.$i.clone()),+)
+                }
+            }
+        }
 
         impl<$($t: 'static),+> $crate::CombinedReactive<($($crate::Reactive<$t>,)+)> {
             /// subscribe data change

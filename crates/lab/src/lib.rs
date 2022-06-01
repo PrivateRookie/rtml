@@ -1,5 +1,5 @@
 use rtml::{
-    attr, mount_body,
+    add, attr, mount_body,
     tags::*,
     EventKind::{Blur, Click},
     IntoReactive, Reactive,
@@ -13,7 +13,7 @@ fn my_form() -> Form {
     let name = String::new().reactive();
     let age = 0u8.reactive();
 
-    let valid_data = errors.clone() + (name.clone(), age.clone());
+    let valid_data = add![errors, name, age];
 
     let f = form((
         attr! {
@@ -37,7 +37,7 @@ fn my_form() -> Form {
                 ))
                 .on(
                     Blur,
-                    (name + errors.clone()).evt(|evt, (data, err)| {
+                    add!(name, errors).evt(|evt, (data, err)| {
                         let mut update = false;
                         if let Some(target) = evt.target() {
                             let input: HtmlInputElement = JsValue::from(target).into();
@@ -67,7 +67,7 @@ fn my_form() -> Form {
                 ))
                 .on(
                     Blur,
-                    (age + errors).evt(|evt, (data, err)| {
+                    add!(age, errors).evt(|evt, (data, err)| {
                         let mut update = false;
                         if let Some(target) = evt.target() {
                             let input: HtmlInputElement = JsValue::from(target).into();
@@ -126,9 +126,3 @@ pub fn start() {
     debug_auto_reload();
     mount_body(my_form()).unwrap();
 }
-
-
-
-
-
-
