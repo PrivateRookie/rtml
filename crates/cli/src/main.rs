@@ -1,3 +1,6 @@
+use clap::Parser;
+use futures_util::{stream::SplitSink, SinkExt};
+use owo_colors::OwoColorize;
 use std::{
     io::{Read, Seek, Write},
     net::ToSocketAddrs,
@@ -6,10 +9,6 @@ use std::{
     sync::mpsc::channel,
     time::Duration,
 };
-
-use clap::Parser;
-use futures_util::{stream::SplitSink, SinkExt};
-use termcolor::{Color, ColorSpec, StandardStream, WriteColor};
 use tokio::sync::mpsc::{self, Receiver, Sender};
 use warp::ws::{Message, WebSocket};
 
@@ -103,16 +102,23 @@ fn main() {
     }
 }
 
+macro_rules! expect {
+    ($e:expr, $tpl:literal) => {
+        $e.map_err(|e| {
+            println!("{}: {:?}", $tpl.red(), e);
+        })
+        .unwrap()
+    };
+}
+
 macro_rules! error {
-    ($($arg:tt),*) => {
-        use std::io::Write;
-        let mut stderr = StandardStream::stderr(termcolor::ColorChoice::Auto);
-        if let Err(e) = stderr.set_color(ColorSpec::new().set_fg(Some(Color::Red))) {
-            println!("unable to set term color {:?}", e)
-        };
-        if let Err(e) = writeln!(&mut stderr, $($arg),*) {
-            println!("print msg failed {:?}", e)
-        }
+    ($($t:tt),+) => {
+        println!("{}", format!($($t),+).red());
+    };
+}
+macro_rules! info {
+    ($($t:tt),+) => {
+        println!("{}", format!($($t),+).green());
     };
 }
 
@@ -179,11 +185,13 @@ fn run_wasm_bindgen(package: Option<String>, release: bool) -> PathBuf {
         }
     }
 
-    std::fs::copy(
-        &src_wasm,
-        target_dir.join(src_wasm.file_name().unwrap_or_default()),
-    )
-    .expect("copy wasm file failed");
+    expect! {
+        std::fs::copy(
+            &src_wasm,
+            target_dir.join(src_wasm.file_name().unwrap_or_default()),
+        ),
+        "copy wasm file failed"
+    };
 
     for entry in std::fs::read_dir(get_out_dir(release)).unwrap().flatten() {
         let src = entry.path();
@@ -194,17 +202,20 @@ fn run_wasm_bindgen(package: Option<String>, release: bool) -> PathBuf {
 }
 
 fn read_package() -> String {
-    let mut file = std::fs::File::open("Cargo.toml").expect("no Cargo.toml found");
+    let mut file = expect!(std::fs::File::open("Cargo.toml"), "no Cargo.toml found");
     let mut content = String::new();
-    file.read_to_string(&mut content)
-        .expect("failed to read Cargo.toml");
-    let cargo = content
-        .parse::<toml_edit::Document>()
-        .expect("invalid Cargo.toml");
-    cargo["package"]["name"]
-        .as_str()
-        .expect("empty package name")
-        .to_string()
+    expect!(
+        file.read_to_string(&mut content),
+        "failed to read Cargo.toml"
+    );
+    let cargo = expect!(content.parse::<toml_edit::Document>(), "invalid Cargo.toml");
+    expect!(
+        cargo["package"]["name"]
+            .as_str()
+            .ok_or("empty package name"),
+        ""
+    )
+    .to_string()
 }
 
 fn get_built_wasm(package: Option<String>, release: bool) -> PathBuf {
@@ -282,10 +293,11 @@ async fn start_http_server(dist: PathBuf, host: String, port: u16, rebuild_rx: R
     let other = warp::any().and(warp::fs::dir(dist));
 
     let url = format!("http://{host}:{port}");
-    println!("listening on {url}");
-    let mut addr = format!("{host}:{port}")
-        .to_socket_addrs()
-        .expect("invalid socket addr");
+    info!("listening on {url}");
+    let mut addr = expect!(
+        format!("{host}:{port}").to_socket_addrs(),
+        "invalid socket addr"
+    );
     warp::serve(dev_ws.or(index).or(other))
         .run(addr.next().unwrap())
         .await;
@@ -301,14 +313,18 @@ fn start_watch_thread(
 
     macro_rules! monitor {
         ($path:expr, $interval:expr, $tx:expr) => {
-            let mut w =
-                watcher($tx, Duration::from_millis($interval)).expect("unable to start watcher");
-            w.watch($path, RecursiveMode::Recursive)
-                .expect("unable to start watcher");
+            let mut w = expect!(
+                watcher($tx, Duration::from_millis($interval)),
+                "unable to start watcher"
+            );
+            expect!(
+                w.watch($path, RecursiveMode::Recursive),
+                "unable to start watcher"
+            );
         };
     }
     let (tx, rx) = channel();
-    println!("watch repo every {interval} milliseconds");
+    info!("watch repo every {interval} milliseconds");
     monitor!(&manifest_dir.join("src"), interval, tx.clone());
     monitor!(&manifest_dir.join("build.rs"), interval, tx.clone());
     monitor!(&manifest_dir.join("Cargo.toml"), interval, tx.clone());
@@ -323,13 +339,14 @@ fn start_watch_thread(
                         | DebouncedEvent::Rename(_, _)
                         | DebouncedEvent::Write(_)
                 ) {
-                    println!("🚧 {count} rebuilding...");
+                    info!("🚧 {count} rebuilding...");
                     build_wasm(package.clone(), false);
                     run_wasm_bindgen(package.clone(), false);
                     if let Err(e) = rebuild_tx.blocking_send(()) {
                         error!("{:}", e);
                     }
                     count += 1;
+                    info!("🚧 {count} rebuild done.");
                 }
             }
             Err(e) => {
@@ -347,7 +364,7 @@ fn run_cargo_new(path: &PathBuf, name: Option<String>) {
         cmd.arg("--name");
         cmd.arg(name);
     }
-    cmd.output().expect("failed to create project");
+    expect!(cmd.output(), "failed to create project");
 }
 
 fn init_project(path: &Path) {
@@ -438,7 +455,7 @@ fn config_cargo(path: &Path) {
         .unwrap();
     let mut content = String::new();
     file.read_to_string(&mut content).unwrap();
-    let mut cargo: Document = content.parse().expect("invalid Cargo.toml file");
+    let mut cargo: Document = expect!(content.parse(), "invalid Cargo.toml file");
     if !cargo.contains_key("lib") {
         let mut lib = toml_edit::Table::new();
         lib.insert("crate-type", toml_edit::array());
