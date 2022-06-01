@@ -12,16 +12,20 @@ en-US = []
 
 [dependencies]
 rtml = { path = "../rtml" }
+rtml-project = { path = "../project" }
 wasm-bindgen = "0.2"
-# tracing = { version = "0.1" }
-# tracing-wasm = "0.2.1"
-# web-sys = { version = "0.3", features = [
-#     "Document",
-#     "Element",
-#     "HtmlElement",
-#     "Node",
-#     "Window",
-# ] }
+tracing = { version = "0.1" }
+tracing-wasm = "0.2.1"
+web-sys = { version = "0.3", features = [
+    "Document",
+    "Element",
+    "HtmlElement",
+    "Node",
+    "Window",
+    'Storage',
+    "KeyboardEvent",
+    "HtmlInputElement"
+] }
 
 [build-dependencies]
 rtml = { path = "../rtml" }

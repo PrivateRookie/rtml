@@ -1,6 +1,7 @@
 use clap::Parser;
 use futures_util::{stream::SplitSink, SinkExt};
 use owo_colors::OwoColorize;
+use rtml_share::dev_server::{DEFAULT_HOST, DEFAULT_PORT, WS_URL};
 use std::{
     io::{Read, Seek, Write},
     net::ToSocketAddrs,
@@ -34,10 +35,10 @@ pub enum Commands {
     /// start dev server
     Dev {
         /// listen host
-        #[clap(long, default_value = "127.0.0.1")]
+        #[clap(long, default_value = DEFAULT_HOST)]
         host: String,
         /// listen port
-        #[clap(long, default_value = "9001")]
+        #[clap(long, default_value = DEFAULT_PORT)]
         port: u16,
         /// if set, rebuild if package change, unit(millisecond)
         #[clap(short, long)]
@@ -259,10 +260,16 @@ async fn notify_after_rebuild(
                 }
             },
             _ = rebuild_rx.recv() => {
-                for client in clients.iter_mut() {
-                    if let Err(e) = client.send(Message::text("reload")).await {
-                        error!("{:?}",e);
+                let mut to_delete = vec![];
+                for (idx, client) in clients.iter_mut().enumerate()    {
+                    if let Err(_) = client.send(Message::text("reload")).await {
+                        to_delete.push(idx);
                     };
+                }
+                let mut offset = 0;
+                for idx in to_delete {
+                    if let Err(_) = clients.remove(idx-offset).close().await {};
+                    offset += 1;
                 }
             }
         };
@@ -281,7 +288,7 @@ async fn start_http_server(dist: PathBuf, host: String, port: u16, rebuild_rx: R
         tx.send(ws_tx).await.unwrap();
     }
 
-    let dev_ws = warp::path("__dev__")
+    let dev_ws = warp::path(WS_URL)
         .and(warp::ws())
         .map(move |ws: warp::ws::Ws| {
             let tx = tx.clone();
@@ -380,65 +387,13 @@ fn add_build_rs(path: &Path) {
     }
 
     let mut file = std::fs::File::create(file_path).unwrap();
-    file.write_all(r#"use rtml::{attr, tags::*};
-use rtml_project::{add_file, get_pkg_id};
-
-fn index() -> Html {
-    let pkg = get_pkg_id();
-    html((
-        attr! {lang="zh-cn"},
-        (
-            head((
-                meta(attr! { charset="utf-8" }),
-                meta(attr! { name = "viewport", content="width=device-width, initial-scale=1" }),
-                meta(
-                    attr! { http-equiv="Cache-Control", content="no-cache, no-store, must-revalidate" },
-                ),
-                title(&pkg),
-                script((
-                    attr! { type="module" },
-                    format!("\nimport init from \"./{pkg}.js\";\ninit();\n"),
-                )),
-            )),
-            body(()),
-        ),
-    ))
-}
-
-fn main() -> std::io::Result<()> {
-    add_file("index.html", index().to_string().as_bytes())
-}"#.as_bytes()).unwrap();
+    file.write_all(include_bytes!("../build.tpl.rs")).unwrap();
 }
 
 fn add_lib_rs(path: &Path) {
     let file_path = path.join("src").join("build.rs");
     let mut file = std::fs::File::create(file_path).unwrap();
-    file.write_all(
-        r#"use rtml::tags::*;
-use rtml::{attr, mount_body, style};
-use wasm_bindgen::prelude::*;
-
-#[wasm_bindgen(start)]
-pub fn start() {
-    tracing_wasm::set_as_global_default();
-
-    let page = div((
-        style! {text-align: "center"},
-        (
-            h1("hello World!"),
-            br(()),
-            strong(a((
-                attr! {href="http://"},
-                "Power By https://github.com/PrivateRookie/rtml",
-            ))),
-        ),
-    ));
-
-    mount_body(page).unwrap();
-}"#
-        .as_bytes(),
-    )
-    .unwrap();
+    file.write_all(include_bytes!("../lib.tpl.rs")).unwrap();
 }
 
 fn config_cargo(path: &Path) {
@@ -478,6 +433,9 @@ fn config_cargo(path: &Path) {
     let deps = cargo["dependencies"].as_table_mut().unwrap();
     if !deps.contains_key("rtml") {
         deps.insert("rtml", Item::Value(rtml_dep()));
+    }
+    if !deps.contains_key("rtml-project") {
+        deps.insert("rtml-project", Item::Value(rtml_project_dep()));
     }
     if !deps.contains_key("wasm-bindgen") {
         deps.insert("wasm-bindgen", Item::Value(wasm_bindgen_dep()));

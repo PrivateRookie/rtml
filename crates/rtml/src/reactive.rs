@@ -382,7 +382,6 @@ macro_rules! impl_combine {
                     Box::new(move |event| {
                         if m(event, data.clone()) {
                             $(
-                                tracing::info!("call to update {}", $i);
                                 data.$i.update();
                             )+
                         }
