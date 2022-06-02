@@ -1,9 +1,11 @@
 use rtml::{
-    add, attr, mount_body,
+    attr, mount_body,
     tags::*,
     EventKind::{Blur, Click},
     IntoReactive, Reactive,
 };
+
+mod test;
 use rtml_project::debug_auto_reload;
 use wasm_bindgen::prelude::*;
 use web_sys::{Event, HtmlInputElement};
@@ -13,11 +15,7 @@ fn my_form() -> Form {
     let name = String::new().reactive();
     let age = 0u8.reactive();
 
-    let x = rtml::view!(name, age => {
-        format!("{} is {} old", name.val(), age.val())
-    });
-
-    let f = form((
+    form((
         attr! {
             id="app",
             action="https://vuejs.org/",
@@ -25,7 +23,7 @@ fn my_form() -> Form {
         },
         (
             p(ul(
-                rtml::view!(errors => errors.val().iter().map(li).collect::<Vec<_>>()),
+                rtml::subs!(errors => errors.val().iter().map(li).collect::<Vec<_>>()),
             )),
             p((
                 label((attr! {for="name"}, "Name")),
@@ -48,7 +46,7 @@ fn my_form() -> Form {
                                 update = true;
                                 errors.val_mut().push("name is too long".into());
                             } else {
-                                *name.val_mut() = val.to_string()
+                                *name.val_mut() = val
                             }
                         }
                         update
@@ -119,8 +117,7 @@ fn my_form() -> Form {
                 ),
             ),
         ),
-    ));
-    f
+    ))
 }
 
 #[wasm_bindgen(start)]

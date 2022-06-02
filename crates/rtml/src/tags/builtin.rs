@@ -33,11 +33,11 @@ macro_rules! def {
             //     self
             // }
 
-            // /// replace origin component style
-            // pub fn s_replace(mut self, styles: $crate::tags::Styles) -> Self {
-            //     self.0.styles = styles;
-            //     self
-            // }
+            /// replace origin component style
+            pub fn style(mut self, styles: $crate::tags::Styles) -> Self {
+                self.0.styles = styles;
+                self
+            }
 
             // /// update component attributes with passed attrs
             // pub fn a(mut self, attrs: $crate::tags::Attrs) -> Self {
@@ -47,11 +47,11 @@ macro_rules! def {
             //     self
             // }
 
-            // /// replace component attributes with passed attrs
-            // pub fn a_replace(mut self, attrs: $crate::tags::Attrs) -> Self {
-            //     self.0.attrs = attrs;
-            //     self
-            // }
+            /// replace component attributes with passed attrs
+            pub fn attr(mut self, attrs: $crate::tags::Attrs) -> Self {
+                self.0.attrs = attrs;
+                self
+            }
 
             /// set element children
             pub fn children<C: Into<$crate::tags::EleContent>>(mut self, children: C) -> Self {
@@ -167,6 +167,8 @@ macro_rules! def {
                 }
             }
         }
+
+        rtml_macro::macro_builder!{ $func_name }
     };
 }
 

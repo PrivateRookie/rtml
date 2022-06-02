@@ -349,4 +349,3 @@ pub fn mount<C: Into<EleContent>>(target: &Element, children: C) -> Result<(), J
     children.render(path, target, &doc)?;
     Ok(())
 }
-

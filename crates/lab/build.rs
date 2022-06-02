@@ -24,5 +24,8 @@ fn index() -> Html {
 }
 
 fn main() -> std::io::Result<()> {
-    add_file("index.html", index().to_string().as_bytes())
+    add_file(
+        "index.html",
+        index().to_string().as_bytes(),
+    )
 }

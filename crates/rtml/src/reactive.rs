@@ -25,6 +25,26 @@ macro_rules! add {
     };
 }
 
+/// create update function of one or more reactive data
+///
+/// ## with event param
+/// *params type is required*
+/// ```no_run
+/// update!(d1, d2 => |evt: web_sys::Event| {
+///     let mut update = false;
+///     // do something
+///     update
+/// })
+/// ```
+///
+/// ## without event param
+/// ```no_run
+/// update!(d1, d2 {
+///     let mut update = false;
+///     // do something
+///     update
+/// })
+/// ```
 #[macro_export]
 macro_rules! update {
     ($($d:ident),+ => $c:expr) => {
@@ -62,14 +82,50 @@ macro_rules! update {
     }
 }
 
+/// create view/attr/style function for one or more reactive data
+///
+/// ```no_run
+/// subs!(d1, d2 => if d1.val() > d2.val() {"OK"} else {"Not Ok"})
+///
+/// // if view body is complex, you can use block expr
+/// subs!(d1, d2 => {
+///     // lots of works
+/// })
+/// ```
+/// attr and style function are similar with view function, except for you have to
+/// replace
+/// 1. `=>` to `#>` for attr function
+/// 2. `=>` to `~>` for style function
 #[macro_export]
-macro_rules! view {
+macro_rules! subs {
     ($($d:ident),+ => $b:expr) => {
         {
             $(let $d = $d.clone();)+
             $crate::tags::EleContent::Dynamic {
                 subs: vec![$($d.subs.clone()),+],
                 func: ::std::rc::Rc::new(::std::cell::RefCell::new(move|| ($b).into()))
+            }
+        }
+    };
+    ($($d:ident),+ #> $($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
+        {
+            $(let $d = $d.clone();)+
+            $crate::tags::Attrs::Dynamic {
+                subs: vec![$($d.subs.clone()),+],
+                func: ::std::rc::Rc::new(::std::cell::RefCell::new(move|| $crate::s_attr! {
+                    $($($name)-+ $(= $value)?),+
+                }))
+            }
+        }
+    };
+    ($($d:ident),+ ~> $($($name:ident)-+: $value:expr);+ $(;)?) => {
+        {
+            $(let $d = $d.clone();)+
+            $crate::tags::Styles::Dynamic {
+                subs: vec![$($d.subs.clone()),+],
+                func: ::std::rc::Rc::new(::std::cell::RefCell::new(move|| $crate::s_style! {
+                    $($($name)-+ : $value);+
+                }))
             }
         }
     };

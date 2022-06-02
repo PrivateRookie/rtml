@@ -1,8 +1,5 @@
 use rtml::{
-    mount_body,
-    tags::{button, div, h2},
-    EventKind::Click,
-    IntoReactive,
+    mount_body, IntoReactive, {button, div, h2},
 };
 use wasm_bindgen::prelude::*;
 
@@ -19,24 +16,28 @@ pub fn start() {
         content
     });
 
-    let incr = count.change(|data| {
-        *data.val_mut() += 1;
-        true
-    });
-
-    let dec = count.change(|data| {
-        if *data.val() > 0 {
-            *data.val_mut() -= 1;
-            true
-        } else {
-            false
+    let counter = div! { => (
+        h2!{ => display },
+        button!{
+            @click = count =>|_| {
+                *count.val_mut() += 1;
+                true
+            }
+            => "+1"
+        },
+        button!{
+            @click = count =>   |_| {
+                if *count.val() > 0 {
+                    *count.val_mut() -= 1;
+                    true
+                } else {
+                    false
+                }
+            }
+            => "-1"
         }
-    });
-    let counter = div((
-        h2(display),
-        button("+1").on(Click, incr),
-        button("-1").on(Click, dec),
-    ));
+        )
+    };
 
     mount_body(counter).unwrap();
 }

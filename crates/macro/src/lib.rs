@@ -1,36 +1,38 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse::Parse, parse_macro_input, Expr, ExprBlock, Token};
-
-struct EventHandler {
-    params: Vec<Expr>,
-    body: ExprBlock,
-}
-
-impl Parse for EventHandler {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let mut params = vec![];
-        loop {
-            params.push(input.parse()?);
-            if !input.peek(Token![,]) {
-                break;
-            } else {
-                input.parse::<Token![,]>()?;
-            }
-        }
-        input.parse::<Token![=>]>()?;
-        let body = input.parse()?;
-        Ok(EventHandler { params, body })
-    }
-}
+use syn::{parse_macro_input, Ident};
 
 #[proc_macro]
-pub fn evt(input: TokenStream) -> TokenStream {
-    let EventHandler { params, body } = parse_macro_input!(input as EventHandler);
-    let params: Vec<&Expr> = params.iter().collect();
+pub fn macro_builder(input: TokenStream) -> TokenStream {
+    let name = parse_macro_input!(input as Ident);
     let expanded = quote! {
-        rtml::add!(#(#params),*)
-            .evt(|evt, (#(#params),*)| #body)
+        #[macro_export]
+        macro_rules! #name {
+            (
+            $($(#$($a_cap:ident),+)? $(#)?{ $($($a_name:ident)-+ $(= $a_value:expr)?)*  })?
+            $($(~$($s_cap:ident),+)? $(~)?{ $($($s_name:ident)-+: $s_value:expr);* $(;)? })?
+            $(@$type:ident = $($e_cap:ident),+ => $b:expr)*
+            $(=> $content:expr)?
+            ) => {
+                {
+                let __tag__ = rtml::tags::#name(());
+
+                $(
+                    let __tag__ = __tag__.attr(rtml::attr! { $($($a_cap),+   #> )? $($($a_name)-+ $(=$a_value)?),*});
+                )?
+                $(
+                    let __tag__ = __tag__.style(rtml::style_! { $($($s_cap),+ ~>)? $($($s_name)-+ :$s_value);*});
+                )?
+
+                $(
+                    let __tag__ = __tag__.children($content);
+                )?
+                $(
+                    let __tag__ = __tag__.on(stringify!($type), rtml::update!($($e_cap),+ => $b));
+                )*
+                __tag__
+            }};
+        }
     };
     TokenStream::from(expanded)
 }

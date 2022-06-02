@@ -1,4 +1,4 @@
-use rtml::{mount_body, tags::*, EventKind::Click, IntoReactive};
+use rtml::{mount_body, subs, tags::*, EventKind::Click, IntoReactive};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -63,13 +63,12 @@ pub fn reactive_if_else() {
         true
     });
 
-    let btn_view = user.view(|data| {
-        let user = data.val();
-        let btn = if user.logged_in { "Log out" } else { "Log in" };
-        btn
-    });
-
-    let btn = button(btn_view).on(Click, toggle);
+    let btn = button(subs!(user => if user.val().logged_in {
+        "Log out"
+    } else {
+        "Log in"
+    }))
+    .on(Click, toggle);
 
     mount_body(btn).unwrap();
 }

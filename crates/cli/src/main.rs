@@ -262,14 +262,12 @@ async fn notify_after_rebuild(
             _ = rebuild_rx.recv() => {
                 let mut to_delete = vec![];
                 for (idx, client) in clients.iter_mut().enumerate()    {
-                    if let Err(_) = client.send(Message::text("reload")).await {
+                    if client.send(Message::text("reload")).await.is_err() {
                         to_delete.push(idx);
                     };
                 }
-                let mut offset = 0;
-                for idx in to_delete {
-                    if let Err(_) = clients.remove(idx-offset).close().await {};
-                    offset += 1;
+                for (offset, idx) in to_delete.iter().enumerate() {
+                    if clients.remove(idx-offset).close().await.is_err() {};
                 }
             }
         };
@@ -334,7 +332,7 @@ fn start_watch_thread(
     info!("watch repo every {interval} milliseconds");
     monitor!(&manifest_dir.join("src"), interval, tx.clone());
     monitor!(&manifest_dir.join("build.rs"), interval, tx.clone());
-    monitor!(&manifest_dir.join("Cargo.toml"), interval, tx.clone());
+    monitor!(&manifest_dir.join("Cargo.toml"), interval, tx);
     let mut count = 1;
     loop {
         match rx.recv() {

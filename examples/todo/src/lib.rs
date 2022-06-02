@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
-use rtml::EventKind::{Blur, Click, Keypress, DblClick};
-use rtml::{attr, mount_body, s_attr, tags::*, IntoReactive, Reactive, style};
+use rtml::EventKind::{Blur, Click, DblClick, Keypress};
+use rtml::{attr, mount_body, s_attr, style_, tags::*, IntoReactive, Reactive};
 use store::Store;
 use wasm_bindgen::prelude::*;
 use web_sys::{HtmlInputElement, KeyboardEvent};
@@ -81,9 +81,8 @@ pub fn start() {
                             (
                                 strong(records.view(|data| data.val().items.len())),
                                 span(" item(s) left"),
-                                
-                            ),
-                        )), 
+                            )
+                        )),
                         filter_view(filter),
                         button((attr!{class="clear-completed"}, records.view(|data| {
                             format!("Clear Completed {}", data.val().items.iter().filter(|i| i.completed).count())
@@ -172,61 +171,66 @@ fn filter_view(filter: Reactive<FilterStatus>) -> Ul {
 
 fn todo_list(records: Reactive<Store>, filter: Reactive<FilterStatus>) -> Ul {
     let combine = records + filter;
-    ul(combine.view(|(records, filter)| {
-        let opt = filter.val();
-        let opt = opt.deref();
-        records.val()
-            .items
-            .iter()
-            .filter(|item| {
-                match opt {
+    ul(
+        combine.view(|(records, filter)| {
+            let opt = filter.val();
+            let opt = opt.deref();
+            records
+                .val()
+                .items
+                .iter()
+                .filter(|item| match opt {
                     FilterStatus::All => true,
                     FilterStatus::Active => !item.completed,
                     FilterStatus::Completed => item.completed,
-                }
-            })
-            .enumerate()
-            .map(|(idx, item)| {
-                let mut input_attr = s_attr! { type="checkbox", class="toggle" };
-                if item.completed {
-                    input_attr.0.insert("checked".into(), "".into());
-                }
-                li((
-                    div((
-                        attr! {class="view"},
-                        (
-                            input(Attrs::Static(input_attr))
-                                .on(
+                })
+                .enumerate()
+                .map(|(idx, item)| {
+                    let mut input_attr = s_attr! { type="checkbox", class="toggle" };
+                    if item.completed {
+                        input_attr.0.insert("checked".into(), "".into());
+                    }
+                    li((
+                        div((
+                            attr! {class="view"},
+                            (
+                                input(Attrs::Static(input_attr)).on(
                                     Click,
                                     records.change(move |store| {
                                         store.val_mut().toggle(idx);
                                         true
                                     }),
                                 ),
-                            label(&item.description).on(
-                                DblClick,
-                                records.change(move |store| {
-                                    if let Some(item) = store.val_mut().items.get_mut(idx) {
-                                        item.editing = !item.editing;
-                                    }
-                                    store.val().save().unwrap();
-                                    true
-                                }),
+                                label(&item.description).on(
+                                    DblClick,
+                                    records.change(move |store| {
+                                        if let Some(item) = store.val_mut().items.get_mut(idx) {
+                                            item.editing = !item.editing;
+                                        }
+                                        store.val().save().unwrap();
+                                        true
+                                    }),
+                                ),
+                                button((
+                                    attr! {class="destroy"},
+                                    style_! {margin: "10px"},
+                                    "🚮",
+                                ))
+                                .on(
+                                    Click,
+                                    records.change(move |store| {
+                                        store.val_mut().remove(idx);
+                                        true
+                                    }),
+                                ),
                             ),
-                            button((attr! {class="destroy"}, style! {margin: "10px"} ,"🚮")).on(
-                                Click,
-                                records.change(move |store| {
-                                    store.val_mut().remove(idx);
-                                    true
-                                }),
-                            ),
-                        ),
-                    )),
-                    item_edit_input(item, idx, records.clone()),
-                ))
-            })
-            .collect::<Vec<_>>()
-    }))
+                        )),
+                        item_edit_input(item, idx, records.clone()),
+                    ))
+                })
+                .collect::<Vec<_>>()
+        }),
+    )
 }
 
 fn item_edit_input(item: &store::Item, idx: usize, data: Reactive<Store>) -> Input {
@@ -245,8 +249,7 @@ fn item_edit_input(item: &store::Item, idx: usize, data: Reactive<Store>) -> Inp
             edit(event, store, idx);
             true
         });
-        input(attr! {class="edit", type="text", value=item.description})
-            .on(Blur, on_blur)
+        input(attr! {class="edit", type="text", value=item.description}).on(Blur, on_blur)
     } else {
         input(attr! {type="hidden"})
     }

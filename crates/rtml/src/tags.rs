@@ -1,5 +1,9 @@
 use crate::{reactive::Dom, tag_fmt::TagFormatter, Listeners, Template, TemplateList};
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{
+    cell::RefCell,
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 mod builtin;
 pub use builtin::*;
@@ -230,8 +234,31 @@ impl Styles {
 /// font-size: 100;
 /// escaped: "abc";
 /// ```
+///
+/// to subscribe reactive data, explicit add reactive data ident, and add "~>" symbol
+///
+/// ```no_run
+/// let age = 0u8.reactive();
+/// let s = style! { age ~>
+///     background-color: if age.val() > 60 { "red" } else { "green" };
+///     bar: "bxx";
+///     font-size: 100;
+///     escaped: r#""abc""#
+/// }
+/// ```
 #[macro_export]
-macro_rules! style {
+macro_rules! style_ {
+    ($($d:ident),+ ~> $($($name:ident)-+: $value:expr);+ $(;)?) => {
+        {
+            $(let $d = $d.clone();)+
+            $crate::tags::Styles::Dynamic {
+                subs: vec![$($d.subs.clone()),+],
+                func: ::std::rc::Rc::new(::std::cell::RefCell::new(move|| $crate::s_style! {
+                    $($($name)-+ : $value);+
+                }))
+            }
+        }
+    };
     ($($($name:ident)-+: $value:expr);+ $(;)?) => {
         {
             let mut map: std::collections::HashMap<String, String> = std::collections::HashMap::new();
@@ -299,9 +326,32 @@ pub(crate) fn config_attr(
     attrs: &StaticAttrs,
     ele: &web_sys::Element,
 ) -> Result<(), wasm_bindgen::JsValue> {
+    let old_attrs = ele.attributes();
+    let mut old_keys = (0..old_attrs.length())
+        .filter_map(|idx| {
+            old_attrs.get_with_index(idx).and_then(|attr| {
+                let name = attr.name();
+                if name == "style" {
+                    None
+                } else {
+                    Some(attr.name())
+                }
+            })
+        })
+        .collect::<HashSet<_>>();
     for (name, value) in attrs.0.iter() {
-        ele.set_attribute(name, value).map_err(|e| {
-            tracing::error!("failed to set attribute {}=\"{}\", {:?}", name, value, e);
+        let old = old_attrs.get_with_name(name).map(|a| a.value());
+        if old.map(|v| v != *value).unwrap_or(true) {
+            ele.set_attribute(name, value).map_err(|e| {
+                tracing::error!("failed to set attribute {}=\"{}\", {:?}", name, value, e);
+                e
+            })?;
+        }
+        old_keys.remove(name);
+    }
+    for to_delete in old_keys {
+        ele.remove_attribute(&to_delete).map(|e| {
+            tracing::error!("failed to remove attribute {}", to_delete);
             e
         })?;
     }
@@ -373,10 +423,26 @@ impl Attrs {
 /// ```
 ///
 /// **NOTE**: style should be set by `style!` macro
+///
+/// to subscribe reactive data, explicit add data identifier and add "#>"
+///
+/// ```no_run
+/// attr! { age #> value=age.val() }
+/// ```
 #[macro_export]
 macro_rules! attr {
+        ($($d:ident),+ #> $($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
+            {
+                $(let $d = $d.clone();)+
+                $crate::tags::Attrs::Dynamic {
+                    subs: vec![$($d.subs.clone()),+],
+                    func: ::std::rc::Rc::new(::std::cell::RefCell::new(move|| $crate::s_attr! {
+                        $($($name)-+ $(= $value)?),+
+                    }))
+                }
+            }
+        };
         ($($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
-            #[allow(unused_assignments)]
             { let mut attrs: std::collections::HashMap<String, String> = std::collections::HashMap::new();
             $(
                 let name = vec![$(stringify!($name)),*];

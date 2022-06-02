@@ -14,7 +14,7 @@ crate-type = ["cdylib", "rlib"]
 
 
 [dependencies]
-# rtml-macro = { path = "../macro" }
+rtml-macro = { path = "../macro" }
 wasm-bindgen = { version = "0.2" }
 web-sys = { version = "0.3", features = [
     "Document",
@@ -27,6 +27,8 @@ web-sys = { version = "0.3", features = [
     "HtmlCollection",
     "Event",
     "EventTarget",
+    "NamedNodeMap",
+    "Attr",
 ] }
 tracing = { version = "0.1" }
 tracing-wasm = "0.2.1"

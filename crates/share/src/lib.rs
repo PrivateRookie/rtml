@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-
 pub mod dev_server {
     pub const WS_URL: &str = "__dev__";
     pub const DEFAULT_HOST: &str = "127.0.0.1";
