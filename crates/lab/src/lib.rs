@@ -6,14 +6,16 @@ use rtml::{
 };
 use rtml_project::debug_auto_reload;
 use wasm_bindgen::prelude::*;
-use web_sys::HtmlInputElement;
+use web_sys::{Event, HtmlInputElement};
 
 fn my_form() -> Form {
     let errors: Reactive<Vec<String>> = vec![].reactive();
     let name = String::new().reactive();
     let age = 0u8.reactive();
 
-    let valid_data = add![errors, name, age];
+    let x = rtml::view!(name, age => {
+        format!("{} is {} old", name.val(), age.val())
+    });
 
     let f = form((
         attr! {
@@ -22,9 +24,9 @@ fn my_form() -> Form {
             method="post"
         },
         (
-            p(ul(errors.view(|err| {
-                err.val().iter().map(li).collect::<Vec<_>>()
-            }))),
+            p(ul(
+                rtml::view!(errors => errors.val().iter().map(li).collect::<Vec<_>>()),
+            )),
             p((
                 label((attr! {for="name"}, "Name")),
                 input((
@@ -37,16 +39,16 @@ fn my_form() -> Form {
                 ))
                 .on(
                     Blur,
-                    add!(name, errors).evt(|evt, (data, err)| {
+                    rtml::update!(name, errors => |evt: Event| {
                         let mut update = false;
                         if let Some(target) = evt.target() {
                             let input: HtmlInputElement = JsValue::from(target).into();
                             let val = input.value();
                             if val.len() > 10 {
                                 update = true;
-                                err.val_mut().push("name is too long".into());
+                                errors.val_mut().push("name is too long".into());
                             } else {
-                                *data.val_mut() = val.to_string()
+                                *name.val_mut() = val.to_string()
                             }
                         }
                         update
@@ -67,16 +69,16 @@ fn my_form() -> Form {
                 ))
                 .on(
                     Blur,
-                    add!(age, errors).evt(|evt, (data, err)| {
+                    rtml::update!(age, errors => |evt: Event| {
                         let mut update = false;
                         if let Some(target) = evt.target() {
                             let input: HtmlInputElement = JsValue::from(target).into();
                             match input.value().parse::<u8>() {
                                 Ok(val) => {
-                                    *data.val_mut() = val;
+                                    *age.val_mut() = val;
                                 }
                                 Err(e) => {
-                                    err.val_mut().push(e.to_string());
+                                    errors.val_mut().push(e.to_string());
                                     update = true;
                                 }
                             }
@@ -102,7 +104,7 @@ fn my_form() -> Form {
             p(
                 input(attr! {type="submit", value="submit"}).on(
                     Click,
-                    valid_data.evt(|evt, (errors, name, age)| {
+                    rtml::update!(name, age, errors => |evt: Event| {
                         errors.val_mut().clear();
                         if name.val().is_empty() {
                             errors.val_mut().push("Name is required".into());
@@ -112,6 +114,7 @@ fn my_form() -> Form {
                         }
                         evt.prevent_default();
                         true
+
                     }),
                 ),
             ),

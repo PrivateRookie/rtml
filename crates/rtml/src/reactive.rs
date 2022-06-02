@@ -13,7 +13,7 @@ use crate::{
 
 #[macro_export]
 /// concat multi reactive data
-/// 
+///
 /// ```no_run
 /// let name= String::new().reactive();
 /// let age = 0u0.reactive();
@@ -22,6 +22,56 @@ use crate::{
 macro_rules! add {
     ($($d:expr),+ $(,)?) => {
         $crate::CombinedReactive::new(($($d.clone()),+))
+    };
+}
+
+#[macro_export]
+macro_rules! update {
+    ($($d:ident),+ => $c:expr) => {
+        {
+            $(let $d = $d.clone();)+
+            Box::new(move || {
+                $(let $d = $d.clone();)+
+                Box::new(move |event: web_sys::Event| {
+                    let should_update = $c(event);
+                    if should_update {
+                        $(
+                            $d.update();
+                        )+
+                    }
+                })
+            })
+        }
+    };
+
+    ($($d:ident),+ $b:block) => {
+        {
+            $(let $d = $d.clone();)+
+            Box::new(move || {
+                $(let $d = $d.clone();)+
+                Box::new(move |_: web_sys::Event| {
+                    let should_update = $b;
+                    if should_update {
+                        $(
+                            $d.update();
+                        )+
+                    }
+                })
+            })
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! view {
+    ($($d:ident),+ => $b:expr) => {
+        {
+            $(let $d = $d.clone();)+
+            $crate::tags::EleContent::Dynamic {
+                subs: vec![$($d.subs.clone()),+],
+                func: ::std::rc::Rc::new(::std::cell::RefCell::new(move|| ($b).into()))
+            }
+        }
     };
 }
 
