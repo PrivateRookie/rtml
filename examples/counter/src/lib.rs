@@ -16,14 +16,14 @@ pub fn start() {
         content
     });
 
-    let counter = div! { => (
-        h2!{ => display },
+    let counter = div! { || (
+        h2!{ || display },
         button!{
             @click = count =>|_| {
                 *count.val_mut() += 1;
                 true
-            }
-            => "+1"
+            };
+            || "+1"
         },
         button!{
             @click = count =>   |_| {
@@ -33,10 +33,10 @@ pub fn start() {
                 } else {
                     false
                 }
-            }
-            => "-1"
-        }
-        )
+            };
+            || "-1"
+        })
+
     };
 
     mount_body(counter).unwrap();
