@@ -1,11 +1,8 @@
 use rtml::{
-    form, input, label, mount_body, option, p, select,
-    tags::Form,
-    EventKind::{Blur, Click},
-    IntoReactive, Reactive, button,
+    button, form, input, label, mount_body, option, p, select, tags::Form, IntoReactive, Reactive,
 };
 
-mod test;
+// mod test;
 use rtml_project::debug_auto_reload;
 use wasm_bindgen::prelude::*;
 use web_sys::{Event, HtmlInputElement};
@@ -22,7 +19,11 @@ fn my_form() -> Form {
             p! {|| (
                 label! {#{for="name"} || "Name"},
                 input!(
-                    #name {id="name" type="text" name="name" value=name.val()}
+                    # {id="name" type="text" name="name"}
+                    :name => |ele| {
+                        let input: HtmlInputElement = JsValue::from(ele).into();
+                        input.set_value(&name.val());
+                    };
                     @blur = name, errors => |evt: Event| {
                         let mut update = false;
                         if let Some(target) = evt.target() {
@@ -31,9 +32,8 @@ fn my_form() -> Form {
                             if val.len() > 10 {
                                 update = true;
                                 errors.val_mut().push("name is too long".into());
-                            } else {
-                                *name.val_mut() = val
                             }
+                            *name.val_mut() = val;
                         }
                         update
                     };
@@ -42,7 +42,11 @@ fn my_form() -> Form {
             p! {|| (
                 label! {#{for="age"} || "Age"},
                 input!(
-                    #age {id="age" type="number" name="age" min="0" value=age.val()}
+                    # {id="age" type="number" name="age" min="0" value="0"}
+                    : age => |ele| {
+                        let input: HtmlInputElement = JsValue::from(ele).into();
+                        input.set_value(&age.val().to_string());
+                    };
                     @blur = age, errors => |evt: Event| {
                         let mut update = false;
                         if let Some(target) = evt.target() {
@@ -69,7 +73,8 @@ fn my_form() -> Form {
                     option!(|| "Atomic Blonde"),
                 ))
             )},
-            p! {|| input! {
+            p! {||
+                input! {
                 #{type="submit" value="submit"}
                 @click = name, age, errors => |evt: Event| {
                     errors.val_mut().clear();
@@ -86,17 +91,12 @@ fn my_form() -> Form {
             button!(
                 #{type="button"}
                 @click = name, age, errors => |_| {
-                    let doc = web_sys::window().unwrap().document().unwrap();
-                    let name_ele = doc.get_element_by_id("name").unwrap();
-                    let name_input: HtmlInputElement = JsValue::from(name_ele).into();
-                    name_input.set_value("");
-                    tracing::info!("clear");
                     name.val_mut().clear();
                     *age.val_mut() = 0;
                     errors.val_mut().clear();
                     true
                 };
-                || "Clear"
+                || "Reset"
             )
         )
     };

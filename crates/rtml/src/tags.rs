@@ -7,11 +7,12 @@ use std::{
 
 mod builtin;
 pub use builtin::*;
-use web_sys::{Document, Event};
+use web_sys::{Document, Element, Event};
 
 pub struct Unit {
     pub name: &'static str,
     pub content: EleContent,
+    pub modifier: EleModifierRegisterData,
     pub attrs: Attrs,
     pub styles: Styles,
     pub listeners: Listeners,
@@ -31,6 +32,7 @@ impl Template for Unit {
         &self,
     ) -> (
         &'static str,
+        &EleModifierRegisterData,
         &Attrs,
         &Styles,
         &EleContent,
@@ -46,6 +48,7 @@ impl Template for Unit {
             .collect();
         (
             self.name,
+            &self.modifier,
             &self.attrs,
             &self.styles,
             &self.content,
@@ -55,6 +58,11 @@ impl Template for Unit {
 }
 
 impl Unit {
+    pub fn bind(mut self, m: (Vec<Rc<RefCell<Dom>>>, Rc<RefCell<dyn Fn(Element)>>)) -> Self {
+        self.modifier = Some(m);
+        self
+    }
+
     pub fn on<K: Into<&'static str>>(
         mut self,
         kind: K,
@@ -431,45 +439,45 @@ impl Attrs {
 /// ```
 #[macro_export]
 macro_rules! attr {
-        ($($d:ident),+ #> $($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
-            {
-                $(let $d = $d.clone();)+
-                $crate::tags::Attrs::Dynamic {
-                    subs: vec![$($d.subs.clone()),+],
-                    func: ::std::rc::Rc::new(::std::cell::RefCell::new(move|| $crate::s_attr! {
-                        $($($name)-+ $(= $value)?),+
-                    }))
-                }
+    ($($d:ident),+ #> $($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
+        {
+            $(let $d = $d.clone();)+
+            $crate::tags::Attrs::Dynamic {
+                subs: vec![$($d.subs.clone()),+],
+                func: ::std::rc::Rc::new(::std::cell::RefCell::new(move|| $crate::s_attr! {
+                    $($($name)-+ $(= $value)?),+
+                }))
             }
-        };
-        ($($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
-            { let mut attrs: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+        }
+    };
+    ($($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
+        { let mut attrs: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+        $(
+            let name = vec![$(stringify!($name)),*];
+            let key = name.join("-");
+            let mut valid = true;
+            if key.starts_with("on") {
+                $crate::tags::_warning("event handler can not be set with attr! macro");
+                valid = false;
+            } else if key == "style" {
+                $crate::tags::_warning("style should be set with style! macro");
+                valid = false;
+            }
+            let mut value = None;
             $(
-                let name = vec![$(stringify!($name)),*];
-                let key = name.join("-");
-                let mut valid = true;
-                if key.starts_with("on") {
-                    $crate::tags::_warning("event handler can not be set with attr! macro");
-                    valid = false;
-                } else if key == "style" {
-                    $crate::tags::_warning("style should be set with style! macro");
-                    valid = false;
-                }
-                let mut value = None;
-                $(
-                    value = Some($value.to_string());
-                )?
-                if valid {
-                    attrs.insert(key.to_string(), value.unwrap_or_default());
-                }
+                value = Some($value.to_string());
+            )?
+            if valid {
+                attrs.insert(key.to_string(), value.unwrap_or_default());
+            }
 
-            )*
-            $crate::tags::Attrs::Static($crate::tags::StaticAttrs(attrs))
-        }};
-        () => {{
-            $crate::tags::Attrs::default()
-        }}
-    }
+        )*
+        $crate::tags::Attrs::Static($crate::tags::StaticAttrs(attrs))
+    }};
+    () => {{
+        $crate::tags::Attrs::default()
+    }}
+}
 
 /// helper macro to set html element attributes, like id, class, hidden etc
 ///
@@ -489,31 +497,33 @@ macro_rules! attr {
 /// **NOTE**: style should be set by `style!` macro
 #[macro_export]
 macro_rules! s_attr {
-        ($($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
-            { let mut attrs: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+    ($($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
+        { let mut attrs: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+        $(
+            let name = vec![$(stringify!($name)),*];
+            let key = name.join("-");
+            let mut valid = true;
+            if key.starts_with("on") {
+                $crate::tags::_warning("event handler can not be set with attr! macro");
+                valid = false;
+            } else if key == "style" {
+                $crate::tags::_warning("style should be set with style! macro");
+                valid = false;
+            }
+            let mut value = None;
             $(
-                let name = vec![$(stringify!($name)),*];
-                let key = name.join("-");
-                let mut valid = true;
-                if key.starts_with("on") {
-                    $crate::tags::_warning("event handler can not be set with attr! macro");
-                    valid = false;
-                } else if key == "style" {
-                    $crate::tags::_warning("style should be set with style! macro");
-                    valid = false;
-                }
-                let mut value = None;
-                $(
-                    value = Some($value.to_string());
-                )?
-                if valid {
-                    attrs.insert(key.to_string(), value.unwrap_or_default());
-                }
+                value = Some($value.to_string());
+            )?
+            if valid {
+                attrs.insert(key.to_string(), value.unwrap_or_default());
+            }
 
-            )*
-            $crate::tags::StaticAttrs(attrs)
-        }};
-        () => {{
-            Default::default()
-        }}
-    }
+        )*
+        $crate::tags::StaticAttrs(attrs)
+    }};
+    () => {{
+        Default::default()
+    }}
+}
+
+pub type EleModifierRegisterData = Option<(Vec<Rc<RefCell<Dom>>>, Rc<RefCell<dyn Fn(Element)>>)>;

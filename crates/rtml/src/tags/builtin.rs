@@ -5,13 +5,14 @@ macro_rules! def {
         $(#[cfg_attr(feature=$lang, doc=$doc)])+
         pub fn $func_name<T: Into<$arg>>(tag: T) -> $struct {
             let args : $arg = tag.into();
-            let $arg { content, attrs, styles } = args;
+            let $arg { content, attrs, styles, modifier} = args;
             $struct($crate::tags::Unit {
                 name: stringify!($func_name),
                 content,
                 attrs,
                 styles,
-                listeners: Default::default()
+                listeners: Default::default(),
+                modifier
             })
         }
 
@@ -63,6 +64,10 @@ macro_rules! def {
             pub fn on<K: Into<&'static str>>(self, kind: K, listener: Box<dyn Fn() -> Box<dyn Fn(web_sys::Event)>>) -> Self {
                 $struct(self.0.on(kind, listener))
             }
+
+            pub fn bind(self, m: (::std::vec::Vec<::std::rc::Rc<::std::cell::RefCell<$crate::reactive::Dom>>>, ::std::rc::Rc<::std::cell::RefCell<dyn Fn(web_sys::Element)>>)) -> Self {
+                $struct(self.0.bind(m))
+            }
         }
 
         impl $crate::Template for $struct {
@@ -74,6 +79,7 @@ macro_rules! def {
 
         pub struct $arg {
             pub content: $crate::tags::EleContent,
+            pub modifier: $crate::tags::EleModifierRegisterData,
             pub attrs: $crate::tags::Attrs,
             pub styles: $crate::tags::Styles,
         }
@@ -82,6 +88,7 @@ macro_rules! def {
             fn from(src:  C) -> Self {
                 Self {
                     content: src.into(),
+                    modifier: Default::default(),
                     attrs: Default::default(),
                     styles: Default::default(),
                 }
@@ -92,6 +99,7 @@ macro_rules! def {
             fn from(src: ( $crate::tags::Attrs, C)) -> Self {
                 Self {
                     content: src.1.into(),
+                    modifier: Default::default(),
                     attrs: src.0,
                     styles: Default::default(),
                 }
@@ -103,6 +111,7 @@ macro_rules! def {
             fn from(src: ( $crate::tags::Styles, C)) -> Self {
                 Self {
                     content: src.1.into(),
+                    modifier: Default::default(),
                     attrs: Default::default(),
                     styles: src.0,
                 }
@@ -113,6 +122,7 @@ macro_rules! def {
             fn from(src: ( $crate::tags::Attrs, $crate::tags::Styles, C)) -> Self {
                 Self {
                     content: src.2.into(),
+                    modifier: Default::default(),
                     attrs: src.0,
                     styles: src.1,
                 }
@@ -122,6 +132,7 @@ macro_rules! def {
             fn from(src: ( $crate::tags::Styles, $crate::tags::Attrs, C)) -> Self {
                 Self {
                     content: src.2.into(),
+                    modifier: Default::default(),
                     styles: src.0,
                     attrs: src.1,
                 }
@@ -133,6 +144,7 @@ macro_rules! def {
             fn from(src: $crate::tags::Attrs) -> Self {
                 Self {
                     content: Default::default(),
+                    modifier: Default::default(),
                     attrs: src,
                     styles: Default::default(),
                 }
@@ -143,6 +155,7 @@ macro_rules! def {
             fn from(src:  $crate::tags::Styles) -> Self {
                 Self {
                     content: Default::default(),
+                    modifier: Default::default(),
                     attrs: Default::default(),
                     styles: src,
                 }
@@ -153,6 +166,7 @@ macro_rules! def {
             fn from(src: ( $crate::tags::Attrs, $crate::tags::Styles)) -> Self {
                 Self {
                     content: Default::default(),
+                    modifier: Default::default(),
                     attrs: src.0,
                     styles: src.1,
                 }
@@ -162,6 +176,7 @@ macro_rules! def {
             fn from(src: ( $crate::tags::Styles, $crate::tags::Attrs)) -> Self {
                 Self {
                     content: Default::default(),
+                    modifier: Default::default(),
                     styles: src.0,
                     attrs: src.1,
                 }

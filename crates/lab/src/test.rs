@@ -1,9 +1,10 @@
-use web_sys::Event;
+use web_sys::{Element, Event};
 
 macro_rules! demo {
     (
     $($(#$($a_cap:ident),+)? $(#)?{ $($($a_name:ident)-+ $(= $a_value:expr)?)*  })?
     $($(*$($s_cap:ident),+)? $(*)?{ $($($s_name:ident)-+: $s_value:expr);* $(;)? })?
+    $(:$($b_cap:ident),+ => $b_body:expr;)?
     $(@$type:ident = $($e_cap:ident),+ => $b:expr;)*
     $(|$($v_cap:ident),+|  $content:expr)?
     ) => {
@@ -16,7 +17,9 @@ macro_rules! demo {
             $(
                 let __tag__ = __tag__.style(rtml::style_! { $($($s_cap),+ ~>)? $($($s_name)-+ :$s_value);*});
             )?
-
+            $(
+                let __tag__ = __tag__.bind(rtml::subs!($($b_cap),+ :> $b_body));
+            )?
             $(
                 let __tag__ = __tag__.children(rtml::subs!($($v_cap),+ => $content));
             )?
@@ -29,6 +32,7 @@ macro_rules! demo {
     (
     $($(#$($a_cap:ident),+)? $(#)?{ $($($a_name:ident)-+ $(= $a_value:expr)?)*  })?
     $($(*$($s_cap:ident),+)? $(*)?{ $($($s_name:ident)-+: $s_value:expr);* $(;)? })?
+    $(:$($b_cap:ident),+ => $b_body:expr;)?
     $(@$type:ident = $($e_cap:ident),+ => $b:expr;)*
     $(|| $content:expr)?
     ) => {
@@ -61,15 +65,21 @@ fn macro_test() {
     let count = 0.reactive();
 
     let d = demo! {
-        #count { value=count.val() id="test" pad="xxx" }
-        *{ background-color: "red" }
-        // TODO 允许不捕获变量
-        @click = count => |_| {
-            *count.val_mut() += 1;
-            true
+        // #count { value=count.val() id="test" pad="xxx" }
+        // *{ background-color: "red" }
+        : count => |ele: Element| {
         };
-        |count| format!("count is {}", count.val())
+        // @click = count => |_| {
+        //     *count.val_mut() += 1;
+        //     true
+        // };
+        // |count| format!("count is {}", count.val())
     };
+
+    let x = rtml::subs!(count :>  |ele: web_sys::Element| {
+        tracing::info!("count is {}", count.val());
+    });
+    let d = rtml::tags::p(()).bind(x);
     let _x = input! {
         // # 代表除 style 之外的属性
         #{ id="ok" class="good" }

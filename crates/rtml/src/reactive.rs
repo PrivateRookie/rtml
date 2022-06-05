@@ -107,6 +107,16 @@ macro_rules! subs {
             }
         }
     };
+    ($($d:ident),+ :> $b:expr) => {
+        {
+            $(let $d = $d.clone();)+
+            
+            (
+                vec![$($d.subs.clone()),+],
+                ::std::rc::Rc::new(::std::cell::RefCell::new(move |ele: web_sys::Element| $b(ele))) as ::std::rc::Rc<::std::cell::RefCell<dyn Fn(web_sys::Element)>>
+            )
+        }
+    };
     ($($d:ident),+ #> $($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
         {
             $(let $d = $d.clone();)+
@@ -158,8 +168,9 @@ pub struct Dom {
     updater: Option<(Element, UpdateFunc)>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct UpdateFunc {
+    pub ele_modifier: Option<Rc<RefCell<dyn Fn(Element)>>>,
     pub attr: Option<Rc<RefCell<dyn Fn() -> StaticAttrs>>>,
     pub style: Option<Rc<RefCell<dyn Fn() -> StaticStyles>>>,
     pub children: Option<Rc<RefCell<dyn Fn() -> StaticContent>>>,
@@ -295,6 +306,19 @@ impl<T: 'static> Reactive<T> {
         }
     }
 
+    pub fn bind<M: Fn(Element, Self) + 'static>(
+        &self,
+        m: M,
+    ) -> crate::tags::EleModifierRegisterData {
+        let d = self.clone();
+        let data = (
+            vec![self.subs.clone()],
+            Rc::new(RefCell::new(move |ele: Element| m(ele, d.clone())))
+                as Rc<RefCell<dyn Fn(Element)>>,
+        );
+        Some(data)
+    }
+
     /// subscribe data change and return children
     pub fn view<C: Into<StaticContent>, V: Fn(Self) -> C + 'static>(&self, v: V) -> EleContent {
         let data = self.clone();
@@ -389,6 +413,9 @@ fn update_dom(dom: &mut Dom) -> Result<(), wasm_bindgen::JsValue> {
         if let Some(s_func) = updater.style.as_ref() {
             let styles = s_func.borrow()();
             config_style(&styles, &ele)?;
+        }
+        if let Some(m_func) = updater.ele_modifier {
+            m_func.borrow()(ele.clone())
         }
     };
 

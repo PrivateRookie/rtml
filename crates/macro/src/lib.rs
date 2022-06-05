@@ -11,6 +11,7 @@ pub fn macro_builder(input: TokenStream) -> TokenStream {
             (
                 $($(#$($a_cap:ident),+)? $(#)?{ $($($a_name:ident)-+ $(= $a_value:expr)?)*  })?
                 $($(*$($s_cap:ident),+)? $(*)?{ $($($s_name:ident)-+: $s_value:expr);* $(;)? })?
+                $(:$($b_cap:ident),+ => $b_body:expr;)?
                 $(@$type:ident = $($e_cap:ident),+ => $b:expr;)*
                 $(|$($v_cap:ident),+|  $content:expr)?
                 ) => {
@@ -23,7 +24,9 @@ pub fn macro_builder(input: TokenStream) -> TokenStream {
                         $(
                             let __tag__ = __tag__.style(rtml::style_! { $($($s_cap),+ ~>)? $($($s_name)-+ :$s_value);*});
                         )?
-            
+                        $(
+                            let __tag__ = __tag__.bind(rtml::subs!($($b_cap),+ :> $b_body));
+                        )?
                         $(
                             let __tag__ = __tag__.children(rtml::subs!($($v_cap),+ => $content));
                         )?
@@ -36,6 +39,7 @@ pub fn macro_builder(input: TokenStream) -> TokenStream {
                 (
                 $($(#$($a_cap:ident),+)? $(#)?{ $($($a_name:ident)-+ $(= $a_value:expr)?)*  })?
                 $($(*$($s_cap:ident),+)? $(*)?{ $($($s_name:ident)-+: $s_value:expr);* $(;)? })?
+                $(:$($b_cap:ident),+ => $b_body:expr;)?
                 $(@$type:ident = $($e_cap:ident),+ => $b:expr;)*
                 $(|| $content:expr)?
                 ) => {
@@ -48,7 +52,9 @@ pub fn macro_builder(input: TokenStream) -> TokenStream {
                         $(
                             let __tag__ = __tag__.style(rtml::style_! { $($($s_cap),+ ~>)? $($($s_name)-+ :$s_value);*});
                         )?
-            
+                        $(
+                            let __tag__ = __tag__.bind(rtml::subs!($($b_cap),+ :> $b_body));
+                        )?
                         $(
                             let __tag__ = __tag__.children($content);
                         )?

@@ -1,5 +1,5 @@
-use reactive::UpdateFunc;
-use std::collections::HashMap;
+use reactive::{Dom, UpdateFunc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use tag_fmt::TagFormatter;
 use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{Document, Element, Event, HtmlElement};
@@ -9,7 +9,10 @@ mod events;
 /// html tags
 pub mod tags;
 pub use events::*;
-use tags::{AttrRegisterData, Attrs, ContentRegisterData, EleContent, StyleRegisterData, Styles};
+use tags::{
+    AttrRegisterData, Attrs, ContentRegisterData, EleContent, EleModifierRegisterData,
+    StyleRegisterData, Styles,
+};
 mod reactive;
 pub use reactive::{reactive, CombinedReactive, IntoReactive, Reactive};
 
@@ -19,6 +22,7 @@ pub mod tag_fmt;
 
 pub type TplResources<'a> = (
     &'static str,
+    &'a EleModifierRegisterData,
     &'a Attrs,
     &'a Styles,
     &'a EleContent,
@@ -37,7 +41,7 @@ pub trait Template {
         parent: &Element,
         doc: &Document,
     ) -> Result<Element, JsValue> {
-        let (name, attrs, styles, content, other_listeners) = self.resources();
+        let (name, modifier, attrs, styles, content, other_listeners) = self.resources();
         let ele = doc.create_element(name).map_err(|e| {
             tracing::error!("failed to create element {}: {:?}", name, e);
             e
@@ -71,7 +75,7 @@ pub trait Template {
             e
         })?;
         let content_subs = content.render(path.clone(), &ele, doc)?;
-        register(attr_subs, style_subs, content_subs, path, &ele);
+        register(modifier.clone(), attr_subs, style_subs, content_subs, path, &ele);
         Ok(ele)
     }
 
@@ -79,7 +83,7 @@ pub trait Template {
         use std::fmt::Write;
 
         let pad = f.pad_size();
-        let (name, attrs, styles, content, _) = self.resources();
+        let (name, _, attrs, styles, content, _) = self.resources();
         if name == "html" {
             write!(buf, "<!doctype html>{}", f.line_sep)?;
         }
@@ -143,113 +147,35 @@ pub trait Template {
 }
 
 fn register(
+    ele_subs: EleModifierRegisterData,
     attr_subs: AttrRegisterData,
     style_subs: StyleRegisterData,
     content_subs: ContentRegisterData,
     path: Vec<usize>,
     ele: &Element,
 ) {
-    // tracing::info!(
-    //     "register dyn for {:?} {}",
-    //     path.iter().enumerate().collect::<Vec<_>>(),
-    //     ele.local_name()
-    // );
-    match (attr_subs, style_subs, content_subs) {
-        (None, None, None) => {}
-        (None, None, Some((subs, func))) => {
-            for dom in subs {
-                dom.borrow_mut().register(
-                    path.clone(),
-                    ele.clone(),
-                    UpdateFunc {
-                        attr: None,
-                        style: None,
-                        children: Some(func.clone()),
-                    },
-                );
-            }
-        }
-        (None, Some((subs, func)), None) => {
-            for dom in subs {
-                dom.borrow_mut().register(
-                    path.clone(),
-                    ele.clone(),
-                    UpdateFunc {
-                        attr: None,
-                        style: Some(func.clone()),
-                        children: None,
-                    },
-                );
-            }
-        }
-        (None, Some((s_subs, s_func)), Some((c_subs, c_func))) => {
-            assert_eq!(s_subs.len(), c_subs.len());
-            for dom in s_subs {
-                dom.borrow_mut().register(
-                    path.clone(),
-                    ele.clone(),
-                    UpdateFunc {
-                        attr: None,
-                        style: Some(s_func.clone()),
-                        children: Some(c_func.clone()),
-                    },
-                );
-            }
-        }
-        (Some((subs, func)), None, None) => {
-            for dom in subs {
-                dom.borrow_mut().register(
-                    path.clone(),
-                    ele.clone(),
-                    UpdateFunc {
-                        attr: Some(func.clone()),
-                        style: None,
-                        children: None,
-                    },
-                );
-            }
-        }
-        (Some((a_subs, a_func)), None, Some((c_subs, c_func))) => {
-            assert_eq!(a_subs.len(), c_subs.len());
-            for dom in a_subs {
-                dom.borrow_mut().register(
-                    path.clone(),
-                    ele.clone(),
-                    UpdateFunc {
-                        attr: Some(a_func.clone()),
-                        style: None,
-                        children: Some(c_func.clone()),
-                    },
-                );
-            }
-        }
-        (Some((a_subs, a_func)), Some((s_subs, s_func)), None) => {
-            assert_eq!(a_subs.len(), s_subs.len());
-            for dom in a_subs {
-                dom.borrow_mut().register(
-                    path.clone(),
-                    ele.clone(),
-                    UpdateFunc {
-                        attr: Some(a_func.clone()),
-                        style: Some(s_func.clone()),
-                        children: None,
-                    },
-                );
-            }
-        }
-        (Some((a_subs, a_func)), Some((s_subs, s_func)), Some((c_subs, c_func))) => {
-            assert!(a_subs.len() == s_subs.len() && s_subs.len() == c_subs.len());
-            for dom in a_subs {
-                dom.borrow_mut().register(
-                    path.clone(),
-                    ele.clone(),
-                    UpdateFunc {
-                        attr: Some(a_func.clone()),
-                        style: Some(s_func.clone()),
-                        children: Some(c_func.clone()),
-                    },
-                );
-            }
+    let mut updater = UpdateFunc::default();
+    let mut subs: Option<Vec<Rc<RefCell<Dom>>>> = None;
+    if let Some((doms, func)) = ele_subs {
+        updater.ele_modifier = Some(func);
+        subs = Some(doms);
+    }
+    if let Some((doms, func)) = attr_subs {
+        updater.attr = Some(func);
+        subs = Some(doms);
+    }
+    if let Some((doms, func)) = style_subs {
+        updater.style = Some(func);
+        subs = Some(doms);
+    }
+    if let Some((doms, func)) = content_subs {
+        updater.children = Some(func);
+        subs = Some(doms);
+    }
+    if let Some(doms) = subs {
+        for dom in doms {
+            dom.borrow_mut()
+                .register(path.clone(), ele.clone(), updater.clone());
         }
     }
 }
@@ -292,6 +218,7 @@ pub fn unit(name: &'static str, content: EleContent) -> tags::Unit {
     tags::Unit {
         name,
         content,
+        modifier: Default::default(),
         styles: Default::default(),
         attrs: Default::default(),
         listeners: Default::default(),
