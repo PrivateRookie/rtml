@@ -1,4 +1,4 @@
-def! {
+def_tag! {
   menuitem,
   Menuitem,
   MenuitemArg,

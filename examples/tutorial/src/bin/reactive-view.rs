@@ -1,19 +1,19 @@
-use rtml::attr;
+use rtml::t_attr;
 use rtml::tags::*;
 
 fn reactive_view() -> Html {
     let pkg = env!("CARGO_PKG_NAME").replace('-', "_");
     let bin = env!("CARGO_BIN_NAME").replace('-', "_");
     html((
-        attr! {lang="zh-cn"},
+        t_attr! {lang="zh-cn"},
         (
             head((
-                meta(attr! { charset="utf-8" }),
+                meta(t_attr! { charset="utf-8" }),
                 meta(
-                    attr! { http-equiv="Cache-Control", content="no-cache, no-store, must-revalidate" },
+                    t_attr! { http-equiv="Cache-Control", content="no-cache, no-store, must-revalidate" },
                 ),
                 script((
-                    attr! { type="module" },
+                    t_attr! { type="module" },
                     format!(
                         r#"
                     import init from "./{pkg}.js";

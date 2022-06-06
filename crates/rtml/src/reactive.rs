@@ -17,9 +17,9 @@ use crate::{
 /// ```no_run
 /// let name= String::new().reactive();
 /// let age = 0u0.reactive();
-/// let combined = add!(name, age);
+/// let combined = ref_add!(name, age);
 /// ```
-macro_rules! add {
+macro_rules! ref_add {
     ($($d:expr),+ $(,)?) => {
         $crate::CombinedReactive::new(($($d.clone()),+))
     };
@@ -30,7 +30,7 @@ macro_rules! add {
 /// ## with event param
 /// *params type is required*
 /// ```no_run
-/// update!(d1, d2 => |evt: web_sys::Event| {
+/// ref_update!(d1, d2 => |evt: web_sys::Event| {
 ///     let mut update = false;
 ///     // do something
 ///     update
@@ -39,14 +39,14 @@ macro_rules! add {
 ///
 /// ## without event param
 /// ```no_run
-/// update!(d1, d2 {
+/// ref_update!(d1, d2 {
 ///     let mut update = false;
 ///     // do something
 ///     update
 /// })
 /// ```
 #[macro_export]
-macro_rules! update {
+macro_rules! ref_update {
     ($($d:ident),+ => $c:expr) => {
         {
             $(let $d = $d.clone();)+
@@ -59,7 +59,7 @@ macro_rules! update {
                             $d.update();
                         )+
                     }
-                })
+                }) as Box<dyn Fn(web_sys::Event)>
             })
         }
     };
@@ -76,7 +76,7 @@ macro_rules! update {
                             $d.update();
                         )+
                     }
-                })
+                }) as Box<dyn Fn(web_sys::Event)>
             })
         }
     }
@@ -85,19 +85,19 @@ macro_rules! update {
 /// create view/attr/style function for one or more reactive data
 ///
 /// ```no_run
-/// subs!(d1, d2 => if d1.val() > d2.val() {"OK"} else {"Not Ok"})
+/// ref_subs!(d1, d2 => if d1.val() > d2.val() {"OK"} else {"Not Ok"})
 ///
 /// // if view body is complex, you can use block expr
-/// subs!(d1, d2 => {
+/// ref_subs!(d1, d2 => {
 ///     // lots of works
 /// })
 /// ```
 /// attr and style function are similar with view function, except for you have to
 /// replace
 /// 1. `=>` to `#>` for attr function
-/// 2. `=>` to `~>` for style function
+/// 2. `=>` to `*>` for style function
 #[macro_export]
-macro_rules! subs {
+macro_rules! ref_subs {
     ($($d:ident),+ => $b:expr) => {
         {
             $(let $d = $d.clone();)+
@@ -110,7 +110,7 @@ macro_rules! subs {
     ($($d:ident),+ :> $b:expr) => {
         {
             $(let $d = $d.clone();)+
-            
+
             (
                 vec![$($d.subs.clone()),+],
                 ::std::rc::Rc::new(::std::cell::RefCell::new(move |ele: web_sys::Element| $b(ele))) as ::std::rc::Rc<::std::cell::RefCell<dyn Fn(web_sys::Element)>>
@@ -128,7 +128,7 @@ macro_rules! subs {
             }
         }
     };
-    ($($d:ident),+ ~> $($($name:ident)-+: $value:expr);+ $(;)?) => {
+    ($($d:ident),+ *> $($($name:ident)-+: $value:expr);+ $(;)?) => {
         {
             $(let $d = $d.clone();)+
             $crate::tags::Styles::Dynamic {
@@ -168,9 +168,11 @@ pub struct Dom {
     updater: Option<(Element, UpdateFunc)>,
 }
 
+pub(crate) type ModifierFunc = Rc<RefCell<dyn Fn(Element)>>;
+
 #[derive(Clone, Default)]
 pub struct UpdateFunc {
-    pub ele_modifier: Option<Rc<RefCell<dyn Fn(Element)>>>,
+    pub ele_modifier: Option<ModifierFunc>,
     pub attr: Option<Rc<RefCell<dyn Fn() -> StaticAttrs>>>,
     pub style: Option<Rc<RefCell<dyn Fn() -> StaticStyles>>>,
     pub children: Option<Rc<RefCell<dyn Fn() -> StaticContent>>>,
@@ -415,7 +417,7 @@ fn update_dom(dom: &mut Dom) -> Result<(), wasm_bindgen::JsValue> {
             config_style(&styles, &ele)?;
         }
         if let Some(m_func) = updater.ele_modifier {
-            m_func.borrow()(ele.clone())
+            m_func.borrow()(ele)
         }
     };
 

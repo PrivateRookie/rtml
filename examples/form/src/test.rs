@@ -12,19 +12,19 @@ macro_rules! demo {
             let __tag__ = rtml::tags::p(());
 
             $(
-                let __tag__ = __tag__.attr(rtml::attr! { $($($a_cap),+   #> )? $($($a_name)-+ $(=$a_value)?),*});
+                let __tag__ = __tag__.attr(rtml::t_attr! { $($($a_cap),+   #> )? $($($a_name)-+ $(=$a_value)?),*});
             )?
             $(
-                let __tag__ = __tag__.style(rtml::style_! { $($($s_cap),+ ~>)? $($($s_name)-+ :$s_value);*});
+                let __tag__ = __tag__.style(rtml::style_! { $($($s_cap),+ *>)? $($($s_name)-+ :$s_value);*});
             )?
             $(
-                let __tag__ = __tag__.bind(rtml::subs!($($b_cap),+ :> $b_body));
+                let __tag__ = __tag__.bind(rtml::ref_subs!($($b_cap),+ :> $b_body));
             )?
             $(
-                let __tag__ = __tag__.children(rtml::subs!($($v_cap),+ => $content));
+                let __tag__ = __tag__.children(rtml::ref_subs!($($v_cap),+ => $content));
             )?
             $(
-                let __tag__ = __tag__.on(stringify!($type), rtml::update!($($e_cap),+ => $b));
+                let __tag__ = __tag__.on(stringify!($type), rtml::ref_update!($($e_cap),+ => $b));
             )*
             __tag__
         }
@@ -40,17 +40,17 @@ macro_rules! demo {
             let __tag__ = rtml::tags::p(());
 
             $(
-                let __tag__ = __tag__.attr(rtml::attr! { $($($a_cap),+   #> )? $($($a_name)-+ $(=$a_value)?),*});
+                let __tag__ = __tag__.attr(rtml::t_attr! { $($($a_cap),+   #> )? $($($a_name)-+ $(=$a_value)?),*});
             )?
             $(
-                let __tag__ = __tag__.style(rtml::style_! { $($($s_cap),+ ~>)? $($($s_name)-+ :$s_value);*});
+                let __tag__ = __tag__.style(rtml::style_! { $($($s_cap),+ *>)? $($($s_name)-+ :$s_value);*});
             )?
 
             $(
                 let __tag__ = __tag__.children($content);
             )?
             $(
-                let __tag__ = __tag__.on(stringify!($type), rtml::update!($($e_cap),+ => $b));
+                let __tag__ = __tag__.on(stringify!($type), rtml::ref_update!($($e_cap),+ => $b));
             )*
             __tag__
         }
@@ -76,7 +76,7 @@ fn macro_test() {
         // |count| format!("count is {}", count.val())
     };
 
-    let x = rtml::subs!(count :>  |ele: web_sys::Element| {
+    let x = rtml::ref_subs!(count :>  |ele: web_sys::Element| {
         tracing::info!("count is {}", count.val());
     });
     let d = rtml::tags::p(()).bind(x);

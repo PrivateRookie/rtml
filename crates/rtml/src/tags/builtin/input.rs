@@ -1,4 +1,4 @@
-def! {
+def_tag! {
   input,
   Input,
   InputArg,

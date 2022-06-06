@@ -5,13 +5,13 @@ use rtml::tags::*;
 fn main() -> Html {
     let pkg = env!("CARGO_PKG_NAME").replace('-', "_");
     html((
-        attr! {lang="zh-cn"},
+        t_attr! {lang="zh-cn"},
         (
             head((
-                meta(attr! { charset="utf-8" }),
-                meta(attr! { http-equiv="Cache-Control", content="no-cache, no-store, must-revalidate" }),
+                meta(t_attr! { charset="utf-8" }),
+                meta(t_attr! { http-equiv="Cache-Control", content="no-cache, no-store, must-revalidate" }),
                 script((
-                    attr! { type="module" },
+                    t_attr! { type="module" },
                     format!("\nimport init from \"./{pkg}.js\";\ninit();\n"),
                 )),
                 title("RTML with WASM"),

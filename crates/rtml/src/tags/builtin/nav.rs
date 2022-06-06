@@ -1,4 +1,4 @@
-def! {
+def_tag! {
   nav,
   Nav,
   NavArg,

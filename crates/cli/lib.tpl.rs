@@ -10,12 +10,12 @@ pub fn start() {
     debug_auto_reload();
 
     let page = div((
-        style! {text-align: "center"},
+        t_style! {text-align: "center"},
         (
             h1("hello World!"),
             br(()),
             strong(a((
-                attr! {href="http://"},
+                t_attr! {href="http://"},
                 "Power By https://github.com/PrivateRookie/rtml",
             ))),
         ),

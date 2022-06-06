@@ -17,13 +17,13 @@ use rtml::tags::*;
 fn main() -> Html {
     // 使用与 html 标签同名函数构造对应的 html 元素
     html((
-        // attr! 用于设置 html 元素属性, 这这里设置一个最常见 lang 属性
-        attr! { lang="zh-cn" },
+        // t_attr! 用于设置 html 元素属性, 这这里设置一个最常见 lang 属性
+        t_attr! { lang="zh-cn" },
         // 属性之后可跟着样式设置(可选)和子元素, 这里忽略样式设置
         (
             head((
                 // 对于 meta 等标签, 我们不关心内容, 只传入属性也是合法的参数
-                meta(attr! { charset="utf-8" }),
+                meta(t_attr! { charset="utf-8" }),
                 // 直接传入字符串, 浮点数, 整数, 布尔值会被自动设置为 html 元素文字内容
                 title("RTML Simple Template"),
             )),
@@ -65,11 +65,11 @@ rtml::page 是一个方便用户使用的过程宏, 它的作用不过是将被�
 1. 用户可以在单个标签上通过 style 属性设置
 2. 通过 link 或 style 标签, 引入样式文件或嵌入 css 代码
 
-对于第一种方式, rtml 提供了 style! 将其作为标签构造参数传入标签同名函数.
+对于第一种方式, rtml 提供了 t_style! 将其作为标签构造参数传入标签同名函数.
 
 ```rust
 div((
-    style! { color: "red" },
+    t_style! { color: "red" },
     p("should be red text")
 ))
 ```
@@ -80,9 +80,9 @@ div((
 div((
     div("content only"),
     // attribute only
-    div(attr! { id = "app" }),
+    div(t_attr! { id = "app" }),
     // style only
-    div(style! { color: "red" })
+    div(t_style! { color: "red" })
 ))
 ```
 
@@ -90,13 +90,13 @@ div((
 
 ```rust
 div((
-    div((attr! {}, "attr and then content, OK")),
-    div((style! {}, "style and then content, OK")),
-    div((attr! {}, style! {}, "attr then style and then content, OK")),
-    div((style! {}, attr! {}, "order don't matter for attr and style")),
-    div((style! {}, attr! {}, "order don't matter for attr and style")),
+    div((t_attr! {}, "attr and then content, OK")),
+    div((t_style! {}, "style and then content, OK")),
+    div((t_attr! {}, t_style! {}, "attr then style and then content, OK")),
+    div((t_style! {}, t_attr! {}, "order don't matter for attr and style")),
+    div((t_style! {}, t_attr! {}, "order don't matter for attr and style")),
     // no content is also ok
-    div((style! {}, attr! {})),
+    div((t_style! {}, t_attr! {})),
 ))
 ```
 
@@ -104,7 +104,7 @@ div((
 
 ```rust
 head((
-    link(attr! {
+    link(t_attr! {
         rel = "stylesheet",
         href = "https://cdn.bootcdn.net/ajax/libs/zui/1.10.0/css/zui.min.css"
     }),
@@ -266,7 +266,7 @@ init();
 
 ```rust
 script((
-    attr! { type="module" },
+    t_attr! { type="module" },
     format!(r#"import init from "./{pkg}.js";
 init();
 "#),

@@ -1,11 +1,11 @@
 use rtml::{
-    attr,
+    t_attr,
     tags::{html, img, Html},
 };
 
 fn dynamic_attr() -> Html {
     let src = "https://www.rust-lang.org/static/images/rust-logo-blk.svg";
-    html(img(attr! { src = src }))
+    html(img(t_attr! { src = src }))
 }
 
 fn main() {

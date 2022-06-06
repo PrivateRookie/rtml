@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use rtml::EventKind::{Blur, Click, DblClick, Keypress};
-use rtml::{attr, mount_body, s_attr, style_, tags::*, IntoReactive, Reactive};
+use rtml::{t_attr, mount_body, s_attr, t_style, tags::*, IntoReactive, Reactive};
 use store::Store;
 use wasm_bindgen::prelude::*;
 use web_sys::{HtmlInputElement, KeyboardEvent};
@@ -37,13 +37,13 @@ pub fn start() {
     });
 
     let wrapper = div((
-        attr! {class="todomvc-wrapper"},
+        t_attr! {class="todomvc-wrapper"},
         (
             section((
-                attr! {class="todoapp"},
+                t_attr! {class="todoapp"},
                 (
                     header((
-                        attr! {class="header"},
+                        t_attr! {class="header"},
                         (
                             h1("RTML - Todos"),
                             input_view(records.clone()),
@@ -63,7 +63,7 @@ pub fn start() {
                                 s_attr! { type="checkbox", class="toggle-all", id="toggle-all", checked=checked }
                             }))
                             .on(Click, toggle_all),
-                            label(attr! {for="toggle-all"}),
+                            label(t_attr! {for="toggle-all"}),
                             todo_list(records.clone(), filter.clone()),
                         ),
                     )),
@@ -77,14 +77,14 @@ pub fn start() {
                             s_attr! {class=cls}
                         }),
                         (span((
-                            attr! {class="todo-count"},
+                            t_attr! {class="todo-count"},
                             (
                                 strong(records.view(|data| data.val().items.len())),
                                 span(" item(s) left"),
                             )
                         )),
                         filter_view(filter),
-                        button((attr!{class="clear-completed"}, records.view(|data| {
+                        button((t_attr!{class="clear-completed"}, records.view(|data| {
                             format!("Clear Completed {}", data.val().items.iter().filter(|i| i.completed).count())
                         }))).on(Click, clear_complete)
                     ),
@@ -92,20 +92,20 @@ pub fn start() {
                 ),
             )),
             footer((
-                attr! {class="info"},
+                t_attr! {class="info"},
                 (
                     p("Double-click to edit a todo"),
                     p((
                         span("Written by "),
                         a((
-                            attr! {href="https://github.com/PrivateRookie", target="_blank"},
+                            t_attr! {href="https://github.com/PrivateRookie", target="_blank"},
                             "PrivateRookie",
                         )),
                     )),
                     p((
                         span("Part of "),
                         a((
-                            attr! {href="http://todomvc.com/", target="_blank"},
+                            t_attr! {href="http://todomvc.com/", target="_blank"},
                             "TodoMVC",
                         )),
                     )),
@@ -132,7 +132,7 @@ fn input_view(records: Reactive<Store>) -> Input {
         }
         update
     });
-    input(attr! {id="edit-input",class="new-todo", placeholder="What needs to be done?"})
+    input(t_attr! {id="edit-input",class="new-todo", placeholder="What needs to be done?"})
         .on(Keypress, update_and_reset)
 }
 
@@ -140,7 +140,7 @@ fn filter_view(filter: Reactive<FilterStatus>) -> Ul {
     use FilterStatus::*;
     let options = vec![All, Completed, Active];
     ul((
-        attr! {class="filters"},
+        t_attr! {class="filters"},
         options
             .into_iter()
             .map(|opt| {
@@ -192,7 +192,7 @@ fn todo_list(records: Reactive<Store>, filter: Reactive<FilterStatus>) -> Ul {
                     }
                     li((
                         div((
-                            attr! {class="view"},
+                            t_attr! {class="view"},
                             (
                                 input(Attrs::Static(input_attr)).on(
                                     Click,
@@ -212,8 +212,8 @@ fn todo_list(records: Reactive<Store>, filter: Reactive<FilterStatus>) -> Ul {
                                     }),
                                 ),
                                 button((
-                                    attr! {class="destroy"},
-                                    style_! {margin: "10px"},
+                                    t_attr! {class="destroy"},
+                                    t_style! {margin: "10px"},
                                     "🚮",
                                 ))
                                 .on(
@@ -249,8 +249,8 @@ fn item_edit_input(item: &store::Item, idx: usize, data: Reactive<Store>) -> Inp
             edit(event, store, idx);
             true
         });
-        input(attr! {class="edit", type="text", value=item.description}).on(Blur, on_blur)
+        input(t_attr! {class="edit", type="text", value=item.description}).on(Blur, on_blur)
     } else {
-        input(attr! {type="hidden"})
+        input(t_attr! {type="hidden"})
     }
 }

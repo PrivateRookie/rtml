@@ -19,19 +19,19 @@ pub fn macro_builder(input: TokenStream) -> TokenStream {
                         let __tag__ = rtml::tags::#name(());
             
                         $(
-                            let __tag__ = __tag__.attr(rtml::attr! { $($($a_cap),+   #> )? $($($a_name)-+ $(=$a_value)?),*});
+                            let __tag__ = __tag__.attr(rtml::t_attr! { $($($a_cap),+   #> )? $($($a_name)-+ $(=$a_value)?),*});
                         )?
                         $(
-                            let __tag__ = __tag__.style(rtml::style_! { $($($s_cap),+ ~>)? $($($s_name)-+ :$s_value);*});
+                            let __tag__ = __tag__.style(rtml::style_! { $($($s_cap),+ *>)? $($($s_name)-+ :$s_value);*});
                         )?
                         $(
-                            let __tag__ = __tag__.bind(rtml::subs!($($b_cap),+ :> $b_body));
+                            let __tag__ = __tag__.bind(rtml::ref_subs!($($b_cap),+ :> $b_body));
                         )?
                         $(
-                            let __tag__ = __tag__.children(rtml::subs!($($v_cap),+ => $content));
+                            let __tag__ = __tag__.children(rtml::ref_subs!($($v_cap),+ => $content));
                         )?
                         $(
-                            let __tag__ = __tag__.on(stringify!($type), rtml::update!($($e_cap),+ => $b));
+                            let __tag__ = __tag__.on(stringify!($type), rtml::ref_update!($($e_cap),+ => $b));
                         )*
                         __tag__
                     }
@@ -47,19 +47,19 @@ pub fn macro_builder(input: TokenStream) -> TokenStream {
                         let __tag__ = rtml::tags::#name(());
             
                         $(
-                            let __tag__ = __tag__.attr(rtml::attr! { $($($a_cap),+   #> )? $($($a_name)-+ $(=$a_value)?),*});
+                            let __tag__ = __tag__.attr(rtml::t_attr! { $($($a_cap),+   #> )? $($($a_name)-+ $(=$a_value)?),*});
                         )?
                         $(
-                            let __tag__ = __tag__.style(rtml::style_! { $($($s_cap),+ ~>)? $($($s_name)-+ :$s_value);*});
+                            let __tag__ = __tag__.style(rtml::style_! { $($($s_cap),+ *>)? $($($s_name)-+ :$s_value);*});
                         )?
                         $(
-                            let __tag__ = __tag__.bind(rtml::subs!($($b_cap),+ :> $b_body));
+                            let __tag__ = __tag__.bind(rtml::ref_subs!($($b_cap),+ :> $b_body));
                         )?
                         $(
                             let __tag__ = __tag__.children($content);
                         )?
                         $(
-                            let __tag__ = __tag__.on(stringify!($type), rtml::update!($($e_cap),+ => $b));
+                            let __tag__ = __tag__.on(stringify!($type), rtml::ref_update!($($e_cap),+ => $b));
                         )*
                         __tag__
                     }

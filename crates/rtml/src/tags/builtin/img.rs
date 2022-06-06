@@ -1,4 +1,4 @@
-def! {
+def_tag! {
   img,
   Img,
   ImgArg,

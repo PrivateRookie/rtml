@@ -1,4 +1,4 @@
-def! {
+def_tag! {
   h4,
   H4,
   H4Arg,

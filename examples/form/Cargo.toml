@@ -1,13 +1,13 @@
 [package]
-name = "counter"
+name = "form"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-
 [dependencies]
 rtml = { path = "../../crates/rtml" }
+rtml-project = { path = "../../crates/project" }
 wasm-bindgen = { version = "0.2" }
 web-sys = { version = "0.3", features = [
     "Document",

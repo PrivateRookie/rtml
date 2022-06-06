@@ -1,6 +1,6 @@
 #[macro_export]
 /// def a thin wrapper of html element
-macro_rules! def {
+macro_rules! def_tag {
     ($func_name:ident, $struct:ident, $arg:ident, doc: $($lang:literal = $doc:literal);+) => {
         $(#[cfg_attr(feature=$lang, doc=$doc)])+
         pub fn $func_name<T: Into<$arg>>(tag: T) -> $struct {

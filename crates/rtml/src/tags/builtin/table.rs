@@ -1,4 +1,4 @@
-def! {
+def_tag! {
   table,
   Table,
   TableArg,

@@ -58,7 +58,7 @@ impl Template for Unit {
 }
 
 impl Unit {
-    pub fn bind(mut self, m: (Vec<Rc<RefCell<Dom>>>, Rc<RefCell<dyn Fn(Element)>>)) -> Self {
+    pub fn bind(mut self, m: (Vec<Rc<RefCell<Dom>>>, crate::reactive::ModifierFunc)) -> Self {
         self.modifier = Some(m);
         self
     }
@@ -228,7 +228,7 @@ impl Styles {
 /// helper macro to create css style
 ///
 /// ```no_run
-/// let s = style! {
+/// let s = t_style! {
 ///     background-color: "#fffff";
 ///     bar: "bxx";
 ///     font-size: 100;
@@ -243,11 +243,11 @@ impl Styles {
 /// escaped: "abc";
 /// ```
 ///
-/// to subscribe reactive data, explicit add reactive data ident, and add "~>" symbol
+/// to subscribe reactive data, explicit add reactive data ident, and add "*>" symbol
 ///
 /// ```no_run
 /// let age = 0u8.reactive();
-/// let s = style! { age ~>
+/// let s = t_style! { age *>
 ///     background-color: if age.val() > 60 { "red" } else { "green" };
 ///     bar: "bxx";
 ///     font-size: 100;
@@ -255,8 +255,8 @@ impl Styles {
 /// }
 /// ```
 #[macro_export]
-macro_rules! style_ {
-    ($($d:ident),+ ~> $($($name:ident)-+: $value:expr);+ $(;)?) => {
+macro_rules! t_style {
+    ($($d:ident),+ *> $($($name:ident)-+: $value:expr);+ $(;)?) => {
         {
             $(let $d = $d.clone();)+
             $crate::tags::Styles::Dynamic {
@@ -285,7 +285,7 @@ macro_rules! style_ {
 /// helper macro to create css style
 ///
 /// ```no_run
-/// let s = style! {
+/// let s = t_style! {
 ///     background-color: "#fffff";
 ///     bar: "bxx";
 ///     font-size: 100;
@@ -419,7 +419,7 @@ impl Attrs {
 ///
 /// ```no_run
 /// div((
-///     attr! { id="app", data-some-demo },
+///     t_attr! { id="app", data-some-demo },
 ///     "hello"
 ///  ))
 /// ```
@@ -430,15 +430,15 @@ impl Attrs {
 /// <div id="app" data-some-demo>hello</div>
 /// ```
 ///
-/// **NOTE**: style should be set by `style!` macro
+/// **NOTE**: style should be set by `t_style!` macro
 ///
 /// to subscribe reactive data, explicit add data identifier and add "#>"
 ///
 /// ```no_run
-/// attr! { age #> value=age.val() }
+/// t_attr! { age #> value=age.val() }
 /// ```
 #[macro_export]
-macro_rules! attr {
+macro_rules! t_attr {
     ($($d:ident),+ #> $($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
         {
             $(let $d = $d.clone();)+
@@ -457,10 +457,10 @@ macro_rules! attr {
             let key = name.join("-");
             let mut valid = true;
             if key.starts_with("on") {
-                $crate::tags::_warning("event handler can not be set with attr! macro");
+                $crate::tags::_warning("event handler can not be set with t_attr! macro");
                 valid = false;
             } else if key == "style" {
-                $crate::tags::_warning("style should be set with style! macro");
+                $crate::tags::_warning("style should be set with t_style! macro");
                 valid = false;
             }
             let mut value = None;
@@ -483,7 +483,7 @@ macro_rules! attr {
 ///
 /// ```no_run
 /// div((
-///     attr! { id="app", data-some-demo },
+///     t_attr! { id="app", data-some-demo },
 ///     "hello"
 ///  ))
 /// ```
@@ -494,7 +494,7 @@ macro_rules! attr {
 /// <div id="app" data-some-demo>hello</div>
 /// ```
 ///
-/// **NOTE**: style should be set by `style!` macro
+/// **NOTE**: style should be set by `t_style!` macro
 #[macro_export]
 macro_rules! s_attr {
     ($($($name:tt)-+ $(= $value:expr)?),+ $(,)?) => {
@@ -504,10 +504,10 @@ macro_rules! s_attr {
             let key = name.join("-");
             let mut valid = true;
             if key.starts_with("on") {
-                $crate::tags::_warning("event handler can not be set with attr! macro");
+                $crate::tags::_warning("event handler can not be set with t_attr! macro");
                 valid = false;
             } else if key == "style" {
-                $crate::tags::_warning("style should be set with style! macro");
+                $crate::tags::_warning("style should be set with t_style! macro");
                 valid = false;
             }
             let mut value = None;
