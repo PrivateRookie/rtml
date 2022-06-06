@@ -1,7 +1,10 @@
 use clap::Parser;
 use futures_util::{stream::SplitSink, SinkExt};
 use owo_colors::OwoColorize;
-use rtml_share::dev_server::{DEFAULT_HOST, DEFAULT_PORT, WS_URL};
+use rtml_share::{
+    copy_dir_all,
+    dev_server::{DEFAULT_HOST, DEFAULT_PORT, WS_URL},
+};
 use std::{
     io::{Read, Seek, Write},
     net::ToSocketAddrs,
@@ -197,7 +200,11 @@ fn run_wasm_bindgen(package: Option<String>, release: bool) -> PathBuf {
     for entry in std::fs::read_dir(get_out_dir(release)).unwrap().flatten() {
         let src = entry.path();
         let dest: PathBuf = src.components().skip(5).collect();
-        std::fs::copy(src, target_dir.join(dest)).unwrap();
+        if src.is_file() {
+            std::fs::copy(src, target_dir.join(dest)).unwrap();
+        } else {
+            copy_dir_all(src, target_dir.join(dest).as_path()).unwrap();
+        }
     }
     target_dir
 }

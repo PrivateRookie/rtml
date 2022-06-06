@@ -1,4 +1,7 @@
-use rtml_share::dev_server::{DEFAULT_HOST, DEFAULT_PORT, WS_URL};
+use rtml_share::{
+    copy_dir_all,
+    dev_server::{DEFAULT_HOST, DEFAULT_PORT, WS_URL},
+};
 use std::{
     io::Write,
     path::{Path, PathBuf},
@@ -20,6 +23,23 @@ pub fn add_file<P: AsRef<Path>>(path: P, content: &[u8]) -> std::io::Result<()> 
     }
     let mut file = std::fs::File::create(dir.join(path))?;
     file.write_all(content)?;
+    Ok(())
+}
+
+/// auto collect assets file to dist dir
+/// **source** should be relative path to root
+pub fn add_assets<P: AsRef<Path>>(source: P) -> std::io::Result<()> {
+    let dist = output_dir();
+    if !dist.exists() {
+        std::fs::create_dir_all(&dist)?;
+    }
+    if source.as_ref().is_file() {
+        let dest = dist.join(&source);
+        std::fs::copy(&source, dest)?;
+    } else {
+        let dest = dist.join(source.as_ref().components().skip(1).collect::<PathBuf>());
+        copy_dir_all(source, dest.as_path())?;
+    }
     Ok(())
 }
 
@@ -54,6 +74,7 @@ pub fn auto_reload() {
     reload.forget();
 }
 
+/// auto reload page if source change in debug mode
 pub fn debug_auto_reload() {
     #[cfg(debug_assertions)]
     {

@@ -1,5 +1,5 @@
 use rtml::{t_attr, tags::*};
-use rtml_project::{add_file, get_pkg_id};
+use rtml_project::{add_file, add_assets, get_pkg_id};
 
 fn index() -> Html {
     let pkg = get_pkg_id();
@@ -24,8 +24,6 @@ fn index() -> Html {
 }
 
 fn main() -> std::io::Result<()> {
-    add_file(
-        "index.html",
-        index().to_string().as_bytes(),
-    )
+    add_assets("assets")?;
+    add_file("index.html", index().to_string().as_bytes())
 }
