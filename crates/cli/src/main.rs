@@ -445,6 +445,12 @@ fn config_cargo(path: &Path) {
     if !deps.contains_key("wasm-bindgen") {
         deps.insert("wasm-bindgen", Item::Value(wasm_bindgen_dep()));
     }
+    if !deps.contains_key("web-sys") {
+        deps.insert("web-sys", Item::Value(web_sys_dep()));
+    }
+    if !deps.contains_key("js-sys") {
+        deps.insert("js-sys", Item::Value(js_sys_dep()));
+    }
     if !deps.contains_key("tracing") {
         deps.insert("tracing", Item::Value(tracing_dep()));
     }
@@ -486,6 +492,31 @@ fn rtml_project_dep() -> toml_edit::Value {
     );
     toml_edit::Value::InlineTable(dep)
 }
+fn web_sys_dep() -> toml_edit::Value {
+    let mut dep = toml_edit::InlineTable::new();
+    dep.insert(
+        "version",
+        toml_edit::Value::String(toml_edit::Formatted::new("0.3".into())),
+    );
+    let mut feats = toml_edit::Array::new();
+    feats.push("Document");
+    feats.push("Element");
+    feats.push("HtmlElement");
+    feats.push("Node");
+    feats.push("Window");
+    dep.insert("features", toml_edit::Value::Array(feats));
+    toml_edit::Value::InlineTable(dep)
+}
+
+fn js_sys_dep() -> toml_edit::Value {
+    let mut dep = toml_edit::InlineTable::new();
+    dep.insert(
+        "version",
+        toml_edit::Value::String(toml_edit::Formatted::new("0.3".into())),
+    );
+    toml_edit::Value::InlineTable(dep)
+}
+
 fn wasm_bindgen_dep() -> toml_edit::Value {
     let mut dep = toml_edit::InlineTable::new();
     dep.insert(
