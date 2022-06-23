@@ -1,5 +1,5 @@
 use rtml::tags::*;
-use rtml::{attr, mount_body, style};
+use rtml::{t_attr, mount_body, t_style};
 use rtml_project::debug_auto_reload;
 use wasm_bindgen::prelude::*;
 

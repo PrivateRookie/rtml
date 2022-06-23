@@ -396,7 +396,7 @@ fn add_build_rs(path: &Path) {
 }
 
 fn add_lib_rs(path: &Path) {
-    let file_path = path.join("src").join("build.rs");
+    let file_path = path.join("src").join("lib.rs");
     let mut file = std::fs::File::create(file_path).unwrap();
     file.write_all(include_bytes!("../lib.tpl.rs")).unwrap();
 }

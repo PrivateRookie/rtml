@@ -1,4 +1,4 @@
-use rtml::{attr, tags::*};
+use rtml::{t_attr, tags::*};
 use rtml_project::{add_file, get_pkg_id};
 
 fn index() -> Html {
